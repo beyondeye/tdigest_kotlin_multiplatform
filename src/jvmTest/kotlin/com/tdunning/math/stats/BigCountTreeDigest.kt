@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-package com.tdunning.math.stats;
+package com.tdunning.math.stats
 
-/**
- * A DigestFactory is used in tests to abstract what kind of digest is being tested.
- */
-public interface DigestFactory {
-    TDigest getDigest(double compression);
+class BigCountTreeDigest : BigCount() {
+    override fun createDigest(): TDigest {
+        return AVLTreeDigest(20.0)
+    }
 }

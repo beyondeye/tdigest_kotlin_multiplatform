@@ -15,12 +15,10 @@
  * limitations under the License.
  */
 
-package com.tdunning.math.stats;
+package com.tdunning.math.stats
 
-import java.io.Serializable;
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.List;
+import java.io.Serializable
+import java.nio.ByteBuffer
 
 /**
  * Adaptive histogram based on something like streaming k-means crossed with Q-digest.
@@ -41,46 +39,13 @@ import java.util.List;
  *
  * - easy to adapt for use with map-reduce
  */
-public abstract class TDigest implements Serializable {
-    double min = Double.POSITIVE_INFINITY;
-    double max = Double.NEGATIVE_INFINITY;
+abstract class TDigest : Serializable {
+    var min = java.lang.Double.POSITIVE_INFINITY
+        internal set
+    var max = java.lang.Double.NEGATIVE_INFINITY
+        internal set
 
-    /**
-     * Creates an {@link MergingDigest}.  This is generally the best known implementation right now.
-     *
-     * @param compression The compression parameter.  100 is a common value for normal uses.  1000 is extremely large.
-     *                    The number of centroids retained will be a smallish (usually less than 10) multiple of this number.
-     * @return the MergingDigest
-     */
-    @SuppressWarnings("WeakerAccess")
-    public static TDigest createMergingDigest(double compression) {
-        return new MergingDigest(compression);
-    }
-
-    /**
-     * Creates an AVLTreeDigest.  AVLTreeDigest is nearly the best known implementation right now.
-     *
-     * @param compression The compression parameter.  100 is a common value for normal uses.  1000 is extremely large.
-     *                    The number of centroids retained will be a smallish (usually less than 10) multiple of this number.
-     * @return the AvlTreeDigest
-     */
-    @SuppressWarnings("WeakerAccess")
-    public static TDigest createAvlTreeDigest(double compression) {
-        return new AVLTreeDigest(compression);
-    }
-
-    /**
-     * Creates a TDigest of whichever type is the currently recommended type.  MergingDigest is generally the best
-     * known implementation right now.
-     *
-     * @param compression The compression parameter.  100 is a common value for normal uses.  1000 is extremely large.
-     *                    The number of centroids retained will be a smallish (usually less than 10) multiple of this number.
-     * @return the TDigest
-     */
-    @SuppressWarnings({"unused", "WeakerAccess", "SameParameterValue"})
-    public static TDigest createDigest(double compression) {
-        return createMergingDigest(compression);
-    }
+    abstract val isRecording: Boolean
 
     /**
      * Adds a sample to a histogram.
@@ -88,15 +53,15 @@ public abstract class TDigest implements Serializable {
      * @param x The value to add.
      * @param w The weight of this point.
      */
-    public abstract void add(double x, int w);
+    abstract fun add(x: Double, w: Int)
 
-    final void checkValue(double x) {
-        if (Double.isNaN(x)) {
-            throw new IllegalArgumentException("Cannot add NaN");
+    internal fun checkValue(x: Double) {
+        if (java.lang.Double.isNaN(x)) {
+            throw IllegalArgumentException("Cannot add NaN")
         }
     }
 
-    public abstract void add(List<? extends TDigest> others);
+    abstract fun add(others: List<TDigest>)
 
     /**
      * Re-examines a t-digest to determine whether some centroids are redundant.  If your data are
@@ -107,22 +72,22 @@ public abstract class TDigest implements Serializable {
      *
      * This is a destructive operation that is not thread-safe.
      */
-    public abstract void compress();
+    abstract fun compress()
 
     /**
      * Returns the number of points that have been added to this TDigest.
      *
      * @return The sum of the weights on all centroids.
      */
-    public abstract long size();
+    abstract fun size(): Long
 
     /**
-     * Returns the fraction of all points added which are &le; x.
+     * Returns the fraction of all points added which are  x.
      *
      * @param x The cutoff for the cdf.
      * @return The fraction of all data which is less or equal to x.
      */
-    public abstract double cdf(double x);
+    abstract fun cdf(x: Double): Double
 
     /**
      * Returns an estimate of the cutoff such that a specified fraction of the data
@@ -131,29 +96,29 @@ public abstract class TDigest implements Serializable {
      * @param q The desired fraction
      * @return The value x such that cdf(x) == q
      */
-    public abstract double quantile(double q);
+    abstract fun quantile(q: Double): Double
 
     /**
-     * A {@link Collection} that lets you go through the centroids in ascending order by mean.  Centroids
+     * A [Collection] that lets you go through the centroids in ascending order by mean.  Centroids
      * returned will not be re-used, but may or may not share storage with this TDigest.
      *
      * @return The centroids in the form of a Collection.
      */
-    public abstract Collection<Centroid> centroids();
+    abstract fun centroids(): Collection<Centroid>
 
     /**
      * Returns the current compression factor.
      *
      * @return The compression factor originally used to set up the TDigest.
      */
-    public abstract double compression();
+    abstract fun compression(): Double
 
     /**
      * Returns the number of bytes required to encode this TDigest using #asBytes().
      *
      * @return The number of bytes required.
      */
-    public abstract int byteSize();
+    abstract fun byteSize(): Int
 
     /**
      * Returns the number of bytes required to encode this TDigest using #asSmallBytes().
@@ -164,7 +129,7 @@ public abstract class TDigest implements Serializable {
      *
      * @return The number of bytes required.
      */
-    public abstract int smallByteSize();
+    abstract fun smallByteSize(): Int
 
     /**
      * Serialize this TDigest into a byte buffer.  Note that the serialization used is
@@ -172,7 +137,7 @@ public abstract class TDigest implements Serializable {
      *
      * @param buf The byte buffer into which the TDigest should be serialized.
      */
-    public abstract void asBytes(ByteBuffer buf);
+    abstract fun asBytes(buf: ByteBuffer)
 
     /**
      * Serialize this TDigest into a byte buffer.  Some simple compression is used
@@ -182,7 +147,7 @@ public abstract class TDigest implements Serializable {
      *
      * @param buf The byte buffer into which the TDigest should be serialized.
      */
-    public abstract void asSmallBytes(ByteBuffer buf);
+    abstract fun asSmallBytes(buf: ByteBuffer)
 
     /**
      * Tell this TDigest to record the original data as much as possible for test
@@ -190,40 +155,66 @@ public abstract class TDigest implements Serializable {
      *
      * @return This TDigest so that configurations can be done in fluent style.
      */
-    public abstract TDigest recordAllData();
-
-    public abstract boolean isRecording();
+    abstract fun recordAllData(): TDigest
 
     /**
      * Add a sample to this TDigest.
      *
      * @param x The data value to add
      */
-    public abstract void add(double x);
+    abstract fun add(x: Double)
 
     /**
      * Add all of the centroids of another TDigest to this one.
      *
      * @param other The other TDigest
      */
-    public abstract void add(TDigest other);
+    abstract fun add(other: TDigest)
 
-    public abstract int centroidCount();
-
-    public double getMin() {
-        return min;
-    }
-
-    public double getMax() {
-        return max;
-    }
+    abstract fun centroidCount(): Int
 
     /**
      * Over-ride the min and max values for testing purposes
      */
-    @SuppressWarnings("SameParameterValue")
-    void setMinMax(double min, double max) {
-        this.min = min;
-        this.max = max;
+    internal fun setMinMax(min: Double, max: Double) {
+        this.min = min
+        this.max = max
+    }
+
+    companion object {
+
+        /**
+         * Creates an [MergingDigest].  This is generally the best known implementation right now.
+         *
+         * @param compression The compression parameter.  100 is a common value for normal uses.  1000 is extremely large.
+         * The number of centroids retained will be a smallish (usually less than 10) multiple of this number.
+         * @return the MergingDigest
+         */
+        fun createMergingDigest(compression: Double): TDigest {
+            return MergingDigest(compression)
+        }
+
+        /**
+         * Creates an AVLTreeDigest.  AVLTreeDigest is nearly the best known implementation right now.
+         *
+         * @param compression The compression parameter.  100 is a common value for normal uses.  1000 is extremely large.
+         * The number of centroids retained will be a smallish (usually less than 10) multiple of this number.
+         * @return the AvlTreeDigest
+         */
+        fun createAvlTreeDigest(compression: Double): TDigest {
+            return AVLTreeDigest(compression)
+        }
+
+        /**
+         * Creates a TDigest of whichever type is the currently recommended type.  MergingDigest is generally the best
+         * known implementation right now.
+         *
+         * @param compression The compression parameter.  100 is a common value for normal uses.  1000 is extremely large.
+         * The number of centroids retained will be a smallish (usually less than 10) multiple of this number.
+         * @return the TDigest
+         */
+        fun createDigest(compression: Double): TDigest {
+            return createMergingDigest(compression)
+        }
     }
 }

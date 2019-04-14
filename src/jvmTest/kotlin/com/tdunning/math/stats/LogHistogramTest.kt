@@ -72,12 +72,16 @@ class LogHistogramTest : HistogramTestCases() {
         super.doLinear(146.0, 17.0, 189)
     }
 
-    override fun testCompression() {
+    @Test
+    fun testCompression() {
         //ignore
+       // testCompressionCore()
+    }
+    @Test
+    @Throws(IOException::class, ClassNotFoundException::class)
+    fun testSerialization() {
+        //ignore
+       // testSerializationCore()
     }
 
-    @Throws(IOException::class, ClassNotFoundException::class)
-    override fun testSerialization() {
-        //ignore
-    }
 }

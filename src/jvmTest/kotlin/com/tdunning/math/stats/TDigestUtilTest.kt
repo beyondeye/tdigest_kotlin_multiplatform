@@ -15,35 +15,38 @@
  * limitations under the License.
  */
 
-package com.tdunning.math.stats;
+package com.tdunning.math.stats
 
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Random;
+import com.carrotsearch.randomizedtesting.RandomizedTest
+import java.nio.ByteBuffer
+import java.util.Random
 
-import org.junit.Test;
+import org.junit.Test
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.Lists
+import org.junit.Assert
 
-public class TDigestUtilTest extends AbstractTest {
+
+
+class TDigestUtilTest : AbstractTest() {
 
     @Test
-    public void testIntEncoding() {
-        Random gen = getRandom();
-        ByteBuffer buf = ByteBuffer.allocate(10000);
-        List<Integer> ref = Lists.newArrayList();
-        for (int i = 0; i < 3000; i++) {
-            int n = gen.nextInt();
-            n = n >>> (i / 100);
-            ref.add(n);
-            AbstractTDigest.encode(buf, n);
+    fun testIntEncoding() {
+        val gen = RandomizedTest.getRandom()
+        val buf = ByteBuffer.allocate(10000)
+        val ref = Lists.newArrayList<Int>()
+        for (i in 0..2999) {
+            var n = gen.nextInt()
+            n = n.ushr(i / 100)
+            ref.add(n)
+            AbstractTDigest.encode(buf, n)
         }
 
-        buf.flip();
+        buf.flip()
 
-        for (int i = 0; i < 3000; i++) {
-            int n = AbstractTDigest.decode(buf);
-            assertEquals(String.format("%d:", i), ref.get(i).intValue(), n);
+        for (i in 0..2999) {
+            val n = AbstractTDigest.decode(buf)
+            Assert.assertEquals(String.format("%d:", i), ref[i].toInt().toLong(), n.toLong())
         }
     }
 }

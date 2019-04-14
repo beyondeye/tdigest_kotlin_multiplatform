@@ -21,6 +21,7 @@ import org.junit.Before
 import org.junit.Test
 
 import java.io.FileNotFoundException
+import java.io.IOException
 
 class FloatHistogramTest : HistogramTestCases() {
     @Before
@@ -42,5 +43,14 @@ class FloatHistogramTest : HistogramTestCases() {
     @Throws(FileNotFoundException::class)
     fun testLinear() {
         super.doLinear(165.4, 18.0, 212)
+    }
+    @Test
+    fun testCompression() {
+        CompressionTestCore()
+    }
+    @Test
+    @Throws(IOException::class, ClassNotFoundException::class)
+    fun testSerialization() {
+        SerializationTestCore()
     }
 }

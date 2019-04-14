@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-package com.tdunning.math.stats;
+package com.tdunning.math.stats
 
-public class BigCountTreeDigest extends BigCount {
-    @Override
-    public TDigest createDigest() {
-        return new AVLTreeDigest(20);
+class BigCountMergingDigest : BigCount() {
+    override fun createDigest(): TDigest {
+        return MergingDigest(100.0)
     }
 }

@@ -29,7 +29,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-open class HistogramTestCases {
+abstract class HistogramTestCases {
     internal var useLinearBuckets: Boolean = false
     internal var factory: HistogramFactory? = null
 
@@ -186,8 +186,7 @@ open class HistogramTestCases {
         assertEquals(bigBinIndex.toLong(), histogram.bucket(2.235).toLong())
     }
 
-    @Test
-    open fun testCompression() {
+    fun CompressionTestCore() {
         val n = 1000000
         val x = factory!!.create(1e-3, 10.0)
 
@@ -207,9 +206,8 @@ open class HistogramTestCases {
         }
     }
 
-    @Test
     @Throws(IOException::class, ClassNotFoundException::class)
-    open fun testSerialization() {
+    fun SerializationTestCore() {
         val n = 1000000
         val x = factory!!.create(1e-3, 10.0)
 

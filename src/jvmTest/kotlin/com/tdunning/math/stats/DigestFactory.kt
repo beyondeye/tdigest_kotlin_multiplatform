@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-package com.tdunning.math.stats;
+package com.tdunning.math.stats
 
-public class BigCountMergingDigest extends BigCount {
-    @Override
-    public TDigest createDigest() {
-        return new MergingDigest(100);
-    }
+/**
+ * A DigestFactory is used in tests to abstract what kind of digest is being tested.
+ */
+interface DigestFactory {
+    fun getDigest(compression: Double): TDigest
 }

@@ -15,23 +15,12 @@
  * limitations under the License.
  */
 
-package com.tdunning.math.stats;
+package com.tdunning.math.stats
 
 /**
  * Static sorting methods
  */
-public class Sort {
-    /**
-     * Quick sort using an index array.  On return,
-     * values[order[i]] is in order as i goes 0..values.length
-     *
-     * @param order  Indexes into values
-     * @param values The values to sort.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public static void sort(int[] order, double[] values) {
-        sort(order, values, 0, values.length);
-    }
+object Sort {
 
     /**
      * Quick sort using an index array.  On return,
@@ -41,9 +30,8 @@ public class Sort {
      * @param values The values to sort.
      * @param n      The number of values to sort
      */
-    @SuppressWarnings("WeakerAccess")
-    public static void sort(int[] order, double[] values, int n) {
-        sort(order, values, 0, n);
+    fun sort(order: IntArray, values: DoubleArray, n: Int) {
+        sort(order, values, 0, n)
     }
 
     /**
@@ -55,13 +43,12 @@ public class Sort {
      * @param start  The first element to sort
      * @param n      The number of values to sort
      */
-    @SuppressWarnings("WeakerAccess")
-    public static void sort(int[] order, double[] values, int start, int n) {
-        for (int i = 0; i < n; i++) {
-            order[i] = i;
+    fun sort(order: IntArray, values: DoubleArray, start: Int = 0, n: Int = values.size) {
+        for (i in 0 until n) {
+            order[i] = i
         }
-        quickSort(order, values, start, n, 8);
-        insertionSort(order, values, start, n, 8);
+        quickSort(order, values, start, n, 8)
+        insertionSort(order, values, start, n, 8)
     }
 
     /**
@@ -73,66 +60,68 @@ public class Sort {
      * @param end    The value after the last value to sort
      * @param limit  The minimum size to recurse down to.
      */
-    private static void quickSort(int[] order, double[] values, int start, int end, int limit) {
+    private fun quickSort(order: IntArray, values: DoubleArray, start: Int, end: Int, limit: Int) {
+        var start = start
+        var end = end
         // the while loop implements tail-recursion to avoid excessive stack calls on nasty cases
         while (end - start > limit) {
 
             // median of three values for the pivot
-            int a = start;
-            int b = (start + end) / 2;
-            int c = end - 1;
+            val a = start
+            val b = (start + end) / 2
+            val c = end - 1
 
-            int pivotIndex;
-            double pivotValue;
-            double va = values[order[a]];
-            double vb = values[order[b]];
-            double vc = values[order[c]];
-            //noinspection Duplicates
+            val pivotIndex: Int
+            val pivotValue: Double
+            val va = values[order[a]]
+            val vb = values[order[b]]
+            val vc = values[order[c]]
+
             if (va > vb) {
                 if (vc > va) {
                     // vc > va > vb
-                    pivotIndex = a;
-                    pivotValue = va;
+                    pivotIndex = a
+                    pivotValue = va
                 } else {
                     // va > vb, va >= vc
                     if (vc < vb) {
                         // va > vb > vc
-                        pivotIndex = b;
-                        pivotValue = vb;
+                        pivotIndex = b
+                        pivotValue = vb
                     } else {
                         // va >= vc >= vb
-                        pivotIndex = c;
-                        pivotValue = vc;
+                        pivotIndex = c
+                        pivotValue = vc
                     }
                 }
             } else {
                 // vb >= va
                 if (vc > vb) {
                     // vc > vb >= va
-                    pivotIndex = b;
-                    pivotValue = vb;
+                    pivotIndex = b
+                    pivotValue = vb
                 } else {
                     // vb >= va, vb >= vc
                     if (vc < va) {
                         // vb >= va > vc
-                        pivotIndex = a;
-                        pivotValue = va;
+                        pivotIndex = a
+                        pivotValue = va
                     } else {
                         // vb >= vc >= va
-                        pivotIndex = c;
-                        pivotValue = vc;
+                        pivotIndex = c
+                        pivotValue = vc
                     }
                 }
             }
 
             // move pivot to beginning of array
-            swap(order, start, pivotIndex);
+            swap(order, start, pivotIndex)
 
             // we use a three way partition because many duplicate values is an important case
 
-            int low = start + 1;   // low points to first value not known to be equal to pivotValue
-            int high = end;        // high points to first value > pivotValue
-            int i = low;           // i scans the array
+            var low = start + 1   // low points to first value not known to be equal to pivotValue
+            var high = end        // high points to first value > pivotValue
+            var i = low           // i scans the array
             while (i < high) {
                 // invariant:  values[order[k]] == pivotValue for k in [0..low)
                 // invariant:  values[order[k]] < pivotValue for k in [low..i)
@@ -140,20 +129,20 @@ public class Sort {
                 // in-loop:  i < high
                 // in-loop:  low < high
                 // in-loop:  i >= low
-                double vi = values[order[i]];
+                val vi = values[order[i]]
                 if (vi == pivotValue) {
                     if (low != i) {
-                        swap(order, low, i);
+                        swap(order, low, i)
                     } else {
-                        i++;
+                        i++
                     }
-                    low++;
+                    low++
                 } else if (vi > pivotValue) {
-                    high--;
-                    swap(order, i, high);
+                    high--
+                    swap(order, i, high)
                 } else {
                     // vi < pivotValue
-                    i++;
+                    i++
                 }
             }
             // invariant:  values[order[k]] == pivotValue for k in [0..low)
@@ -165,34 +154,36 @@ public class Sort {
             // we have to move the values equal to the pivot into the middle.  To do this, we swap pivot
             // values into the top end of the [low,high) range stopping when we run out of destinations
             // or when we run out of values to copy
-            int from = start;
-            int to = high - 1;
-            for (i = 0; from < low && to >= low; i++) {
-                swap(order, from++, to--);
+            var from = start
+            var to = high - 1
+            i = 0
+            while (from < low && to >= low) {
+                swap(order, from++, to--)
+                i++
             }
             if (from == low) {
                 // ran out of things to copy.  This means that the the last destination is the boundary
-                low = to + 1;
+                low = to + 1
             } else {
                 // ran out of places to copy to.  This means that there are uncopied pivots and the
                 // boundary is at the beginning of those
-                low = from;
+                low = from
             }
 
-//            checkPartition(order, values, pivotValue, start, low, high, end);
+            //            checkPartition(order, values, pivotValue, start, low, high, end);
 
             // now recurse, but arrange it so we handle the longer limit by tail recursion
             if (low - start < end - high) {
-                quickSort(order, values, start, low, limit);
+                quickSort(order, values, start, low, limit)
 
                 // this is really a way to do
                 //    quickSort(order, values, high, end, limit);
-                start = high;
+                start = high
             } else {
-                quickSort(order, values, high, end, limit);
+                quickSort(order, values, high, end, limit)
                 // this is really a way to do
                 //    quickSort(order, values, start, low, limit);
-                end = low;
+                end = low
             }
         }
     }
@@ -205,23 +196,21 @@ public class Sort {
      * @param key    Values to sort on
      * @param values The auxilliary values to sort.
      */
-    @SuppressWarnings("WeakerAccess")
-    public static void sort(double[] key, double[] ... values) {
-        sort(key, 0, key.length, values);
+    fun sort(key: DoubleArray, vararg values: DoubleArray) {
+        sort(key, 0, key.size, *values)
     }
 
     /**
      * Quick sort using an index array.  On return,
      * values[order[i]] is in order as i goes start..n
-     *  @param key    Values to sort on
+     * @param key    Values to sort on
      * @param start  The first element to sort
      * @param n      The number of values to sort
      * @param values The auxilliary values to sort.
      */
-    @SuppressWarnings("WeakerAccess")
-    public static void sort(double[] key, int start, int n, double[]... values) {
-        quickSort(key, values, start, start + n, 8);
-        insertionSort(key, values, start, n, 8);
+    fun sort(key: DoubleArray, start: Int, n: Int, vararg values: DoubleArray) {
+        quickSort(key, values, start, start + n, 8)
+        insertionSort(key, values, start, n, 8)
     }
 
     /**
@@ -233,66 +222,68 @@ public class Sort {
      * @param end    The value after the last value to sort
      * @param limit  The minimum size to recurse down to.
      */
-    private static void quickSort(double[] key, double[][] values, int start, int end, int limit) {
+    private fun quickSort(key: DoubleArray, values: Array<out DoubleArray>, start: Int, end: Int, limit: Int) {
+        var start = start
+        var end = end
         // the while loop implements tail-recursion to avoid excessive stack calls on nasty cases
         while (end - start > limit) {
 
             // median of three values for the pivot
-            int a = start;
-            int b = (start + end) / 2;
-            int c = end - 1;
+            val a = start
+            val b = (start + end) / 2
+            val c = end - 1
 
-            int pivotIndex;
-            double pivotValue;
-            double va = key[a];
-            double vb = key[b];
-            double vc = key[c];
-            //noinspection Duplicates
+            val pivotIndex: Int
+            val pivotValue: Double
+            val va = key[a]
+            val vb = key[b]
+            val vc = key[c]
+
             if (va > vb) {
                 if (vc > va) {
                     // vc > va > vb
-                    pivotIndex = a;
-                    pivotValue = va;
+                    pivotIndex = a
+                    pivotValue = va
                 } else {
                     // va > vb, va >= vc
                     if (vc < vb) {
                         // va > vb > vc
-                        pivotIndex = b;
-                        pivotValue = vb;
+                        pivotIndex = b
+                        pivotValue = vb
                     } else {
                         // va >= vc >= vb
-                        pivotIndex = c;
-                        pivotValue = vc;
+                        pivotIndex = c
+                        pivotValue = vc
                     }
                 }
             } else {
                 // vb >= va
                 if (vc > vb) {
                     // vc > vb >= va
-                    pivotIndex = b;
-                    pivotValue = vb;
+                    pivotIndex = b
+                    pivotValue = vb
                 } else {
                     // vb >= va, vb >= vc
                     if (vc < va) {
                         // vb >= va > vc
-                        pivotIndex = a;
-                        pivotValue = va;
+                        pivotIndex = a
+                        pivotValue = va
                     } else {
                         // vb >= vc >= va
-                        pivotIndex = c;
-                        pivotValue = vc;
+                        pivotIndex = c
+                        pivotValue = vc
                     }
                 }
             }
 
             // move pivot to beginning of array
-            swap(start, pivotIndex, key, values);
+            swap(start, pivotIndex, key, *values)
 
             // we use a three way partition because many duplicate values is an important case
 
-            int low = start + 1;   // low points to first value not known to be equal to pivotValue
-            int high = end;        // high points to first value > pivotValue
-            int i = low;           // i scans the array
+            var low = start + 1   // low points to first value not known to be equal to pivotValue
+            var high = end        // high points to first value > pivotValue
+            var i = low           // i scans the array
             while (i < high) {
                 // invariant:  values[order[k]] == pivotValue for k in [0..low)
                 // invariant:  values[order[k]] < pivotValue for k in [low..i)
@@ -300,20 +291,20 @@ public class Sort {
                 // in-loop:  i < high
                 // in-loop:  low < high
                 // in-loop:  i >= low
-                double vi = key[i];
+                val vi = key[i]
                 if (vi == pivotValue) {
                     if (low != i) {
-                        swap(low, i, key, values);
+                        swap(low, i, key, *values)
                     } else {
-                        i++;
+                        i++
                     }
-                    low++;
+                    low++
                 } else if (vi > pivotValue) {
-                    high--;
-                    swap(i, high, key, values);
+                    high--
+                    swap(i, high, key, *values)
                 } else {
                     // vi < pivotValue
-                    i++;
+                    i++
                 }
             }
             // invariant:  values[order[k]] == pivotValue for k in [0..low)
@@ -325,34 +316,36 @@ public class Sort {
             // we have to move the values equal to the pivot into the middle.  To do this, we swap pivot
             // values into the top end of the [low,high) range stopping when we run out of destinations
             // or when we run out of values to copy
-            int from = start;
-            int to = high - 1;
-            for (i = 0; from < low && to >= low; i++) {
-                swap(from++, to--, key, values);
+            var from = start
+            var to = high - 1
+            i = 0
+            while (from < low && to >= low) {
+                swap(from++, to--, key, *values)
+                i++
             }
             if (from == low) {
                 // ran out of things to copy.  This means that the the last destination is the boundary
-                low = to + 1;
+                low = to + 1
             } else {
                 // ran out of places to copy to.  This means that there are uncopied pivots and the
                 // boundary is at the beginning of those
-                low = from;
+                low = from
             }
 
-//            checkPartition(order, values, pivotValue, start, low, high, end);
+            //            checkPartition(order, values, pivotValue, start, low, high, end);
 
             // now recurse, but arrange it so we handle the longer limit by tail recursion
             if (low - start < end - high) {
-                quickSort(key, values, start, low, limit);
+                quickSort(key, values, start, low, limit)
 
                 // this is really a way to do
                 //    quickSort(order, values, high, end, limit);
-                start = high;
+                start = high
             } else {
-                quickSort(key, values, high, end, limit);
+                quickSort(key, values, high, end, limit)
                 // this is really a way to do
                 //    quickSort(order, values, start, low, limit);
-                end = low;
+                end = low
             }
         }
     }
@@ -368,40 +361,39 @@ public class Sort {
      * @param end    The ending point of the sort
      * @param limit  The largest amount of disorder
      */
-    @SuppressWarnings("SameParameterValue")
-    private static void insertionSort(double[] key, double[][] values, int start, int end, int limit) {
-        for (int i = start + 1; i < end; i++) {
-            double v = key[i];
-            int m = Math.max(i - limit, start);
-            for (int j = i; j >= m; j--) {
+    private fun insertionSort(key: DoubleArray, values: Array<out DoubleArray>, start: Int, end: Int, limit: Int) {
+        for (i in start + 1 until end) {
+            val v = key[i]
+            val m = Math.max(i - limit, start)
+            for (j in i downTo m) {
                 if (j == 0 || key[j - 1] <= v) {
                     if (j < i) {
-                        System.arraycopy(key, j, key, j + 1, i - j);
-                        for (double[] value : values) {
-                            System.arraycopy(value, j, value, j + 1, i - j);
+                        System.arraycopy(key, j, key, j + 1, i - j)
+                        for (value in values) {
+                            System.arraycopy(value, j, value, j + 1, i - j)
                         }
                     }
-                    break;
+                    break
                 }
             }
         }
     }
 
-    private static void swap(int[] order, int i, int j) {
-        int t = order[i];
-        order[i] = order[j];
-        order[j] = t;
+    private fun swap(order: IntArray, i: Int, j: Int) {
+        val t = order[i]
+        order[i] = order[j]
+        order[j] = t
     }
 
-    private static void swap(int i, int j, double[] key, double[]...values) {
-        double t = key[i];
-        key[i] = key[j];
-        key[j] = t;
+    private fun swap(i: Int, j: Int, key: DoubleArray, vararg values: DoubleArray) {
+        var t = key[i]
+        key[i] = key[j]
+        key[j] = t
 
-        for (int k = 0; k < values.length; k++) {
-            t = values[k][i];
-            values[k][i] = values[k][j];
-            values[k][j] = t;
+        for (k in values.indices) {
+            t = values[k][i]
+            values[k][i] = values[k][j]
+            values[k][j] = t
         }
     }
 
@@ -416,33 +408,40 @@ public class Sort {
      * @param high       Values from low to high are equal to the pivot.
      * @param end        Values from high to end are above the pivot.
      */
-    @SuppressWarnings("UnusedDeclaration")
-    public static void checkPartition(int[] order, double[] values, double pivotValue, int start, int low, int high, int end) {
-        if (order.length != values.length) {
-            throw new IllegalArgumentException("Arguments must be same size");
+    fun checkPartition(
+        order: IntArray,
+        values: DoubleArray,
+        pivotValue: Double,
+        start: Int,
+        low: Int,
+        high: Int,
+        end: Int
+    ) {
+        if (order.size != values.size) {
+            throw IllegalArgumentException("Arguments must be same size")
         }
 
         if (!(start >= 0 && low >= start && high >= low && end >= high)) {
-            throw new IllegalArgumentException(String.format("Invalid indices %d, %d, %d, %d", start, low, high, end));
+            throw IllegalArgumentException(String.format("Invalid indices %d, %d, %d, %d", start, low, high, end))
         }
 
-        for (int i = 0; i < low; i++) {
-            double v = values[order[i]];
+        for (i in 0 until low) {
+            val v = values[order[i]]
             if (v >= pivotValue) {
-                throw new IllegalArgumentException(String.format("Value greater than pivot at %d", i));
+                throw IllegalArgumentException(String.format("Value greater than pivot at %d", i))
             }
         }
 
-        for (int i = low; i < high; i++) {
+        for (i in low until high) {
             if (values[order[i]] != pivotValue) {
-                throw new IllegalArgumentException(String.format("Non-pivot at %d", i));
+                throw IllegalArgumentException(String.format("Non-pivot at %d", i))
             }
         }
 
-        for (int i = high; i < end; i++) {
-            double v = values[order[i]];
+        for (i in high until end) {
+            val v = values[order[i]]
             if (v <= pivotValue) {
-                throw new IllegalArgumentException(String.format("Value less than pivot at %d", i));
+                throw IllegalArgumentException(String.format("Value less than pivot at %d", i))
             }
         }
     }
@@ -457,63 +456,63 @@ public class Sort {
      * @param n      How many elements to sort
      * @param limit  The largest amount of disorder
      */
-    @SuppressWarnings("SameParameterValue")
-    private static void insertionSort(int[] order, double[] values, int start, int n, int limit) {
-        for (int i = start + 1; i < n; i++) {
-            int t = order[i];
-            double v = values[order[i]];
-            int m = Math.max(i - limit, start);
-            for (int j = i; j >= m; j--) {
+    private fun insertionSort(order: IntArray, values: DoubleArray, start: Int, n: Int, limit: Int) {
+        for (i in start + 1 until n) {
+            val t = order[i]
+            val v = values[order[i]]
+            val m = Math.max(i - limit, start)
+            for (j in i downTo m) {
                 if (j == 0 || values[order[j - 1]] <= v) {
                     if (j < i) {
-                        System.arraycopy(order, j, order, j + 1, i - j);
-                        order[j] = t;
+                        System.arraycopy(order, j, order, j + 1, i - j)
+                        order[j] = t
                     }
-                    break;
+                    break
                 }
             }
         }
     }
 
     /**
-     * Reverses an array in-place.
-     *
-     * @param order The array to reverse
-     */
-    @SuppressWarnings("WeakerAccess")
-    public static void reverse(int[] order) {
-        reverse(order, 0, order.length);
-    }
-
-    /**
-     * Reverses part of an array. See {@link #reverse(int[])}
+     * Reverses part of an array. See [.reverse]
      *
      * @param order  The array containing the data to reverse.
      * @param offset Where to start reversing.
      * @param length How many elements to reverse
      */
-    @SuppressWarnings("WeakerAccess")
-    public static void reverse(int[] order, int offset, int length) {
-        for (int i = 0; i < length / 2; i++) {
-            int t = order[offset + i];
-            order[offset + i] = order[offset + length - i - 1];
-            order[offset + length - i - 1] = t;
+    @JvmOverloads
+    fun reverse(order: IntArray, offset: Int = 0, length: Int = order.size) {
+        for (i in 0 until length / 2) {
+            val t = order[offset + i]
+            order[offset + i] = order[offset + length - i - 1]
+            order[offset + length - i - 1] = t
         }
     }
 
     /**
-     * Reverses part of an array. See {@link #reverse(int[])}
+     * Reverses part of an array. See [.reverse]
      *
      * @param order  The array containing the data to reverse.
      * @param offset Where to start reversing.
      * @param length How many elements to reverse
      */
-    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    public static void reverse(double[] order, int offset, int length) {
-        for (int i = 0; i < length / 2; i++) {
-            double t = order[offset + i];
-            order[offset + i] = order[offset + length - i - 1];
-            order[offset + length - i - 1] = t;
+    fun reverse(order: DoubleArray, offset: Int, length: Int) {
+        for (i in 0 until length / 2) {
+            val t = order[offset + i]
+            order[offset + i] = order[offset + length - i - 1]
+            order[offset + length - i - 1] = t
         }
     }
 }
+/**
+ * Quick sort using an index array.  On return,
+ * values[order[i]] is in order as i goes 0..values.length
+ *
+ * @param order  Indexes into values
+ * @param values The values to sort.
+ */
+/**
+ * Reverses an array in-place.
+ *
+ * @param order The array to reverse
+ */
