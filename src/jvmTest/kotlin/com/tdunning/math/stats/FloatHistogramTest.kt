@@ -15,32 +15,32 @@
  * limitations under the License.
  */
 
-package com.tdunning.math.stats;
+package com.tdunning.math.stats
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.Before
+import org.junit.Test
 
-import java.io.FileNotFoundException;
+import java.io.FileNotFoundException
 
-public class FloatHistogramTest extends HistogramTestCases {
+class FloatHistogramTest : HistogramTestCases() {
     @Before
-    public void setup() {
-        useLinearBuckets = true;
-        factory = new HistogramFactory() {
-            @Override
-            public Histogram create(double min, double max) {
-                return new FloatHistogram(min, max);
+    fun setup() {
+        useLinearBuckets=true
+        factory=object : HistogramFactory {
+            override fun create(min: Double, max: Double): Histogram {
+                return FloatHistogram(min, max)
             }
-        };
+        }
     }
 
     @Test
-    public void testBins() {
-        super.testBins(79, 141, new FloatHistogram(10e-6, 5, 20));
+    fun testBins() {
+        super.testBins(79, 141, FloatHistogram(10e-6, 5.0, 20.0))
     }
 
     @Test
-    public void testLinear() throws FileNotFoundException {
-        super.doLinear(165.4, 18, 212);
+    @Throws(FileNotFoundException::class)
+    fun testLinear() {
+        super.doLinear(165.4, 18.0, 212)
     }
 }
