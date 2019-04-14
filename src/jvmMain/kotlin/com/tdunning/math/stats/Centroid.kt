@@ -20,7 +20,6 @@ package com.tdunning.math.stats
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.Serializable
-import java.util.ArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -41,7 +40,7 @@ class Centroid private constructor(record: Boolean) : Comparable<Centroid>, Seri
     init {
         id = uniqueCount.getAndIncrement()
         if (record) {
-            actualData = ArrayList()
+            actualData = mutableListOf()
         }
     }
 
@@ -115,7 +114,7 @@ class Centroid private constructor(record: Boolean) : Comparable<Centroid>, Seri
 
     fun insertData(x: Double) {
         if (actualData == null) {
-            actualData = ArrayList()
+            actualData = mutableListOf()
         }
         actualData!!.add(x)
     }
@@ -141,6 +140,7 @@ class Centroid private constructor(record: Boolean) : Comparable<Centroid>, Seri
     }
 
     companion object {
+        //*PORT* use https://github.com/Kotlin/kotlinx.atomicfu instead or stdlib
         private val uniqueCount = AtomicInteger(1)
 
         fun createWeighted(x: Double, w: Int, data: Iterable<Double>?): Centroid {

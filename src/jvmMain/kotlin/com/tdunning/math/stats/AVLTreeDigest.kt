@@ -302,6 +302,7 @@ class AVLTreeDigest
     }
 
     override fun centroids(): Collection<Centroid> {
+        //*PORT* define a platform dependent impl of  Collections.unmodifiableCollection
         return Collections.unmodifiableCollection(summary!!)
     }
 

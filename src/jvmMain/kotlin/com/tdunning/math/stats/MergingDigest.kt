@@ -18,7 +18,6 @@
 package com.tdunning.math.stats
 
 import java.nio.ByteBuffer
-import java.util.ArrayList
 import java.util.Collections
 
 /**
@@ -154,8 +153,8 @@ class MergingDigest
      */
     override fun recordAllData(): TDigest {
         super.recordAllData()
-        data = ArrayList()
-        tempData = ArrayList()
+        data = mutableListOf()
+        tempData = mutableListOf()
         return this
     }
 
@@ -182,10 +181,10 @@ class MergingDigest
 
         if (data != null) {
             if (tempData == null) {
-                tempData = ArrayList()
+                tempData = mutableListOf()
             }
             while (tempData!!.size <= where) {
-                tempData!!.add(ArrayList())
+                tempData!!.add(mutableListOf())
             }
             if (history == null) {
                 history = listOf(x)
@@ -230,7 +229,7 @@ class MergingDigest
         val w = DoubleArray(size)
         val data: MutableList<MutableList<Double>>?
         if (isRecording) {
-            data = ArrayList()
+            data = mutableListOf()
         } else {
             data = null
         }
@@ -276,7 +275,7 @@ class MergingDigest
             tempUsed = 0
             unmergedWeight = 0.0
             if (data != null) {
-                tempData = ArrayList()
+                tempData = mutableListOf()
             }
 
         }
@@ -302,7 +301,7 @@ class MergingDigest
                 assert(data != null)
                 incomingData.add(data!![i])
             }
-            data = ArrayList()
+            data = mutableListOf()
         }
         if (incomingOrder == null) {
             incomingOrder = IntArray(incomingCount)
@@ -362,7 +361,7 @@ class MergingDigest
 
                 if (data != null) {
                     while (data!!.size <= lastUsedCell) {
-                        data!!.add(ArrayList())
+                        data!!.add(mutableListOf())
                     }
                     assert(incomingData != null)
                     assert(data!![lastUsedCell] !== incomingData!![ix])
@@ -641,7 +640,7 @@ class MergingDigest
         return object : AbstractCollection<Centroid>() {
             override fun iterator(): MutableIterator<Centroid> {
                 return object : MutableIterator<Centroid> {
-                    internal var i = 0
+                    var i = 0
 
                     override fun hasNext(): Boolean {
                         return i < lastUsedCell
@@ -683,7 +682,7 @@ class MergingDigest
         return lastUsedCell * 8 + 30
     }
 
-    enum class Encoding private constructor( val code: Int) {
+    enum class Encoding constructor( val code: Int) {
         VERBOSE_ENCODING(1), SMALL_ENCODING(2)
     }
 

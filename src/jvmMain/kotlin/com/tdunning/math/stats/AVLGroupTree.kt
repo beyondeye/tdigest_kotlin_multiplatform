@@ -18,7 +18,6 @@
 package com.tdunning.math.stats
 
 import java.io.Serializable
-import java.util.ArrayList
 import java.util.Arrays
 
 /**
@@ -43,6 +42,7 @@ internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) :
 
             override fun resize(newCapacity: Int) {
                 super.resize(newCapacity)
+                //*PORT* define a platform specific version of copyof
                 centroids = Arrays.copyOf(centroids!!, newCapacity)
                 counts = Arrays.copyOf(counts!!, newCapacity)
                 aggregatedCounts = Arrays.copyOf(aggregatedCounts!!, newCapacity)
@@ -64,7 +64,7 @@ internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) :
                         if (count != 1) {
                             throw IllegalStateException()
                         }
-                        data = ArrayList()
+                        data = mutableListOf()
                         data!!.add(centroid)
                     }
                     datas!![node] = data!!
@@ -236,7 +236,7 @@ internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) :
     private fun iterator(startNode: Int): MutableIterator<Centroid> {
         return object : MutableIterator<Centroid> {
 
-            internal var nextNode = startNode
+            var nextNode = startNode
 
             override fun hasNext(): Boolean {
                 return nextNode != IntAVLTree.NIL
