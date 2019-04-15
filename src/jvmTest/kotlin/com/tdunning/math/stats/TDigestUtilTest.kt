@@ -24,6 +24,7 @@ import java.util.Random
 import org.junit.Test
 
 import com.google.common.collect.Lists
+import kotlinx.io.core.buildPacket
 import org.junit.Assert
 
 
@@ -33,20 +34,22 @@ class TDigestUtilTest : AbstractTest() {
     @Test
     fun testIntEncoding() {
         val gen = RandomizedTest.getRandom()
-        val buf = ByteBuffer.allocate(10000)
+//        val buf = ByteBuffer.allocate(10000)
         val ref = Lists.newArrayList<Int>()
-        for (i in 0..2999) {
-            var n = gen.nextInt()
-            n = n.ushr(i / 100)
-            ref.add(n)
-            AbstractTDigest.encode(buf, n)
+        val buf = buildPacket {
+            for (i in 0..2999) {
+                var n = gen.nextInt()
+                n = n.ushr(i / 100)
+                ref.add(n)
+                AbstractTDigest.encode(this, n)
+            }
         }
 
-        buf.flip()
 
         for (i in 0..2999) {
             val n = AbstractTDigest.decode(buf)
             Assert.assertEquals(String.format("%d:", i), ref[i].toInt().toLong(), n.toLong())
         }
+        buf.release()
     }
 }

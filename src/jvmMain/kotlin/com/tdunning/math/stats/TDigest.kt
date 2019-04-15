@@ -17,8 +17,8 @@
 
 package com.tdunning.math.stats
 
+import kotlinx.io.core.Output
 import java.io.Serializable
-import java.nio.ByteBuffer
 
 /**
  * Adaptive histogram based on something like streaming k-means crossed with Q-digest.
@@ -137,7 +137,7 @@ abstract class TDigest : Serializable {
      *
      * @param buf The byte buffer into which the TDigest should be serialized.
      */
-    abstract fun asBytes(buf: ByteBuffer)
+    abstract fun asBytes(buf: Output)
 
     /**
      * Serialize this TDigest into a byte buffer.  Some simple compression is used
@@ -147,7 +147,7 @@ abstract class TDigest : Serializable {
      *
      * @param buf The byte buffer into which the TDigest should be serialized.
      */
-    abstract fun asSmallBytes(buf: ByteBuffer)
+    abstract fun asSmallBytes(buf: Output)
 
     /**
      * Tell this TDigest to record the original data as much as possible for test

@@ -19,6 +19,7 @@ package com.tdunning.math.stats
 
 import com.carrotsearch.randomizedtesting.annotations.Seed
 import com.google.common.collect.Lists
+import kotlinx.io.core.Input
 import org.apache.mahout.common.RandomUtils
 import org.junit.Assert
 import org.junit.Before
@@ -149,7 +150,7 @@ class MergingDigestTest : TDigestTest() {
         Assert.assertEquals(2.0 / 7, td.cdf(3.0), 1e-9)
     }
 
-    override fun fromBytes(bytes: ByteBuffer): TDigest {
+    override fun fromBytes(bytes: Input): TDigest {
         return MergingDigest.fromBytes(bytes)
     }
 

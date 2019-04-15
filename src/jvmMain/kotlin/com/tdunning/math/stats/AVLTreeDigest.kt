@@ -17,7 +17,7 @@
 
 package com.tdunning.math.stats
 
-import java.nio.ByteBuffer
+import kotlinx.io.core.*
 import java.util.Collections
 
 class AVLTreeDigest
@@ -50,7 +50,7 @@ class AVLTreeDigest
         return summary!!.size
     }
 
-    override internal fun add(x: Double, w: Int, base: Centroid) {
+    override  fun add(x: Double, w: Int, base: Centroid) {
         if (x != base.mean() || w != base.count()) {
             throw IllegalArgumentException()
         }
@@ -322,42 +322,49 @@ class AVLTreeDigest
      * the tighter representation.
      */
     override fun smallByteSize(): Int {
-        val bound = byteSize()
-        val buf = ByteBuffer.allocate(bound)
-        asSmallBytes(buf)
-        return buf.position()
+//        val bound = byteSize()
+//        val buf = ByteBuffer.allocate(bound)
+//        asSmallBytes(this)
+//        return buf.position()
+        var res=0
+        val buf= buildPacket {
+            asSmallBytes(this)
+            res=this.size
+        }
+        buf.release()
+        return res
     }
 
     /**
      * Outputs a histogram as bytes using a particularly cheesy encoding.
      */
-    override fun asBytes(buf: ByteBuffer) {
-        buf.putInt(VERBOSE_ENCODING)
-        buf.putDouble(min)
-        buf.putDouble(max)
-        buf.putDouble(compression().toFloat().toDouble())
-        buf.putInt(summary!!.size)
+    override fun asBytes(buf: Output) {
+        buf.writeInt(VERBOSE_ENCODING)
+        buf.writeDouble(min)
+        buf.writeDouble(max)
+        buf.writeDouble(compression().toFloat().toDouble())
+        buf.writeInt(summary!!.size)
         for (centroid in summary!!) {
-            buf.putDouble(centroid.mean())
+            buf.writeDouble(centroid.mean())
         }
 
         for (centroid in summary!!) {
-            buf.putInt(centroid.count())
+            buf.writeInt(centroid.count())
         }
     }
 
-    override fun asSmallBytes(buf: ByteBuffer) {
-        buf.putInt(SMALL_ENCODING)
-        buf.putDouble(min)
-        buf.putDouble(max)
-        buf.putDouble(compression())
-        buf.putInt(summary!!.size)
+    override fun asSmallBytes(buf: Output) {
+        buf.writeInt(SMALL_ENCODING)
+        buf.writeDouble(min)
+        buf.writeDouble(max)
+        buf.writeDouble(compression())
+        buf.writeInt(summary!!.size)
 
         var x = 0.0
         for (centroid in summary!!) {
             val delta = centroid.mean() - x
             x = centroid.mean()
-            buf.putFloat(delta.toFloat())
+            buf.writeFloat(delta.toFloat())
         }
 
         for (centroid in summary!!) {
@@ -377,34 +384,34 @@ class AVLTreeDigest
          * @param buf The buffer to read from.
          * @return The new histogram structure
          */
-        fun fromBytes(buf: ByteBuffer): AVLTreeDigest {
-            val encoding = buf.int
+        fun fromBytes(buf: Input): AVLTreeDigest {
+            val encoding = buf.readInt()
             if (encoding == VERBOSE_ENCODING) {
-                val min = buf.double
-                val max = buf.double
-                val compression = buf.double
+                val min = buf.readDouble()
+                val max = buf.readDouble()
+                val compression = buf.readDouble()
                 val r = AVLTreeDigest(compression)
                 r.setMinMax(min, max)
-                val n = buf.int
+                val n = buf.readInt()
                 val means = DoubleArray(n)
                 for (i in 0 until n) {
-                    means[i] = buf.double
+                    means[i] = buf.readDouble()
                 }
                 for (i in 0 until n) {
-                    r.add(means[i], buf.int)
+                    r.add(means[i], buf.readInt())
                 }
                 return r
             } else if (encoding == SMALL_ENCODING) {
-                val min = buf.double
-                val max = buf.double
-                val compression = buf.double
+                val min = buf.readDouble()
+                val max = buf.readDouble()
+                val compression = buf.readDouble()
                 val r = AVLTreeDigest(compression)
                 r.setMinMax(min, max)
-                val n = buf.int
+                val n = buf.readInt()
                 val means = DoubleArray(n)
                 var x = 0.0
                 for (i in 0 until n) {
-                    val delta = buf.float.toDouble()
+                    val delta = buf.readFloat().toDouble()
                     x += delta
                     means[i] = x
                 }

@@ -17,10 +17,10 @@
 
 package com.tdunning.math.stats
 
+import kotlinx.io.core.Input
 import org.junit.BeforeClass
 
 import java.io.IOException
-import java.nio.ByteBuffer
 
 class AVLTreeDigestTest : TDigestTest() {
 
@@ -32,7 +32,7 @@ class AVLTreeDigestTest : TDigestTest() {
         }
     }
 
-    override fun fromBytes(bytes: ByteBuffer): TDigest {
+    override fun fromBytes(bytes: Input): TDigest {
         return AVLTreeDigest.fromBytes(bytes)
     }
 

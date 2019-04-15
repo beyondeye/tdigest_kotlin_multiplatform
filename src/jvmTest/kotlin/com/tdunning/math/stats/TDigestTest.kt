@@ -21,6 +21,8 @@ import com.carrotsearch.randomizedtesting.RandomizedTest
 import com.clearspring.analytics.stream.quantile.QDigest
 import com.google.common.collect.Iterables
 import com.google.common.collect.Lists
+import kotlinx.io.core.Input
+import kotlinx.io.core.buildPacket
 import org.apache.mahout.common.RandomUtils
 import org.apache.mahout.math.jet.random.AbstractContinousDistribution
 import org.apache.mahout.math.jet.random.Gamma
@@ -65,7 +67,7 @@ abstract class TDigestTest : AbstractTest() {
         return factory(100.0)
     }
 
-    protected abstract fun fromBytes(bytes: ByteBuffer): TDigest
+    protected abstract fun fromBytes(bytes: Input): TDigest
 
     @Throws(FileNotFoundException::class, InterruptedException::class, ExecutionException::class)
     private fun merge(factory: DigestFactory) {
@@ -77,7 +79,7 @@ abstract class TDigestTest : AbstractTest() {
         for (k in 0 until repeats()) {
             val currentK = k
             tasks.add(object : Callable<String> {
-                internal val gen = Random(gen0.nextLong())
+                val gen = Random(gen0.nextLong())
 
                 @Throws(Exception::class)
                 override fun call(): String {
@@ -564,8 +566,8 @@ abstract class TDigestTest : AbstractTest() {
         // near the median.  Our system should be scale invariant and work well regardless.
         val gen = RandomizedTest.getRandom()
         val mix = object : AbstractContinousDistribution() {
-            internal val normal: AbstractContinousDistribution = Normal(0.0, 1e-5, gen)
-            internal val uniform: AbstractContinousDistribution = Uniform(-1.0, 1.0, gen)
+            val normal: AbstractContinousDistribution = Normal(0.0, 1e-5, gen)
+            val uniform: AbstractContinousDistribution = Uniform(-1.0, 1.0, gen)
 
             override fun nextDouble(): Double {
                 val x: Double
@@ -648,7 +650,7 @@ abstract class TDigestTest : AbstractTest() {
         for (i in 0 until repeats()) {
             runTest(
                 factory(), object : AbstractContinousDistribution() {
-                    internal var base = 0.0
+                    var base = 0.0
 
                     override fun nextDouble(): Double {
                         base += Math.PI * 1e-5
@@ -671,15 +673,20 @@ abstract class TDigestTest : AbstractTest() {
         }
         dist.compress()
 
-        val buf = ByteBuffer.allocate(20000)
-        dist.asBytes(buf)
-        Assert.assertTrue(String.format("size is %d\n", buf.position()), buf.position() < 12000)
-        Assert.assertEquals(dist.byteSize().toLong(), buf.position().toLong())
+//        val buf = ByteBuffer.allocate(20000)
+        var writtenBytes=0
+        val buf= buildPacket {
+            dist.asBytes(this)
+            writtenBytes=this.size
+        }
+//       writtenBytes=buf.remaining
+        Assert.assertTrue(String.format("size is %d\n", writtenBytes), writtenBytes < 12000)
+        Assert.assertEquals(dist.byteSize().toLong(), writtenBytes.toLong())
 
-        System.out.printf("# big %d bytes\n", buf.position())
+        System.out.printf("# big %d bytes\n", writtenBytes)
 
-        buf.flip()
         var dist2 = fromBytes(buf)
+        buf.release()
         Assert.assertEquals(dist.centroids().size.toLong(), dist2.centroids().size.toLong())
         Assert.assertEquals(dist.compression(), dist2.compression(), 1e-4)
         Assert.assertEquals(dist.size(), dist2.size())
@@ -699,13 +706,16 @@ abstract class TDigestTest : AbstractTest() {
         }
         Assert.assertFalse(ix.hasNext())
 
-        buf.flip()
-        dist.asSmallBytes(buf)
-        Assert.assertTrue(buf.position() < 6000)
-        System.out.printf("# small %d bytes\n", buf.position())
+        val bufsmall = buildPacket {
+            dist.asSmallBytes(this)
+            writtenBytes=this.size
+        }
 
-        buf.flip()
-        dist2 = fromBytes(buf)
+        Assert.assertTrue(writtenBytes < 6000)
+        System.out.printf("# small %d bytes\n", writtenBytes)
+
+        dist2 = fromBytes(bufsmall)
+        bufsmall.release()
         Assert.assertEquals(dist.centroids().size.toLong(), dist2.centroids().size.toLong())
         Assert.assertEquals(dist.compression(), dist2.compression(), 1e-4)
         Assert.assertEquals(dist.size(), dist2.size())
@@ -783,20 +793,26 @@ abstract class TDigestTest : AbstractTest() {
     @Test
     fun testIntEncoding() {
         val gen = RandomizedTest.getRandom()
-        val buf = ByteBuffer.allocate(10000)
+//        val buf = ByteBuffer.allocate(10000)
         val ref = Lists.newArrayList<Int>()
-        for (i in 0..2999) {
-            var n = gen.nextInt()
-            n = n.ushr(i / 100)
-            ref.add(n)
-            AbstractTDigest.encode(buf, n)
+        val buf= buildPacket {
+            for (i in 0..2999) {
+                var n = gen.nextInt()
+                n = n.ushr(i / 100)
+                ref.add(n)
+                AbstractTDigest.encode(this, n)
+            }
         }
 
-        buf.flip()
 
-        for (i in 0..2999) {
-            val n = AbstractTDigest.decode(buf)
-            Assert.assertEquals(String.format("%d:", i), ref[i].toInt().toLong(), n.toLong())
+        try {
+            for (i in 0..2999) {
+                val n = AbstractTDigest.decode(buf)
+                Assert.assertEquals(String.format("%d:", i), ref[i].toInt().toLong(), n.toLong())
+            }
+        } catch (e:Throwable) {
+            buf.release()
+            throw e
         }
     }
 
@@ -903,7 +919,7 @@ abstract class TDigestTest : AbstractTest() {
         for (k in 0..19) {
             for (size in intArrayOf(10, 100, 1000, 10000)) {
                 tasks.add(object : Callable<String> {
-                    internal val gen = Random(gen0.nextLong())
+                    val gen = Random(gen0.nextLong())
 
                     @Throws(Exception::class)
                     override fun call(): String {
@@ -954,7 +970,7 @@ abstract class TDigestTest : AbstractTest() {
             val n = Math.max(3, repeats() * repeats())
             for (k in 0 until n) {
                 tasks.add(object : Callable<String> {
-                    internal val gen = Random(gen0.nextLong())
+                    val gen = Random(gen0.nextLong())
 
                     @Throws(Exception::class)
                     override fun call(): String {

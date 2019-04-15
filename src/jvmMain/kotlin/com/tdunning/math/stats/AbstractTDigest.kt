@@ -17,7 +17,8 @@
 
 package com.tdunning.math.stats
 
-import java.nio.ByteBuffer
+import kotlinx.io.core.Input
+import kotlinx.io.core.Output
 import java.util.Random
 //import kotlin.random.Random
 
@@ -95,32 +96,30 @@ abstract class AbstractTDigest : TDigest() {
         internal fun interpolate(x: Double, x0: Double, x1: Double): Double {
             return (x - x0) / (x1 - x0)
         }
-
-        //*PORT* define a platform specific ByteBuffer
-        internal fun encode(buf: ByteBuffer, n: Int) {
+        internal fun encode(buf: Output, n: Int) {
             var n = n
             var k = 0
             while (n < 0 || n > 0x7f) {
                 val b = (0x80 or (0x7f and n)).toByte()
-                buf.put(b)
+                buf.writeByte(b)
                 n = n.ushr(7)
                 k++
                 if (k >= 6) {
                     throw IllegalStateException("Size is implausibly large")
                 }
             }
-            buf.put(n.toByte())
+            buf.writeByte(n.toByte())
         }
 
-        internal fun decode(buf: ByteBuffer): Int {
-            var v = buf.get().toInt()
+        internal fun decode(buf: Input): Int {
+            var v = buf.readByte().toInt()
             var z = 0x7f and v
             var shift = 7
             while (v and 0x80 != 0) {
                 if (shift > 28) {
                     throw IllegalStateException("Shift too large in decode")
                 }
-                v = buf.get().toInt()
+                v = buf.readByte().toInt()
                 z += v and 0x7f shl shift
                 shift += 7
             }

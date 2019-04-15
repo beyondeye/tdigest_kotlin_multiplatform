@@ -8,6 +8,12 @@ repositories {
 group 'com.example'
 version '0.0.1'
 
+rootProject.ext.versions = [
+        ioversion : '0.1.7',      //https://github.com/Kotlin/kotlinx-io  
+        tsgenerator: '2.9.456', // https://github.com/vojtechhabarta/typescript-generator
+        atomicfu_version : '0.12.2' //https://github.com/Kotlin/kotlinx.atomicfu
+]
+
 apply plugin: 'maven-publish'
 
 kotlin {
@@ -22,7 +28,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation "org.jetbrains.kotlinx:kotlinx-io:0.1.7"
+                implementation "org.jetbrains.kotlinx:kotlinx-io:$rootProject.versions.ioversion"
             }
         }
         commonTest {
@@ -34,6 +40,7 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation kotlin('stdlib-jdk8')
+                implementation "org.jetbrains.kotlinx:kotlinx-io-jvm:$rootProject.versions.ioversion"
             }
         }
         jvmTest {
@@ -50,6 +57,7 @@ kotlin {
         jsMain {
             dependencies {
                 implementation kotlin('stdlib-js')
+                implementation "org.jetbrains.kotlinx:kotlinx-io-js:$rootProject.versions.ioversion"
             }
         }
         jsTest {

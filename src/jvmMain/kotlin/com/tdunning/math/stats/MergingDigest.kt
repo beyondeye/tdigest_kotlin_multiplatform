@@ -17,6 +17,8 @@
 
 package com.tdunning.math.stats
 
+import kotlinx.io.core.Input
+import kotlinx.io.core.Output
 import java.nio.ByteBuffer
 import java.util.Collections
 
@@ -68,7 +70,20 @@ class MergingDigest
  * @param compression Compression factor
  * @param bufferSize  Number of temporary centroids
  * @param size        Size of main buffer
- */
+ *
+ * Normally used constructor:
+ * Allocates a buffer merging t-digest.  This is the normally used constructor that
+ * allocates default sized internal arrays.  Other versions are available, but should
+ * only be used for special cases.
+ *
+ * @param compression The compression factor
+ *
+ * constructor with buffer size:
+ * If you know the size of the temporary buffer for incoming points, you can use this entry point.
+ *
+ * @param compression Compression factor for t-digest.  Same as 1/\delta in the paper.
+ * @param bufferSize  How many samples to retain before merging.
+ */// we can guarantee that we only need 2 * ceiling(compression).
 @JvmOverloads constructor(private val compression: Double, bufferSize: Int = -1, size: Int = -1) : AbstractTDigest() {
     private var mergeCount = 0
 
@@ -686,31 +701,31 @@ class MergingDigest
         VERBOSE_ENCODING(1), SMALL_ENCODING(2)
     }
 
-    override fun asBytes(buf: ByteBuffer) {
+    override fun asBytes(buf: Output) {
         compress()
-        buf.putInt(Encoding.VERBOSE_ENCODING.code)
-        buf.putDouble(min)
-        buf.putDouble(max)
-        buf.putDouble(compression)
-        buf.putInt(lastUsedCell)
+        buf.writeInt(Encoding.VERBOSE_ENCODING.code)
+        buf.writeDouble(min)
+        buf.writeDouble(max)
+        buf.writeDouble(compression)
+        buf.writeInt(lastUsedCell)
         for (i in 0 until lastUsedCell) {
-            buf.putDouble(weight[i])
-            buf.putDouble(mean[i])
+            buf.writeDouble(weight[i])
+            buf.writeDouble(mean[i])
         }
     }
 
-    override fun asSmallBytes(buf: ByteBuffer) {
+    override fun asSmallBytes(buf: Output) {
         compress()
-        buf.putInt(Encoding.SMALL_ENCODING.code)    // 4
-        buf.putDouble(min)                          // + 8
-        buf.putDouble(max)                          // + 8
-        buf.putFloat(compression.toFloat())           // + 4
-        buf.putShort(mean.size.toShort())           // + 2
-        buf.putShort(tempMean.size.toShort())       // + 2
-        buf.putShort(lastUsedCell.toShort())          // + 2 = 30
+        buf.writeInt(Encoding.SMALL_ENCODING.code)    // 4
+        buf.writeDouble(min)                          // + 8
+        buf.writeDouble(max)                          // + 8
+        buf.writeFloat(compression.toFloat())           // + 4
+        buf.writeShort(mean.size.toShort())           // + 2
+        buf.writeShort(tempMean.size.toShort())       // + 2
+        buf.writeShort(lastUsedCell.toShort())          // + 2 = 30
         for (i in 0 until lastUsedCell) {
-            buf.putFloat(weight[i].toFloat())
-            buf.putFloat(mean[i].toFloat())
+            buf.writeFloat(weight[i].toFloat())
+            buf.writeFloat(mean[i].toFloat())
         }
     }
 
@@ -889,35 +904,35 @@ class MergingDigest
             }
         }
 
-        fun fromBytes(buf: ByteBuffer): MergingDigest {
-            val encoding = buf.int
+        fun fromBytes(buf: Input): MergingDigest {
+            val encoding = buf.readInt()
             if (encoding == Encoding.VERBOSE_ENCODING.code) {
-                val min = buf.double
-                val max = buf.double
-                val compression = buf.double
-                val n = buf.int
+                val min = buf.readDouble()
+                val max = buf.readDouble()
+                val compression = buf.readDouble()
+                val n = buf.readInt()
                 val r = MergingDigest(compression)
                 r.setMinMax(min, max)
                 r.lastUsedCell = n
                 for (i in 0 until n) {
-                    r.weight[i] = buf.double
-                    r.mean[i] = buf.double
+                    r.weight[i] = buf.readDouble()
+                    r.mean[i] = buf.readDouble()
 
                     r.totalWeight += r.weight[i]
                 }
                 return r
             } else if (encoding == Encoding.SMALL_ENCODING.code) {
-                val min = buf.double
-                val max = buf.double
-                val compression = buf.float.toDouble()
-                val n = buf.short.toInt()
-                val bufferSize = buf.short.toInt()
+                val min = buf.readDouble()
+                val max = buf.readDouble()
+                val compression = buf.readFloat().toDouble()
+                val n = buf.readShort().toInt()
+                val bufferSize = buf.readShort().toInt()
                 val r = MergingDigest(compression, bufferSize, n)
                 r.setMinMax(min, max)
-                r.lastUsedCell = buf.short.toInt()
+                r.lastUsedCell = buf.readShort().toInt()
                 for (i in 0 until r.lastUsedCell) {
-                    r.weight[i] = buf.float.toDouble()
-                    r.mean[i] = buf.float.toDouble()
+                    r.weight[i] = buf.readFloat().toDouble()
+                    r.mean[i] = buf.readFloat().toDouble()
 
                     r.totalWeight += r.weight[i]
                 }
@@ -929,16 +944,3 @@ class MergingDigest
         }
     }
 }
-/**
- * Allocates a buffer merging t-digest.  This is the normally used constructor that
- * allocates default sized internal arrays.  Other versions are available, but should
- * only be used for special cases.
- *
- * @param compression The compression factor
- */
-/**
- * If you know the size of the temporary buffer for incoming points, you can use this entry point.
- *
- * @param compression Compression factor for t-digest.  Same as 1/\delta in the paper.
- * @param bufferSize  How many samples to retain before merging.
- */// we can guarantee that we only need 2 * ceiling(compression).

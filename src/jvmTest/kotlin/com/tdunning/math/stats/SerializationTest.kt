@@ -17,6 +17,7 @@
 
 package com.tdunning.math.stats
 
+import kotlinx.io.core.buildPacket
 import org.junit.Test
 
 import java.nio.BufferUnderflowException
@@ -36,10 +37,13 @@ class SerializationTest {
         out.add(24.0)
         //        assertEquals(40.649, out.quantile(0.95), 0.001);
 
-        val output = ByteBuffer.allocate(out.smallByteSize())
-        out.asSmallBytes(output)
+//        val output = ByteBuffer.allocate(out.smallByteSize())
+        val buf = buildPacket {
+            out.asSmallBytes(this)
+        }
 
-        var input = ByteBuffer.wrap(output.array())
+//        var input = ByteBuffer.wrap(output.array())
+        var input = buf.copy()
         try {
             val m = MergingDigest.fromBytes(input)
             var q = 0.0
@@ -58,9 +62,11 @@ class SerializationTest {
         } catch (e: BufferUnderflowException) {
             println("WTF?")
         }
+        input.release()
 
-        input = ByteBuffer.wrap(output.array())
+        input = buf
         val `in` = AVLTreeDigest.fromBytes(input)
+        input.release()
         assertEquals(40.649, `in`.quantile(0.95), 0.001)
     }
 }
