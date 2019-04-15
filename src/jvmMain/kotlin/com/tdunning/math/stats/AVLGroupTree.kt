@@ -18,7 +18,6 @@
 package com.tdunning.math.stats
 
 import java.io.Serializable
-import java.util.Arrays
 
 /**
  * A tree of t-digest centroids.
@@ -42,12 +41,11 @@ internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) :
 
             override fun resize(newCapacity: Int) {
                 super.resize(newCapacity)
-                //*PORT* define a platform specific version of copyof
-                centroids = Arrays.copyOf(centroids!!, newCapacity)
-                counts = Arrays.copyOf(counts!!, newCapacity)
-                aggregatedCounts = Arrays.copyOf(aggregatedCounts!!, newCapacity)
+                centroids = centroids!!.copyOf(newCapacity)
+                counts = counts!!.copyOf(newCapacity)
+                aggregatedCounts = aggregatedCounts!!.copyOf(newCapacity)
                 if (datas != null) {
-                    datas = Arrays.copyOf(datas!!, newCapacity)
+                    datas = datas!!.copyOf(newCapacity)
                 }
             }
 

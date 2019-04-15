@@ -54,8 +54,8 @@ class IntAVLTreeTest : AbstractTest() {
 
         override fun resize(newCapacity: Int) {
             super.resize(newCapacity)
-            values = Arrays.copyOf(values, newCapacity)
-            counts = Arrays.copyOf(counts, newCapacity)
+            values = values.copyOf( newCapacity)
+            counts = counts.copyOf( newCapacity)
         }
 
         override fun compare(node: Int): Int {
