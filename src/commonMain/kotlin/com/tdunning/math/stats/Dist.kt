@@ -16,7 +16,6 @@
  */
 
 package com.tdunning.math.stats
-
 /**
  * Reference implementations for cdf and quantile if we have all data.
  */
@@ -44,7 +43,7 @@ object Dist {
     fun quantile(q: Double, data: DoubleArray): Double {
         val n = data.size
         if (n == 0) {
-            return java.lang.Double.NaN
+            return Double.NaN
         }
         var index = q * n
         if (index < 0) {
@@ -53,13 +52,13 @@ object Dist {
         if (index > n - 1) {
             index = (n - 1).toDouble()
         }
-        return data[Math.floor(index).toInt()]
+        return data[kotlin.math.floor(index).toInt()]
     }
 
     fun quantile(q: Double, data: List<Double>): Double {
         val n = data.size
         if (n == 0) {
-            return java.lang.Double.NaN
+            return Double.NaN
         }
         var index = q * n
         if (index < 0) {
@@ -68,6 +67,6 @@ object Dist {
         if (index > n - 1) {
             index = (n - 1).toDouble()
         }
-        return data[Math.floor(index).toInt()]
+        return data[kotlin.math.floor(index).toInt()]
     }
 }

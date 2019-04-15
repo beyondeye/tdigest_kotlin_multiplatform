@@ -17,13 +17,15 @@
 
 package com.tdunning.math.stats
 
-import java.util.Random
+import kotlin.random.Random
+
+//import java.util.Random
 
 /**
  * Static sorting methods
  */
 object Sort {
-    private val prng = Random() // for choosing pivots during quicksort
+    private val prng:Random = Random(0) // for choosing pivots during quicksort
 
     /**
      * Quick sort using an index array.  On return,
@@ -324,7 +326,7 @@ object Sort {
         // loop invariant: all values start ... i-1 are ordered
         for (i in start + 1 until end) {
             val v = key[i]
-            val m = Math.max(i - limit, start)
+            val m = kotlin.math.max(i - limit, start)
             for (j in i downTo m) {
                 if (j == m || key[j - 1] <= v) {
                     if (j < i) {
@@ -423,7 +425,7 @@ object Sort {
         for (i in start + 1 until n) {
             val t = order[i]
             val v = values[order[i]]
-            val m = Math.max(i - limit, start)
+            val m = kotlin.math.max(i - limit, start)
             for (j in i downTo m) {
                 if (j == 0 || values[order[j - 1]] <= v) {
                     if (j < i) {

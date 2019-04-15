@@ -18,7 +18,6 @@
 package com.tdunning.math.stats
 
 import com.google.common.collect.HashMultiset
-import com.google.common.collect.Multiset
 import org.junit.Test
 
 import java.util.Random

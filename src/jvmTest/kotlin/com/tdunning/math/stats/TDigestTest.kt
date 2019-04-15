@@ -19,11 +19,9 @@ package com.tdunning.math.stats
 
 import com.carrotsearch.randomizedtesting.RandomizedTest
 import com.clearspring.analytics.stream.quantile.QDigest
-import com.google.common.collect.Iterables
 import com.google.common.collect.Lists
 import com.tdunning.math.stats.Dist.cdf
 import kotlinx.io.core.Input
-import kotlinx.io.core.Output
 import kotlinx.io.core.buildPacket
 import org.apache.mahout.common.RandomUtils
 import org.apache.mahout.math.jet.random.AbstractContinousDistribution

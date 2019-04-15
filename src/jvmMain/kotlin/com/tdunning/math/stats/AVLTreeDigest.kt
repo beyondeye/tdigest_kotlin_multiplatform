@@ -18,7 +18,6 @@
 package com.tdunning.math.stats
 
 import kotlinx.io.core.*
-import java.util.Collections
 
 class AVLTreeDigest  : AbstractTDigest {
     private val compression: Double
@@ -468,8 +467,7 @@ class AVLTreeDigest  : AbstractTDigest {
     }
 
     override fun centroids(): Collection<Centroid> {
-        //*PORT* define a platform dependent impl of  Collections.unmodifiableCollection
-        return Collections.unmodifiableCollection(summary!!)
+        return summary!!
     }
 
     override fun compression(): Double {

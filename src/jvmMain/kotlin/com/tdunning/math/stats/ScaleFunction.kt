@@ -76,23 +76,23 @@ enum class ScaleFunction {
     K_1 {
         @Override
         override fun k(q: Double, compression: Double, n: Double): Double {
-            return compression * Math.asin(2 * q - 1) / (2 * Math.PI)
+            return compression * kotlin.math.asin(2 * q - 1) / (2 * kotlin.math.PI)
         }
 
         @Override
         override fun k(q: Double, normalizer: Double): Double {
-            return normalizer * Math.asin(2 * q - 1)
+            return normalizer * kotlin.math.asin(2 * q - 1)
         }
 
 
         @Override
         override fun q(k: Double, compression: Double, n: Double): Double {
-            return (Math.sin(k * (2 * Math.PI / compression)) + 1) / 2
+            return (kotlin.math.sin(k * (2 * kotlin.math.PI / compression)) + 1) / 2
         }
 
         @Override
         override fun q(k: Double, normalizer: Double): Double {
-            return (Math.sin(k / normalizer) + 1) / 2
+            return (kotlin.math.sin(k / normalizer) + 1) / 2
         }
 
         @Override
@@ -102,7 +102,7 @@ enum class ScaleFunction {
             } else if (q >= 1) {
                 0.0
             } else {
-                2 * Math.sin(Math.PI / compression) * Math.sqrt(q * (1 - q))
+                2 * kotlin.math.sin(kotlin.math.PI / compression) * kotlin.math.sqrt(q * (1 - q))
             }
         }
 
@@ -113,13 +113,13 @@ enum class ScaleFunction {
             } else if (q >= 1) {
                 0.0
             } else {
-                2 * Math.sin(0.5 / normalizer) * Math.sqrt(q * (1 - q))
+                2 * kotlin.math.sin(0.5 / normalizer) * kotlin.math.sqrt(q * (1 - q))
             }
         }
 
         @Override
         override fun normalizer(compression: Double, n: Double): Double {
-            return compression / (2 * Math.PI)
+            return compression / (2 * kotlin.math.PI)
         }
     },
 
@@ -130,7 +130,7 @@ enum class ScaleFunction {
     K_1_FAST {
         @Override
         override fun k(q: Double, compression: Double, n: Double): Double {
-            return compression * fastAsin(2 * q - 1) / (2 * Math.PI)
+            return compression * fastAsin(2 * q - 1) / (2 * kotlin.math.PI)
         }
 
         @Override
@@ -140,12 +140,12 @@ enum class ScaleFunction {
 
         @Override
         override fun q(k: Double, compression: Double, n: Double): Double {
-            return (Math.sin(k * (2 * Math.PI / compression)) + 1) / 2
+            return (kotlin.math.sin(k * (2 * kotlin.math.PI / compression)) + 1) / 2
         }
 
         @Override
         override fun q(k: Double, normalizer: Double): Double {
-            return (Math.sin(k / normalizer) + 1) / 2
+            return (kotlin.math.sin(k / normalizer) + 1) / 2
         }
 
         @Override
@@ -155,7 +155,7 @@ enum class ScaleFunction {
             } else if (q >= 1) {
                 0.0
             } else {
-                2 * Math.sin(Math.PI / compression) * Math.sqrt(q * (1 - q))
+                2 * kotlin.math.sin(kotlin.math.PI / compression) * kotlin.math.sqrt(q * (1 - q))
             }
         }
 
@@ -166,13 +166,13 @@ enum class ScaleFunction {
             } else if (q >= 1) {
                 0.0
             } else {
-                2 * Math.sin(0.5 / normalizer) * Math.sqrt(q * (1 - q))
+                2 * kotlin.math.sin(0.5 / normalizer) * kotlin.math.sqrt(q * (1 - q))
             }
         }
 
         @Override
         override fun normalizer(compression: Double, n: Double): Double {
-            return compression / (2 * Math.PI)
+            return compression / (2 * kotlin.math.PI)
         }
     },
 
@@ -197,7 +197,7 @@ enum class ScaleFunction {
             } else if (q == 1.0) {
                 2 * k((n - 1) / n, compression, n)
             } else {
-                compression * Math.log(q / (1 - q)) / Z(compression, n)
+                compression * kotlin.math.ln(q / (1 - q)) / Z(compression, n)
             }
         }
 
@@ -210,19 +210,19 @@ enum class ScaleFunction {
                 // this will return something more extreme than q = (n-1)/n
                 2 * k(1 - 1e-15, normalizer)
             } else {
-                Math.log(q / (1 - q)) * normalizer
+                kotlin.math.ln(q / (1 - q)) * normalizer
             }
         }
 
         @Override
         override fun q(k: Double, compression: Double, n: Double): Double {
-            val w = Math.exp(k * Z(compression, n) / compression)
+            val w = kotlin.math.exp(k * Z(compression, n) / compression)
             return w / (1 + w)
         }
 
         @Override
         override fun q(k: Double, normalizer: Double): Double {
-            val w = Math.exp(k / normalizer)
+            val w = kotlin.math.exp(k / normalizer)
             return w / (1 + w)
         }
 
@@ -242,7 +242,7 @@ enum class ScaleFunction {
         }
 
         private fun Z(compression: Double, n: Double): Double {
-            return 4 * Math.log(n / compression) + 24
+            return 4 * kotlin.math.ln(n / compression) + 24
         }
     },
 
@@ -259,7 +259,7 @@ enum class ScaleFunction {
                 10 * k((n - 1) / n, compression, n)
             } else {
                 if (q <= 0.5) {
-                    compression * Math.log(2 * q) / Z(compression, n)
+                    compression * kotlin.math.ln(2 * q) / Z(compression, n)
                 } else {
                     -k(1 - q, compression, n)
                 }
@@ -274,7 +274,7 @@ enum class ScaleFunction {
                 10 * k(1 - 1e-15, normalizer)
             } else {
                 if (q <= 0.5) {
-                    Math.log(2 * q) / normalizer
+                    kotlin.math.ln(2 * q) / normalizer
                 } else {
                     -k(1 - q, normalizer)
                 }
@@ -284,7 +284,7 @@ enum class ScaleFunction {
         @Override
         override fun q(k: Double, compression: Double, n: Double): Double {
             return if (k <= 0) {
-                Math.exp(k * Z(compression, n) / compression) / 2
+                kotlin.math.exp(k * Z(compression, n) / compression) / 2
             } else {
                 1 - q(-k, compression, n)
             }
@@ -293,7 +293,7 @@ enum class ScaleFunction {
         @Override
         override fun q(k: Double, normalizer: Double): Double {
             return if (k <= 0) {
-                Math.exp(k / normalizer) / 2
+                kotlin.math.exp(k / normalizer) / 2
             } else {
                 1 - q(-k, normalizer)
             }
@@ -301,12 +301,12 @@ enum class ScaleFunction {
 
         @Override
         override fun max(q: Double, compression: Double, n: Double): Double {
-            return Z(compression, n) * Math.min(q, 1 - q) / compression
+            return Z(compression, n) * kotlin.math.min(q, 1 - q) / compression
         }
 
         @Override
         override fun max(q: Double, normalizer: Double): Double {
-            return Math.min(q, 1 - q) / normalizer
+            return kotlin.math.min(q, 1 - q) / normalizer
         }
 
         @Override
@@ -315,7 +315,7 @@ enum class ScaleFunction {
         }
 
         private fun Z(compression: Double, n: Double): Double {
-            return 4 * Math.log(n / compression) + 21
+            return 4 * kotlin.math.ln(n / compression) + 21
         }
     },
 
@@ -333,7 +333,7 @@ enum class ScaleFunction {
             } else if (q == 1.0) {
                 2 * k((n - 1) / n, compression, n)
             } else {
-                compression * Math.log(q / (1 - q))
+                compression * kotlin.math.ln(q / (1 - q))
             }
         }
 
@@ -344,19 +344,19 @@ enum class ScaleFunction {
             } else if (q >= 1 - 1e-15) {
                 2 * k(1 - 1e-15, normalizer)
             } else {
-                normalizer * Math.log(q / (1 - q))
+                normalizer * kotlin.math.ln(q / (1 - q))
             }
         }
 
         @Override
         override fun q(k: Double, compression: Double, n: Double): Double {
-            val w = Math.exp(k / compression)
+            val w = kotlin.math.exp(k / compression)
             return w / (1 + w)
         }
 
         @Override
         override fun q(k: Double, normalizer: Double): Double {
-            val w = Math.exp(k / normalizer)
+            val w = kotlin.math.exp(k / normalizer)
             return w / (1 + w)
         }
 
@@ -391,7 +391,7 @@ enum class ScaleFunction {
                 10 * k((n - 1) / n, compression, n)
             } else {
                 if (q <= 0.5) {
-                    compression * Math.log(2 * q)
+                    compression * kotlin.math.ln(2 * q)
                 } else {
                     -k(1 - q, compression, n)
                 }
@@ -406,7 +406,7 @@ enum class ScaleFunction {
                 10 * k(1 - 1e-15, normalizer)
             } else {
                 if (q <= 0.5) {
-                    normalizer * Math.log(2 * q)
+                    normalizer * kotlin.math.ln(2 * q)
                 } else {
                     -k(1 - q, normalizer)
                 }
@@ -416,7 +416,7 @@ enum class ScaleFunction {
         @Override
         override fun q(k: Double, compression: Double, n: Double): Double {
             return if (k <= 0) {
-                Math.exp(k / compression) / 2
+                kotlin.math.exp(k / compression) / 2
             } else {
                 1 - q(-k, compression, n)
             }
@@ -425,7 +425,7 @@ enum class ScaleFunction {
         @Override
         override fun q(k: Double, normalizer: Double): Double {
             return if (k <= 0) {
-                Math.exp(k / normalizer) / 2
+                kotlin.math.exp(k / normalizer) / 2
             } else {
                 1 - q(-k, normalizer)
             }
@@ -433,12 +433,12 @@ enum class ScaleFunction {
 
         @Override
         override fun max(q: Double, compression: Double, n: Double): Double {
-            return Math.min(q, 1 - q) / compression
+            return kotlin.math.min(q, 1 - q) / compression
         }
 
         @Override
         override fun max(q: Double, normalizer: Double): Double {
-            return Math.min(q, 1 - q) / normalizer
+            return kotlin.math.min(q, 1 - q) / normalizer
         }
 
         @Override
@@ -555,7 +555,7 @@ enum class ScaleFunction {
                 val c3High = 0.9
                 val c4Low = 0.87
                 if (x > c3High) {
-                    return Math.asin(x)
+                    return kotlin.math.asin(x)
                 } else {
                     // the models
                     val m0 = doubleArrayOf(0.2955302411, 1.2221903614, 0.1488583743, 0.2422015816, -0.3688700895, 0.0733398445)
@@ -595,7 +595,7 @@ enum class ScaleFunction {
                     }
                     if (mix4 > 0) {
                         // model 4 is just the real deal
-                        r += mix4 * Math.asin(x)
+                        r += mix4 * kotlin.math.asin(x)
                     }
                     return r
                 }

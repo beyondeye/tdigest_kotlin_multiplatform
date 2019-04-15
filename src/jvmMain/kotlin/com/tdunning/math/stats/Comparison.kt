@@ -54,7 +54,7 @@ object Comparison {
             val x: Double
             if (i == qCuts.size) {
                 newQ = 1.0
-                x = Math.max(dist1.max, dist2.max) + 1
+                x = kotlin.math.max(dist1.max, dist2.max) + 1
             } else {
                 newQ = qCuts[i]
                 x = dist1.quantile(newQ)
@@ -133,19 +133,19 @@ object Comparison {
                     throw IllegalArgumentException(String.format("Illegal negative count (%.5f) at %d,%d", k, i, j))
                 }
                 if (k > 0) {
-                    h += k * Math.log(k)
+                    h += k * kotlin.math.ln(k)
                     totalCount += k
                 }
             }
         }
 
-        val normalizer = totalCount * Math.log(totalCount)
+        val normalizer = totalCount * kotlin.math.ln(totalCount)
         h -= normalizer  // same as dividing every count by total inside the log
 
         var hr = 0.0 // accumulator for row-wise entropy
         for (i in 0 until rows) {
             if (rowSums[i] > 0) {
-                hr += rowSums[i] * Math.log(rowSums[i])
+                hr += rowSums[i] * kotlin.math.ln(rowSums[i])
             }
         }
         hr -= normalizer
@@ -153,7 +153,7 @@ object Comparison {
         var hc = 0.0 // accumulator for column-wise entropy
         for (j in 0 until columns) {
             if (colSums[j] > 0) {
-                hc += colSums[j] * Math.log(colSums[j])
+                hc += colSums[j] * kotlin.math.ln(colSums[j])
             }
         }
         hc -= normalizer
@@ -213,12 +213,12 @@ object Comparison {
 
         val n1 = d1.size()
         val n2 = d2.size()
-        return diff * Math.sqrt(n1.toDouble() * n2 / (n1 + n2))
+        return diff * kotlin.math.sqrt(n1.toDouble() * n2 / (n1 + n2))
     }
 
     private fun maxDiff(d1: TDigest, d2: TDigest, diff: Double, x1: Double): Double {
         var diff = diff
-        diff = Math.max(diff, Math.abs(d1.cdf(x1) - d2.cdf(x1)))
+        diff = kotlin.math.max(diff, Math.abs(d1.cdf(x1) - d2.cdf(x1)))
         return diff
     }
 
