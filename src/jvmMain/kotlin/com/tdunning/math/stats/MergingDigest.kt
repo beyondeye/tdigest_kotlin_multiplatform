@@ -19,8 +19,6 @@ package com.tdunning.math.stats
 
 import kotlinx.io.core.Input
 import kotlinx.io.core.Output
-import java.nio.ByteBuffer
-import java.util.Collections
 
 /**
  * Maintains a t-digest by collecting new points in a buffer that is then sorted occasionally and merged
@@ -415,7 +413,7 @@ class MergingDigest
             Sort.reverse(mean, 0, lastUsedCell)
             Sort.reverse(weight, 0, lastUsedCell)
             if (data != null) {
-                Collections.reverse(data!!)
+                data!!.reverse()
             }
         }
 
