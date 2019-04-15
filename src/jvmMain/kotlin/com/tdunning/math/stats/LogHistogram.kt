@@ -20,6 +20,7 @@ package com.tdunning.math.stats
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
+import kotlin.math.pow
 
 
 /**
@@ -117,7 +118,7 @@ class LogHistogram @JvmOverloads constructor(min: Double, max: Double, epsilonFa
             val exponent = kotlin.math.floor(x) - 1
             x = x - exponent
             val m = 3 - kotlin.math.sqrt(7 - 3 * x)
-            return Math.pow(2.0, exponent + 1) * m
+            return 2.0.pow(exponent + 1) * m
         }
     }
 }
