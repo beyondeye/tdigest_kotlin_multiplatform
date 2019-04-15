@@ -429,7 +429,7 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
     }
 
     protected open fun fixAggregates(node: Int) {
-        depth(node, 1 + Math.max(depth(left(node)), depth(right(node))))
+        depth(node, 1 + kotlin.math.max(depth(left(node)), depth(right(node))))
     }
 
     /** Rotate left the subtree under `n`  */
@@ -505,8 +505,8 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
         if (node == NIL) {
             assert(depth(node) == 0)
         } else {
-            assert(depth(node) == 1 + Math.max(depth(left(node)), depth(right(node))))
-            assert(Math.abs(depth(left(node)) - depth(right(node))) <= 1)
+            assert(depth(node) == 1 + kotlin.math.max(depth(left(node)), depth(right(node))))
+            assert(kotlin.math.abs(depth(left(node)) - depth(right(node))) <= 1)
             checkBalance(left(node))
             checkBalance(right(node))
         }

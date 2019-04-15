@@ -218,7 +218,7 @@ object Comparison {
 
     private fun maxDiff(d1: TDigest, d2: TDigest, diff: Double, x1: Double): Double {
         var diff = diff
-        diff = kotlin.math.max(diff, Math.abs(d1.cdf(x1) - d2.cdf(x1)))
+        diff = kotlin.math.max(diff, kotlin.math.abs(d1.cdf(x1) - d2.cdf(x1)))
         return diff
     }
 

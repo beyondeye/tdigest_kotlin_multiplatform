@@ -151,7 +151,7 @@ class MergingDigest
         }
 
         // default size
-        size = Math.max(2 * compression + sizeFudge, size.toDouble()).toInt()
+        size = kotlin.math.max(2 * compression + sizeFudge, size.toDouble()).toInt()
 
         // default buffer
         if (bufferSize == -1) {
@@ -188,7 +188,7 @@ class MergingDigest
 
         // scale is the ratio of extra buffer to the final size
         // we have to account for the fact that we copy all live centroids into the incoming space
-        var scale = Math.max(1, bufferSize / size - 1).toDouble()
+        var scale = kotlin.math.max(1, bufferSize / size - 1).toDouble()
         if (!useTwoLevelCompression) {
             scale = 1.0
         }
@@ -196,11 +196,11 @@ class MergingDigest
         // publicCompression is how many centroids the user asked for
         // compression is how many we actually keep
         this.publicCompression = compression
-        this.compression = Math.sqrt(scale) * publicCompression
+        this.compression = kotlin.math.sqrt(scale) * publicCompression
 
         // changing the compression could cause buffers to be too small, readjust if so
         if (size < this.compression + sizeFudge) {
-            size = Math.ceil(this.compression + sizeFudge).toInt()
+            size = kotlin.math.ceil(this.compression + sizeFudge).toInt()
         }
 
         // ensure enough space in buffer (possibly again)
@@ -408,7 +408,7 @@ class MergingDigest
             if (useWeightLimit) {
                 val q0 = wSoFar / totalWeight
                 val q2 = (wSoFar + proposedWeight) / totalWeight
-                addThis = proposedWeight <= totalWeight * Math.min(scale.max(q0, normalizer), scale.max(q2, normalizer))
+                addThis = proposedWeight <= totalWeight * kotlin.math.min(scale.max(q0, normalizer), scale.max(q2, normalizer))
             } else {
                 addThis = projectedW <= wLimit
             }
@@ -467,8 +467,8 @@ class MergingDigest
         }
 
         if (totalWeight > 0) {
-            min = Math.min(min, mean[0])
-            max = Math.max(max, mean[lastUsedCell - 1])
+            min = kotlin.math.min(min, mean[0])
+            max = kotlin.math.max(max, mean[lastUsedCell - 1])
         }
     }
 

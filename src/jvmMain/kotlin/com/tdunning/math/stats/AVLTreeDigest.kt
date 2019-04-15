@@ -63,7 +63,7 @@ class AVLTreeDigest  : AbstractTDigest {
 
     override fun add(others: List<TDigest>) {
         for (other in others) {
-            setMinMax(Math.min(min, other.min), Math.max(max, other.max))
+            setMinMax(kotlin.math.min(min, other.min), kotlin.math.max(max, other.max))
             for (centroid in other.centroids()) {
                 add(centroid.mean(), centroid.count(), if (isRecording) centroid.data() else null)
             }
@@ -93,7 +93,7 @@ class AVLTreeDigest  : AbstractTDigest {
             run {
                 var neighbor = start
                 while (neighbor != IntAVLTree.NIL) {
-                    val z = Math.abs(summary!!.mean(neighbor) - x)
+                    val z = kotlin.math.abs(summary!!.mean(neighbor) - x)
                     if (z < minDistance) {
                         start = neighbor
                         minDistance = z
@@ -110,10 +110,10 @@ class AVLTreeDigest  : AbstractTDigest {
             var n = 0.0
             var neighbor = start
             while (neighbor != lastNeighbor) {
-                assert(minDistance == Math.abs(summary!!.mean(neighbor) - x))
+                assert(minDistance == kotlin.math.abs(summary!!.mean(neighbor) - x))
                 val q0 = summary!!.headSum(neighbor).toDouble() / count
                 val q1 = q0 + summary!!.count(neighbor).toDouble() / count
-                val k = count * Math.min(scale.max(q0, compression, count.toDouble()), scale.max(q1, compression, count.toDouble()))
+                val k = count * kotlin.math.min(scale.max(q0, compression, count.toDouble()), scale.max(q1, compression, count.toDouble()))
 
                 // this slightly clever selection method improves accuracy with lots of repeated points
                 // what it does is sample uniformly from all clusters that have room
@@ -172,7 +172,7 @@ class AVLTreeDigest  : AbstractTDigest {
             while (after != IntAVLTree.NIL) {
                 w1 = summary!!.count(after)
                 k1 = count * scale.max((n1 + w1) / count, compression, count.toDouble())
-                if (w0 + w1 > Math.min(k0, k1)) {
+                if (w0 + w1 > kotlin.math.min(k0, k1)) {
                     break
                 } else {
                     val mean = weightedAverage(summary!!.mean(node), w0.toDouble(), summary!!.mean(after), w1.toDouble())

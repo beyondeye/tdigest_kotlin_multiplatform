@@ -21,7 +21,6 @@ import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
-import java.lang.Math.sqrt
 
 /**
  * Non-linear histogram that uses floating point representation plus a quadratic correction to
@@ -31,7 +30,7 @@ class LogHistogram @JvmOverloads constructor(min: Double, max: Double, epsilonFa
     Histogram(min, max) {
 
     init {
-        logFactor = Math.log(2.0) / Math.log(1 + epsilonFactor)
+        logFactor = kotlin.math.ln(2.0) / kotlin.math.ln(1 + epsilonFactor)
         logOffset = approxLog2(min) * logFactor
 
         if (max <= 2 * min) {
@@ -115,9 +114,9 @@ class LogHistogram @JvmOverloads constructor(min: Double, max: Double, epsilonFa
          */
         fun pow2(x: Double): Double {
             var x = x
-            val exponent = Math.floor(x) - 1
+            val exponent = kotlin.math.floor(x) - 1
             x = x - exponent
-            val m = 3 - sqrt(7 - 3 * x)
+            val m = 3 - kotlin.math.sqrt(7 - 3 * x)
             return Math.pow(2.0, exponent + 1) * m
         }
     }

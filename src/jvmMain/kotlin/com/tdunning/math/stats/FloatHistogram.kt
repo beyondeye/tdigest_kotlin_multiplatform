@@ -52,7 +52,7 @@ class FloatHistogram @JvmOverloads constructor(min: Double, max: Double, binsPer
         }
 
         // convert binsPerDecade into bins per octave, then figure out how many bits that takes
-        bitsOfPrecision = Math.ceil(Math.log(binsPerDecade * Math.log10(2.0)) / Math.log(2.0)).toInt()
+        bitsOfPrecision = kotlin.math.ceil(kotlin.math.ln(binsPerDecade * kotlin.math.log10(2.0)) / kotlin.math.ln(2.0)).toInt()
         // we keep just the required amount of the mantissa
         shift = 52 - bitsOfPrecision
         // The exponent in a floating point number is offset

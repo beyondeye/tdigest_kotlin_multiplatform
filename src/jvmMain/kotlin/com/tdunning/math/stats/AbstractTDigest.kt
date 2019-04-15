@@ -90,7 +90,7 @@ abstract class AbstractTDigest : TDigest() {
         private fun weightedAverageSorted(x1: Double, w1: Double, x2: Double, w2: Double): Double {
             assert(x1 <= x2)
             val x = (x1 * w1 + x2 * w2) / (w1 + w2)
-            return Math.max(x1, Math.min(x, x2))
+            return kotlin.math.max(x1, kotlin.math.min(x, x2))
         }
 
         internal fun interpolate(x: Double, x0: Double, x1: Double): Double {
