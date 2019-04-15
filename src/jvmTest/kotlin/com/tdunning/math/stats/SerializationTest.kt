@@ -35,7 +35,6 @@ class SerializationTest {
         out.add(42.5)
         out.add(1.0)
         out.add(24.0)
-        //        assertEquals(40.649, out.quantile(0.95), 0.001);
 
 //        val output = ByteBuffer.allocate(out.smallByteSize())
         val buf = buildPacket {
@@ -65,8 +64,8 @@ class SerializationTest {
         input.release()
 
         input = buf
-        val `in` = AVLTreeDigest.fromBytes(input)
+        val `in` = MergingDigest.fromBytes(input)
         input.release()
-        assertEquals(40.649, `in`.quantile(0.95), 0.001)
+        assertEquals(out.quantile(0.95), `in`.quantile(0.95), 0.001)
     }
 }

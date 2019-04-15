@@ -23,17 +23,14 @@ import org.junit.runner.notification.RunListener
 
 import com.carrotsearch.randomizedtesting.RandomizedContext
 
-
 class ReproduceInfoPrinterRunListener : RunListener() {
 
     private var failed = false
 
-    @Throws(Exception::class)
     override fun testFailure(failure: Failure?) {
         failed = true
     }
 
-    @Throws(Exception::class)
     override fun testRunFinished(result: Result?) {
         if (failed) {
             printReproLine()

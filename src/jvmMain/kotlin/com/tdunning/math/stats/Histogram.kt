@@ -82,4 +82,6 @@ abstract class Histogram(protected var min: Double, protected var max: Double) :
 
     @Throws(IOException::class)
     internal abstract fun readObject(`in`: java.io.ObjectInputStream)
+
+    internal abstract fun add(others: Iterable<Histogram>)
 }

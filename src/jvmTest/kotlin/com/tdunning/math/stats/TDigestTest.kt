@@ -21,7 +21,9 @@ import com.carrotsearch.randomizedtesting.RandomizedTest
 import com.clearspring.analytics.stream.quantile.QDigest
 import com.google.common.collect.Iterables
 import com.google.common.collect.Lists
+import com.tdunning.math.stats.Dist.cdf
 import kotlinx.io.core.Input
+import kotlinx.io.core.Output
 import kotlinx.io.core.buildPacket
 import org.apache.mahout.common.RandomUtils
 import org.apache.mahout.math.jet.random.AbstractContinousDistribution
@@ -31,9 +33,9 @@ import org.apache.mahout.math.jet.random.Uniform
 import org.junit.*
 
 import java.io.*
-import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicInteger
 
 
 /**
@@ -67,199 +69,271 @@ abstract class TDigestTest : AbstractTest() {
         return factory(100.0)
     }
 
-    protected abstract fun fromBytes(bytes: Input): TDigest
-
-    @Throws(FileNotFoundException::class, InterruptedException::class, ExecutionException::class)
-    private fun merge(factory: DigestFactory) {
-        val gen0 = RandomizedTest.getRandom()
-        val out = PrintWriter(File("merge.tsv"))
-        out.printf("type\tparts\tq\te0\te1\te2\te2.rel\n")
-
-        val tasks = Lists.newArrayList<Callable<String>>()
-        for (k in 0 until repeats()) {
-            val currentK = k
-            tasks.add(object : Callable<String> {
-                val gen = Random(gen0.nextLong())
-
-                @Throws(Exception::class)
-                override fun call(): String {
-                    val s = StringWriter()
-                    val out = PrintWriter(s)
-
-                    for (parts in intArrayOf(2, 5, 10, 20, 50, 100)) {
-                        val data = Lists.newArrayList<Double>()
-
-                        val dist = factory.create()
-                        dist.recordAllData()
-
-                        // we accumulate the data into multiple sub-digests
-                        val subs = Lists.newArrayList<TDigest>()
-                        for (i in 0 until parts) {
-                            subs.add(factory.create().recordAllData())
-                        }
-
-                        val cnt = IntArray(parts)
-                        for (i in 0..99999) {
-                            val x = gen.nextDouble()
-                            data.add(x)
-                            dist.add(x)
-                            subs[i % parts].add(x)
-                            cnt[i % parts]++
-                        }
-                        dist.compress()
-                        Collections.sort(data)
-
-                        // collect the raw data from the sub-digests
-                        val data2 = Lists.newArrayList<Double>()
-                        var i = 0
-                        var k = 0
-                        for (digest in subs) {
-                            Assert.assertEquals("Sub-digest size check", cnt[i].toLong(), digest.size())
-                            var k2 = 0
-                            for (centroid in digest.centroids()) {
-                                Iterables.addAll(data2, centroid.data()!!)
-                                Assert.assertEquals(
-                                    "Centroid consistency",
-                                    centroid.count().toLong(),
-                                    centroid.data()!!.size.toLong()
-                                )
-                                k2 += centroid.data()!!.size
-                            }
-                            k += k2
-                            Assert.assertEquals("Sub-digest centroid sum check", cnt[i].toLong(), k2.toLong())
-                            i++
-                        }
-                        Assert.assertEquals(
-                            "Sub-digests don't add up to the right size",
-                            data.size.toLong(),
-                            k.toLong()
-                        )
-
-                        // verify that the raw data all got recorded
-                        Collections.sort(data2)
-                        Assert.assertEquals(data.size.toLong(), data2.size.toLong())
-                        var ix = data.iterator()
-                        for (x in data2) {
-                            Assert.assertEquals(ix.next(), x,0.0)
-                        }
-
-                        // now merge the sub-digests
-                        val dist2 = factory.create().recordAllData()
-                        dist2.add(subs)
-
-                        // verify the merged result has the right data
-                        val data3 = Lists.newArrayList<Double>()
-                        for (centroid in dist2.centroids()) {
-                            Iterables.addAll(data3, centroid.data()!!)
-                        }
-                        Collections.sort(data3)
-                        Assert.assertEquals(data.size.toLong(), data3.size.toLong())
-                        ix = data.iterator()
-                        for (x in data3) {
-                            Assert.assertEquals(ix.next(), x,0.0)
-                        }
-
-                        if (dist is MergingDigest) {
-                            dist.checkWeights()
-                            (dist2 as MergingDigest).checkWeights()
-                            for (sub in subs) {
-                                (sub as MergingDigest).checkWeights()
-                            }
-                        }
-
-                        for (q in doubleArrayOf(0.001, 0.01, 0.1, 0.2, 0.3, 0.5)) {
-                            val z = quantile(q, data)
-                            val e1 = dist.quantile(q) - z
-                            val e2 = dist2.quantile(q) - z
-                            out.printf(
-                                "quantile\t%d\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n",
-                                parts,
-                                q,
-                                z - q,
-                                e1,
-                                e2,
-                                Math.abs(e2) / q
-                            )
-                            Assert.assertTrue(
-                                String.format(
-                                    "Relative error: parts=%d, q=%.4f, e1=%.5f, e2=%.5f, rel=%.4f",
-                                    parts,
-                                    q,
-                                    e1,
-                                    e2,
-                                    Math.abs(e2) / q
-                                ), Math.abs(e2) / q < 0.3
-                            )
-                            Assert.assertTrue(
-                                String.format(
-                                    "Absolute error: parts=%d, q=%.4f, e1=%.5f, e2=%.5f, rel=%.4f",
-                                    parts,
-                                    q,
-                                    e1,
-                                    e2,
-                                    Math.abs(e2) / q
-                                ), Math.abs(e2) < 0.015
-                            )
-                        }
-
-                        for (x in doubleArrayOf(0.001, 0.01, 0.1, 0.2, 0.3, 0.5)) {
-                            val z = cdf(x, data)
-                            val e1 = dist.cdf(x) - z
-                            val e2 = dist2.cdf(x) - z
-
-                            out.printf(
-                                "cdf\t%d\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n",
-                                parts,
-                                x,
-                                z - x,
-                                e1,
-                                e2,
-                                Math.abs(e2) / x
-                            )
-                            Assert.assertTrue(
-                                String.format(
-                                    "Absolute cdf: parts=%d, x=%.4f, e1=%.5f, e2=%.5f",
-                                    parts,
-                                    x,
-                                    e1,
-                                    e2
-                                ), Math.abs(e2) < 0.015
-                            )
-                            Assert.assertTrue(
-                                String.format(
-                                    "Relative cdf: parts=%d, x=%.4f, e1=%.5f, e2=%.5f, rel=%.3f",
-                                    parts,
-                                    x,
-                                    e1,
-                                    e2,
-                                    Math.abs(e2) / x
-                                ), Math.abs(e2) / x < 0.3
-                            )
-                        }
-                        out.flush()
-                    }
-                    System.out.printf("Iteration %d\n", currentK + 1)
-                    out.close()
-                    return s.toString()
-                }
-            })
-        }
-
-        val executor = Executors.newFixedThreadPool(20)
-        try {
-            for (result in executor.invokeAll(tasks)) {
-                out.write(result.get())
+    @Test
+    fun offsetUniform() {
+        System.out.printf("delta, q, x1, x2, q1, q2, error_x, error_q\n")
+        for (compression in doubleArrayOf(20.0, 50.0, 100.0, 200.0)) {
+            val digest = factory(compression).create()
+            digest.setScaleFunction(ScaleFunction.K_0)
+            val rand = Random()
+            val gen = Uniform(50.0, 51.0, rand)
+            val data = DoubleArray(1000000)
+            for (i in 0..999999) {
+                data[i] = gen.nextDouble()
+                digest.add(data[i])
             }
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            throw e
-        } finally {
-            executor.shutdownNow()
-            executor.awaitTermination(5, TimeUnit.SECONDS)
-            out.close()
+            Arrays.sort(data)
+            for (q in doubleArrayOf(0.5, 0.9, 0.99, 0.999, 0.9999, 0.99999, 0.999999)) {
+                val x1 = Dist.quantile(q, data)
+                val x2 = digest.quantile(q)
+                val q1 = Dist.cdf(x1, data)
+                val q2 = digest.cdf(x1)
+                System.out.printf(
+                    "%.0f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
+                    compression, q, x1, x2, q1, q2, Math.abs(x1 - x2) / (1 - q), Math.abs(q1 - q2) / (1 - q)
+                )
+            }
+        }
+    }
+
+    @Test
+    fun bigJump() {
+        var digest = factory(100.0).create()
+        for (i in 1..19) {
+            digest.add(i.toDouble())
+        }
+        digest.add(1000000.0)
+
+        Assert.assertEquals(18.0, digest.quantile(0.89999999), 0.0)
+        Assert.assertEquals(19.0, digest.quantile(0.9), 0.0)
+        Assert.assertEquals(19.0, digest.quantile(0.949999999), 0.0)
+        Assert.assertEquals(1000000.0, digest.quantile(0.95), 0.0)
+
+        Assert.assertEquals(0.925, digest.cdf(19.0), 1e-11)
+        Assert.assertEquals(0.95, digest.cdf(19.0000001), 1e-11)
+        Assert.assertEquals(0.9, digest.cdf(19 - 0.0000001), 1e-11)
+
+        digest = factory(80.0).create()
+        digest.setScaleFunction(ScaleFunction.K_0)
+
+        for (j in 0..99) {
+            for (i in 1..19) {
+                digest.add(i.toDouble())
+            }
+            digest.add(1000000.0)
+        }
+        Assert.assertEquals(18.0, digest.quantile(0.89999999), 0.0)
+        Assert.assertEquals(19.0, digest.quantile(0.9), 0.0)
+        Assert.assertEquals(19.0, digest.quantile(0.949999999), 0.0)
+        Assert.assertEquals(1000000.0, digest.quantile(0.95), 0.0)
+    }
+
+    @Test
+    fun testSmallCountQuantile() {
+        val data = Lists.newArrayList(15.0, 20.0, 32.0, 60.0)
+        val td = factory(200.0).create()
+        for (datum in data) {
+            td.add(datum!!)
+        }
+        Assert.assertEquals(20.0, td.quantile(0.4), 1e-10)
+        Assert.assertEquals(20.0, td.quantile(0.25), 1e-10)
+        Assert.assertEquals(15.0, td.quantile(0.25 - 1e-10), 1e-10)
+        Assert.assertEquals(20.0, td.quantile(0.5 - 1e-10), 1e-10)
+        Assert.assertEquals(32.0, td.quantile(0.5), 1e-10)
+    }
+
+    /**
+     * Brute force test that cdf and quantile give reference behavior in digest made up of all singletons.
+     */
+    @Test
+    fun singletonQuantiles() {
+        val data = DoubleArray(20)
+        val digest = factory(100.0).create()
+        for (i in 0..19) {
+            digest.add(i.toDouble())
+            data[i] = i.toDouble()
         }
 
+        var x = digest.min - 0.1
+        while (x <= digest.max + 0.1) {
+            Assert.assertEquals(Dist.cdf(x, data), digest.cdf(x), 0.0)
+            x += 1e-3
+        }
+
+        var q = 0.0
+        while (q <= 1) {
+            Assert.assertEquals(Dist.quantile(q, data), digest.quantile(q), 0.0)
+            q += 1e-3
+        }
     }
+
+    /**
+     * Verifies behavior involving interpolation (or lack of same, really) between singleton centroids.
+     */
+    @Test
+    open fun singleSingleRange() {
+        val digest = factory(100.0).create()
+        digest.add(1.0)
+        digest.add(2.0)
+        digest.add(3.0)
+
+        // verify the cdf is a step between singletons
+        Assert.assertEquals(0.5 / 3.0, digest.cdf(1.0), 0.0)
+        Assert.assertEquals(1 / 3.0, digest.cdf(1 + 1e-10), 0.0)
+        Assert.assertEquals(1 / 3.0, digest.cdf(2 - 1e-10), 0.0)
+        Assert.assertEquals(1.5 / 3.0, digest.cdf(2.0), 0.0)
+        Assert.assertEquals(2 / 3.0, digest.cdf(2 + 1e-10), 0.0)
+        Assert.assertEquals(2 / 3.0, digest.cdf(3 - 1e-10), 0.0)
+        Assert.assertEquals(2.5 / 3.0, digest.cdf(3.0), 0.0)
+        Assert.assertEquals(1.0, digest.cdf(3 + 1e-10), 0.0)
+    }
+
+    //    @Test
+    fun testFill() {
+        val delta = 300
+        val x = MergingDigest(delta.toDouble())
+        val gen = Random()
+        val scale = x.scaleFunction
+        val compression = x.compression()
+        for (i in 0..999999) {
+            x.add(gen.nextGaussian())
+        }
+        var q0 = 0.0
+        var i = 0
+        System.out.printf("i, q, mean, count, dk\n")
+        for (centroid in x.centroids()) {
+            val q = q0 + centroid.count().toDouble() / 2.0 / x.size().toDouble()
+            val q1 = q0 + centroid.count().toDouble() / x.size()
+            var dk = scale.k(q1, compression, x.size().toDouble()) - scale.k(q0, compression, x.size().toDouble())
+            if (centroid.count() > 1) {
+                Assert.assertTrue(
+                    String.format("K-size for centroid %d at %.3f is %.3f", i, centroid.mean(), dk),
+                    dk <= 1
+                )
+            } else {
+                dk = 1.0
+            }
+            System.out.printf("%d,%.7f,%.7f,%d,%.7f\n", i, q, centroid.mean(), centroid.count(), dk)
+            if (java.lang.Double.isNaN(dk)) {
+                System.out.printf(">>>> %.8f, %.8f\n", q0, q1)
+            }
+            q0 = q1
+            i++
+        }
+    }
+
+    /**
+     * Tests cases where min or max is not the same as the extreme centroid which has weight>1. In these cases min and
+     * max give us a little information we wouldn't otherwise have.
+     */
+    @Test
+    fun singletonAtEnd() {
+        var digest = MergingDigest(100.0)
+        digest.add(1.0)
+        digest.add(2.0)
+        digest.add(3.0)
+
+        Assert.assertEquals(1.0, digest.min, 0.0)
+        Assert.assertEquals(3.0, digest.max, 0.0)
+        Assert.assertEquals(3, digest.centroidCount().toLong())
+        Assert.assertEquals(0.0, digest.cdf(0.0), 0.0)
+        Assert.assertEquals(0.0, digest.cdf(1 - 1e-9), 0.0)
+        Assert.assertEquals(0.5 / 3, digest.cdf(1.0), 1e-10)
+        Assert.assertEquals(1.0 / 3, digest.cdf(1 + 1e-10), 1e-10)
+        Assert.assertEquals(2.0 / 3, digest.cdf(3 - 1e-9), 0.0)
+        Assert.assertEquals(2.5 / 3, digest.cdf(3.0), 0.0)
+        Assert.assertEquals(1.0, digest.cdf(3 + 1e-9), 0.0)
+
+        digest.add(1.0)
+        Assert.assertEquals(1.0 / 4, digest.cdf(1.0), 0.0)
+
+        // normally min == mean[0] because weight[0] == 1
+        // we can force this not to be true for testing
+        digest = MergingDigest(1.0)
+        digest.setScaleFunction(ScaleFunction.K_0)
+        for (i in 0..99) {
+            digest.add(1.0)
+            digest.add(2.0)
+            digest.add(3.0)
+        }
+        // This sample will be added to the first cluster that already exists
+        // the effect will be to (slightly) nudge the mean of that cluster
+        // but also decrease the min. As such, near q=0, cdf and quantiles
+        // should reflect this single sample as a singleton
+        digest.add(0.0)
+        Assert.assertTrue(digest.centroidCount() > 0)
+        val first = digest.centroids().iterator().next()
+        Assert.assertTrue(first.count() > 1)
+        Assert.assertTrue(first.mean() > digest.min)
+        Assert.assertEquals(0.0, digest.min, 0.0)
+        Assert.assertEquals(0.0, digest.cdf(0 - 1e-9), 0.0)
+        Assert.assertEquals(0.5 / digest.size(), digest.cdf(0.0), 1e-10)
+        Assert.assertEquals(1.0 / digest.size(), digest.cdf(1e-9), 1e-10)
+
+        Assert.assertEquals(0.0, digest.quantile(0.0), 0.0)
+        Assert.assertEquals(0.0, digest.quantile(0.5 / digest.size()), 0.0)
+        Assert.assertEquals(0.0, digest.quantile(1.0 / digest.size() - 1e-10), 0.0)
+        Assert.assertEquals(0.0, digest.quantile(1.0 / digest.size()), 0.0)
+        Assert.assertEquals(2.0 / first.count().toDouble() / 100.0, digest.quantile(1.01 / digest.size()), 5e-5)
+        Assert.assertEquals(
+            first.mean(),
+            digest.quantile(first.count().toDouble() / 2.0 / digest.size().toDouble()),
+            1e-5
+        )
+
+        digest.add(4.0)
+        val last = Lists.reverse(Lists.newArrayList(digest.centroids())).iterator().next()
+        Assert.assertTrue(last.count() > 1)
+        Assert.assertTrue(last.mean() < digest.max)
+        Assert.assertEquals(1.0, digest.cdf(digest.max + 1e-9), 0.0)
+        Assert.assertEquals(1 - 0.5 / digest.size(), digest.cdf(digest.max), 0.0)
+        Assert.assertEquals(1 - 1.0 / digest.size(), digest.cdf(digest.max - 1e-9), 1e-10)
+
+        Assert.assertEquals(4.0, digest.quantile(1.0), 0.0)
+        Assert.assertEquals(4.0, digest.quantile(1 - 0.5 / digest.size()), 0.0)
+        Assert.assertEquals(4.0, digest.quantile(1 - 1.0 / digest.size() + 1e-10), 0.0)
+        Assert.assertEquals(4.0, digest.quantile(1 - 1.0 / digest.size()), 0.0)
+        val slope = 1.0 / (last.count() / 2.0 - 1) * (digest.max - last.mean())
+        val x = 4 - digest.quantile(1 - 1.01 / digest.size())
+        Assert.assertEquals(slope * 0.01, x, 1e-10)
+        Assert.assertEquals(
+            last.mean(),
+            digest.quantile(1 - last.count().toDouble() / 2.0 / digest.size().toDouble()),
+            1e-10
+        )
+    }
+
+    /**
+     * Verifies interpolation between a singleton and a larger centroid.
+     */
+    @Test
+    fun singleMultiRange() {
+        val digest = MergingDigest(10.0)
+        digest.setScaleFunction(ScaleFunction.K_0)
+        for (i in 0..99) {
+            digest.add(1.0)
+            digest.add(2.0)
+            digest.add(3.0)
+        }
+        // this check is, of course true, but it also forces merging before we change scale
+        Assert.assertTrue(digest.centroidCount() < 300)
+        digest.setScaleFunction(ScaleFunction.K_2)
+        digest.add(0.0)
+        // we now have a digest with a singleton first, then a heavier centroid next
+        val ix = digest.centroids().iterator()
+        val first = ix.next()
+        val second = ix.next()
+        Assert.assertEquals(1, first.count().toLong())
+        Assert.assertEquals(0.0, first.mean(), 0.0)
+        Assert.assertTrue(second.count() > 1)
+        Assert.assertEquals(1.0, second.mean(), 0.0)
+
+        Assert.assertEquals(0.5 / digest.size(), digest.cdf(0.0), 0.0)
+        Assert.assertEquals(1.0 / digest.size(), digest.cdf(1e-10), 1e-10)
+        Assert.assertEquals((1 + second.count() / 8.0) / digest.size(), digest.cdf(0.25), 1e-10)
+    }
+
+    protected abstract fun fromBytes(bytes: Input): TDigest
 
     @Test
     fun testSingleValue() {
@@ -295,38 +369,9 @@ abstract class TDigestTest : AbstractTest() {
         // for this value of the compression, the tree shouldn't have merged any node
         Assert.assertEquals(digest.centroids().size.toLong(), values.size.toLong())
         for (q in doubleArrayOf(0.0, 1e-10, r.nextDouble(), 0.5, 1 - 1e-10, 1.0)) {
-            val q1 = quantile(q, values)
+            val q1 = Dist.quantile(q, values)
             val q2 = digest.quantile(q)
             Assert.assertEquals(String.format("At q=%g, expected %.2f vs %.2f", q, q1, q2), q1, q2, 0.03)
-        }
-    }
-
-    private fun cdf(x: Double, data: List<Double>): Double {
-        var n1 = 0
-        var n2 = 0
-        for (v in data) {
-            n1 += if (v < x) 1 else 0
-            n2 += if (v <= x) 1 else 0
-        }
-        return (n1 + n2).toDouble() / 2.0 / data.size.toDouble()
-    }
-
-    private fun quantile(q: Double, data: List<Double>): Double {
-        if (data.size == 0) {
-            return java.lang.Double.NaN
-        }
-        if (q == 1.0 || data.size == 1) {
-            return data[data.size - 1]
-        }
-        var index = q * data.size
-        if (index < 0.5) {
-            return data[0]
-        } else if (data.size - index < 0.5) {
-            return data[data.size - 1]
-        } else {
-            index -= 0.5
-            val intIndex = index.toInt()
-            return data[intIndex + 1] * (index - intIndex) + data[intIndex] * (intIndex + 1 - index)
         }
     }
 
@@ -341,19 +386,17 @@ abstract class TDigestTest : AbstractTest() {
     }
 
     /**
-     * Builds estimates of the CDF of a bunch of data points and checks that the centroids are accurately
-     * positioned.  Accuracy is assessed in terms of the estimated CDF which is much more stringent than
-     * checking position of quantiles with a single value for desired accuracy.
+     * Builds estimates of the CDF of a bunch of data points and checks that the centroids are accurately positioned.
+     * Accuracy is assessed in terms of the estimated CDF which is much more stringent than checking position of
+     * quantiles with a single value for desired accuracy.
      *
      * @param gen           Random number generator that generates desired values.
-     * @param sizeGuide     Control for size of the histogram.
      * @param tag           Label for the output lines
      * @param recordAllData True if the internal histogrammer should be set up to record all data it sees for
      */
     private fun runTest(
         factory: DigestFactory,
         gen: AbstractContinousDistribution,
-        sizeGuide: Double,
         qValues: DoubleArray,
         tag: String,
         recordAllData: Boolean
@@ -363,27 +406,22 @@ abstract class TDigestTest : AbstractTest() {
             dist.recordAllData()
         }
 
-        val data = Lists.newArrayList<Double>()
+        val data = DoubleArray(100000)
         for (i in 0..99999) {
             val x = gen.nextDouble()
-            data.add(x)
+            data[i] = x
         }
         val t0 = System.nanoTime()
-        var sumW = 0
         for (x in data) {
             dist.add(x)
-            sumW++
         }
         System.out.printf("# %fus per point\n", (System.nanoTime() - t0) * 1e-3 / 100000)
         System.out.printf("# %d centroids\n", dist.centroids().size)
-        Collections.sort(data)
+        Arrays.sort(data)
 
         val xValues = qValues.clone()
         for (i in qValues.indices) {
-            val ix = data.size * qValues[i] - 0.5
-            val index = Math.floor(ix).toInt()
-            val p = ix - index
-            xValues[i] = data[index] * (1 - p) + data[index + 1] * p
+            xValues[i] = Dist.quantile(qValues[i], data)
         }
 
         var qz = 0.0
@@ -401,15 +439,16 @@ abstract class TDigestTest : AbstractTest() {
             qz += centroid.count().toDouble()
             iz++
         }
-        Assert.assertEquals(qz, dist.size().toDouble(), 1e-10)
         Assert.assertEquals(iz.toLong(), dist.centroids().size.toLong())
+        dist.compress()
+        Assert.assertEquals(qz, dist.size().toDouble(), 1e-10)
 
         Assert.assertTrue(
             String.format(
-                "Summary is too large (got %d, wanted < %.1f)",
+                "Summary is too large (got %d, wanted <= %.1f)",
                 dist.centroids().size,
-                20 * sizeGuide
-            ), dist.centroids().size < 20 * sizeGuide
+                dist.compression()
+            ), dist.centroids().size <= dist.compression()
         )
         var softErrors = 0
         for (i in xValues.indices) {
@@ -417,14 +456,14 @@ abstract class TDigestTest : AbstractTest() {
             val q = qValues[i]
             var estimate = dist.cdf(x)
             errorDump?.printf("%s\t%s\t%.8g\t%.8f\t%.8f\n", tag, "cdf", x, q, estimate - q)
-            Assert.assertEquals(q, estimate, 0.005)
+            Assert.assertEquals(q, estimate, 0.08)
 
-            estimate = cdf(dist.quantile(q), data)
+            estimate = Dist.cdf(dist.quantile(q), data)
             errorDump?.printf("%s\t%s\t%.8g\t%.8f\t%.8f\n", tag, "quantile", x, q, estimate - q)
             if (Math.abs(q - estimate) > 0.005) {
                 softErrors++
             }
-            Assert.assertEquals(q, estimate, 0.012)
+            Assert.assertEquals(String.format("discrepancy %.5f vs %.5f @ %.5f", q, estimate, x), q, estimate, 0.012)
         }
         Assert.assertTrue(softErrors < 3)
 
@@ -535,7 +574,7 @@ abstract class TDigestTest : AbstractTest() {
         val gen = RandomizedTest.getRandom()
         for (i in 0 until repeats()) {
             runTest(
-                factory(), Uniform(0.0, 1.0, gen), 100.0,
+                factory(), Uniform(0.0, 1.0, gen),
                 doubleArrayOf(0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999),
                 "uniform", true
             )
@@ -551,7 +590,7 @@ abstract class TDigestTest : AbstractTest() {
         val gen = RandomizedTest.getRandom()
         for (i in 0 until repeats()) {
             runTest(
-                factory(), Gamma(0.1, 0.1, gen), 100.0,
+                factory(200.0), Gamma(0.1, 0.1, gen),
                 //                    new double[]{6.0730483624079e-30, 6.0730483624079e-20, 6.0730483627432e-10, 5.9339110446023e-03,
                 //                            2.6615455373884e+00, 1.5884778179295e+01, 3.3636770117188e+01},
                 doubleArrayOf(0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999),
@@ -582,9 +621,8 @@ abstract class TDigestTest : AbstractTest() {
 
         for (i in 0 until repeats()) {
             runTest(
-                factory(),
+                factory(400.0),
                 mix,
-                100.0,
                 doubleArrayOf(0.001, 0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99, 0.999),
                 "mixture",
                 false
@@ -593,7 +631,7 @@ abstract class TDigestTest : AbstractTest() {
     }
 
     @Test
-    fun testRepeatedValues() {
+    open fun testRepeatedValues() {
         val gen = RandomizedTest.getRandom()
 
         // 5% of samples will be 0 or 1.0.  10% for each of the values 0.1 through 0.9
@@ -603,9 +641,9 @@ abstract class TDigestTest : AbstractTest() {
             }
         }
 
-        val dist = factory(1000.0).create()
+        val dist = factory(400.0).create()
         val data = Lists.newArrayList<Double>()
-        for (i1 in 0..99999) {
+        for (i1 in 0..999999) {
             val x = mix.nextDouble()
             data.add(x)
         }
@@ -615,14 +653,10 @@ abstract class TDigestTest : AbstractTest() {
             dist.add(x)
         }
 
-        System.out.printf("# %fus per point\n", (System.nanoTime() - t0) * 1e-3 / 100000)
+        System.out.printf("# %fus per point\n", (System.nanoTime() - t0) * 1e-3 / 1000000)
         System.out.printf("# %d centroids\n", dist.centroids().size)
 
-        // I would be happier with 5x compression, but repeated values make things kind of weird
-        Assert.assertTrue(
-            "Summary is too large: " + dist.centroids().size,
-            dist.centroids().size < 10 * 1000.toDouble()
-        )
+        Assert.assertTrue("Summary is too large: " + dist.centroids().size, dist.centroids().size < dist.compression())
 
         // all quantiles should round to nearest actual value
         for (i in 0..9) {
@@ -632,14 +666,12 @@ abstract class TDigestTest : AbstractTest() {
                 val q = z + delta
                 val cdf = dist.cdf(q)
                 // we also relax the tolerances for repeated values
-                Assert.assertEquals(String.format("z=%.1f, q = %.3f, cdf = %.3f", z, q, cdf), z + 0.05, cdf, 0.01)
+                Assert.assertEquals(String.format("z=%.1f, q = %.3f, cdf = %.3f", z, q, cdf), z + 0.05, cdf, 0.03)
 
                 val estimate = dist.quantile(q)
                 Assert.assertEquals(
                     String.format("z=%.1f, q = %.3f, cdf = %.3f, estimate = %.3f", z, q, cdf, estimate),
-                    Math.rint(q * 10) / 10.0,
-                    estimate,
-                    0.001
+                    Math.rint(q * 10) / 10.0, estimate, 0.02
                 )
             }
         }
@@ -656,7 +688,7 @@ abstract class TDigestTest : AbstractTest() {
                         base += Math.PI * 1e-5
                         return base
                     }
-                }, 100.0, doubleArrayOf(0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999),
+                }, doubleArrayOf(0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999),
                 "sequential", true
             )
         }
@@ -735,8 +767,8 @@ abstract class TDigestTest : AbstractTest() {
     }
 
     /**
-     * Does basic sanity testing for a particular small example that used to fail.
-     * See https://github.com/addthis/stream-lib/issues/138
+     * Does basic sanity testing for a particular small example that used to fail. See
+     * https://github.com/addthis/stream-lib/issues/138
      */
     @Test
     fun testThreePointExample() {
@@ -905,139 +937,125 @@ abstract class TDigestTest : AbstractTest() {
     }
 
     @Test
-    @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
+    @Throws(IOException::class, InterruptedException::class)
     fun testSizeControl() {
         // very slow running data generator.  Don't want to run this normally.  To run slow tests use
         // mvn test -DrunSlowTests=true
-        RandomizedTest.assumeTrue(java.lang.Boolean.parseBoolean(System.getProperty("runSlowTests")))
+        //        assumeTrue(Boolean.parseBoolean(System.getProperty("runSlowTests")));
+        val live = AtomicInteger(0)
+        val pending = AtomicInteger(0)
 
         val gen0 = RandomizedTest.getRandom()
-        val out = PrintWriter(FileOutputStream("scaling.tsv"))
-        out.printf("k\tsamples\tcompression\tsize1\tsize2\n")
+        PrintWriter(FileOutputStream(String.format("scaling-%s.tsv", digestName))).use { out ->
+            out.printf("k\tsamples\tcompression\tcentroids\tsize1\tsize2\n")
 
-        val tasks = Lists.newArrayList<Callable<String>>()
-        for (k in 0..19) {
-            for (size in intArrayOf(10, 100, 1000, 10000)) {
-                tasks.add(object : Callable<String> {
-                    val gen = Random(gen0.nextLong())
+            val tasks = Lists.newArrayList<Callable<String>>()
+            for (k in 0..4) {
+                for (size in intArrayOf(10, 100, 1000, 10000)) {
+                    tasks.add(object : Callable<String> {
+                        internal val gen = Random(gen0.nextLong())
 
-                    @Throws(Exception::class)
-                    override fun call(): String {
-                        System.out.printf("Starting %d,%d\n", k, size)
-                        val s = StringWriter()
-                        val out = PrintWriter(s)
-                        for (compression in doubleArrayOf(2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0)) {
-                            val dist = factory(compression).create()
-                            for (i in 0 until size * 1000) {
-                                dist.add(gen.nextDouble())
+                        override fun call(): String {
+                            System.out.printf("Starting %d,%d\n", k, size)
+                            live.incrementAndGet()
+                            try {
+                                val s = StringWriter()
+                                val out = PrintWriter(s)
+                                for (compression in doubleArrayOf(50.0, 100.0, 200.0, 500.0)) {
+                                    try {
+                                        val dist = factory(compression).create()
+                                        for (i in 0 until size * 1000) {
+                                            dist.add(gen.nextDouble())
+                                        }
+                                        dist.compress()
+                                        out.printf(
+                                            "%d\t%d\t%.0f\t%d\t%d\t%d\n",
+                                            k,
+                                            size,
+                                            compression,
+                                            dist.centroidCount(),
+                                            dist.smallByteSize(),
+                                            dist.byteSize()
+                                        )
+                                        out.flush()
+                                    } catch (e: Throwable) {
+                                        System.out.printf(
+                                            "                         Exception %s, %d, %.0f, %d\n",
+                                            e.toString(),
+                                            k,
+                                            compression,
+                                            size
+                                        )
+                                        throw e
+                                    }
+
+                                }
+                                out.close()
+                                return s.toString()
+                            } finally {
+                                live.decrementAndGet()
+                                pending.decrementAndGet()
+                                System.out.printf(
+                                    "                   %d,%d (%d live threads, %d pending tasks)\n",
+                                    k,
+                                    size,
+                                    live.get(),
+                                    pending.get()
+                                )
                             }
-                            out.printf(
-                                "%d\t%d\t%.0f\t%d\t%d\n",
-                                k,
-                                size,
-                                compression,
-                                dist.smallByteSize(),
-                                dist.byteSize()
-                            )
-                            out.flush()
                         }
-                        out.close()
-                        return s.toString()
-                    }
-                })
+                    })
+                }
             }
-        }
+            pending.set(tasks.size)
 
-        val executor = Executors.newFixedThreadPool(20)
-        for (result in executor.invokeAll(tasks)) {
-            out.write(result.get())
-        }
-        executor.shutdown()
-        executor.awaitTermination(5, TimeUnit.SECONDS)
+            val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 2)
+            for (result in executor.invokeAll(tasks)) {
+                try {
+                    out.write(result.get())
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                }
 
-        out.close()
+                System.err.printf("\n\n")
+            }
+            executor.shutdownNow()
+            Assert.assertTrue("Dangling executor thread", executor.awaitTermination(5, TimeUnit.SECONDS))
+        }
     }
 
     @Test
-    @Throws(FileNotFoundException::class, InterruptedException::class, ExecutionException::class)
+    @Throws(FileNotFoundException::class)
     fun testScaling() {
-        val gen0 = RandomizedTest.getRandom()
+        val gen = RandomizedTest.getRandom()
 
-        PrintWriter(FileOutputStream("error-scaling.tsv")).use { out ->
+        PrintWriter(FileOutputStream(String.format("error-scaling-%s.tsv", digestName))).use { out ->
             out.printf("pass\tcompression\tq\terror\tsize\n")
 
             val tasks = Lists.newArrayList<Callable<String>>()
-            val n = Math.max(3, repeats() * repeats())
-            for (k in 0 until n) {
-                tasks.add(object : Callable<String> {
-                    val gen = Random(gen0.nextLong())
+            for (k in 0..9) {
+                val data = Lists.newArrayList<Double>()
+                for (i in 0..99999) {
+                    data.add(gen.nextDouble())
+                }
+                Collections.sort(data)
 
-                    @Throws(Exception::class)
-                    override fun call(): String {
-                        System.out.printf("Start %d\n", k)
-                        val s = StringWriter()
-                        val out = PrintWriter(s)
-
-                        val data = Lists.newArrayList<Double>()
-                        for (i in 0..99999) {
-                            data.add(gen.nextDouble())
-                        }
-                        Collections.sort(data)
-
-                        for (compression in doubleArrayOf(10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0)) {
-                            val dist = factory(compression).create()
-                            for (x in data) {
-                                dist.add(x!!)
-                            }
-                            dist.compress()
-
-                            for (q in doubleArrayOf(0.001, 0.01, 0.1, 0.5)) {
-                                val estimate = dist.quantile(q)
-                                val actual = data[(q * data.size).toInt()]
-                                out.printf(
-                                    "%d\t%.0f\t%.3f\t%.9f\t%d\n",
-                                    k,
-                                    compression,
-                                    q,
-                                    estimate - actual,
-                                    dist.byteSize()
-                                )
-                                out.flush()
-                            }
-                        }
-                        out.close()
-                        System.out.printf("Finish %d\n", k)
-
-                        return s.toString()
+                for (compression in doubleArrayOf(10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0)) {
+                    val dist = factory(compression).create()
+                    for (x in data) {
+                        dist.add(x!!)
                     }
-                })
-            }
+                    dist.compress()
 
-            val exec = Executors.newFixedThreadPool(16)
-            try {
-                for (result in exec.invokeAll(tasks)) {
-                    out.write(result.get())
+                    for (q in doubleArrayOf(0.001, 0.01, 0.1, 0.5)) {
+                        val estimate = dist.quantile(q)
+                        val actual = data[(q * data.size).toInt()]
+                        out.printf("%d\t%.0f\t%.3f\t%.9f\t%d\n", k, compression, q, estimate - actual, dist.byteSize())
+                        out.flush()
+                    }
                 }
-                exec.shutdown()
-                if (exec.awaitTermination(5, TimeUnit.SECONDS)) {
-                    return
-                }
-
-            } catch (e: InterruptedException) {
-                Thread.currentThread().interrupt()
-            } catch (e: Throwable) {
-                e.printStackTrace()
             }
-
-            exec.shutdownNow()
-            Assert.assertTrue("Dangling executor thread", exec.awaitTermination(5, TimeUnit.SECONDS))
         }
-    }
-
-    @Test
-    @Throws(FileNotFoundException::class, InterruptedException::class, ExecutionException::class)
-    fun testMerge() {
-        merge(factory())
     }
 
     @Test
@@ -1055,13 +1073,12 @@ abstract class TDigestTest : AbstractTest() {
         // [ 5, 10, 15, 20, 30, 40, 50, 60, 70]
         val values = Arrays.asList(5.0, 10.0, 15.0, 20.0, 30.0, 35.0, 40.0, 45.0, 50.0)
         for (q in doubleArrayOf(1.5 / 9, 3.5 / 9, 6.5 / 9)) {
-            Assert.assertEquals(String.format("q=%.2f ", q), quantile(q, values), digest.quantile(q), 0.01)
+            Assert.assertEquals(String.format("q=%.2f ", q), Dist.quantile(q, values), digest.quantile(q), 0.01)
         }
     }
 
     @Test
-    @Throws(Exception::class)
-    fun testMontonicity() {
+    fun testMonotonicity() {
         val digest = factory().create()
         val gen = RandomizedTest.getRandom()
         for (i in 0..99999) {
@@ -1083,60 +1100,13 @@ abstract class TDigestTest : AbstractTest() {
         }
     }
 
-    //    @Test
-    //    public void testKSDrift() {
-    //        final Random gen = getRandom();
-    //        int N1 = 50;
-    //        int N2 = 10000;
-    //        double[] data = new double[N1 * N2];
-    //        System.out.printf("rep,i,ks,class\n");
-    //        for (int rep = 0; rep < 5; rep++) {
-    //            TDigest digest = factory(200).create();
-    //            for (int i = 0; i < N1; i++) {
-    //                for (int j = 0; j < N2; j++) {
-    //                    double x = gen.nextDouble();
-    //                    data[i * N2 + j] = x;
-    //                    digest.add(x);
-    //                }
-    //                System.out.printf("%d,%d,%.7f,%s,%d\n", rep, i, ks(data, (i + 1) * N2, digest), digest.getClass().getSimpleName(), digest.centroidCount());
-    //            }
-    //        }
-    //    }
-
-    private fun ks(data: DoubleArray, length: Int, digest: TDigest): Double {
-        var d1 = 0.0
-        var d2 = 0.0
-        Arrays.sort(data, 0, length)
-        var i = 0
-        for (centroid in digest.centroids()) {
-            val x = centroid.mean()
-            while (i < length && data[i] <= x) {
-                i++
-            }
-            val q0a = i.toDouble() / (length - 1)
-            val q0b = (i + 1).toDouble() / (length - 1)
-            val q0: Double
-            if (i > 0) {
-                if (i < length) {
-                    q0 = (q0a * (data[i] - x) + q0b * (x - data[i - 1])) / (data[i] - data[i - 1])
-                } else {
-                    q0 = 1.0
-                }
-            } else {
-                q0 = 0.0
-            }
-            val q1 = digest.cdf(x)
-            d1 = Math.max(q1 - q0, d1)
-            d2 = Math.max(q0 - q1, d2)
-        }
-        return Math.max(d1, d2)
-    }
-
     companion object {
         private val lock = 3
         private var sizeDump: PrintWriter? = null
         private var errorDump: PrintWriter? = null
         private var deviationDump: PrintWriter? = null
+
+        private var digestName: String? = null
 
         @BeforeClass
         fun freezeSeed() {
@@ -1145,6 +1115,7 @@ abstract class TDigestTest : AbstractTest() {
 
         @Throws(IOException::class)
         fun setup(digestName: String) {
+            TDigestTest.digestName = digestName
             synchronized(lock) {
                 sizeDump = PrintWriter(FileWriter("sizes-$digestName.csv"))
                 sizeDump!!.printf("tag\ti\tq\tk\tactual\n")
@@ -1169,29 +1140,54 @@ abstract class TDigestTest : AbstractTest() {
                 deviationDump!!.close()
             }
         }
-
-        private fun merge(subData: Iterable<TDigest>, gen: Random, r: TDigest): TDigest {
-            val centroids = ArrayList<Centroid>()
-            var recordAll = false
-            for (digest in subData) {
-                for (centroid in digest.centroids()) {
-                    centroids.add(centroid)
-                }
-                recordAll = recordAll or digest.isRecording
-            }
-            Collections.shuffle(centroids, gen)
-            if (recordAll) {
-                r.recordAllData()
-            }
-
-            for (c in centroids) {
-
-                if (r.isRecording) {
-                    // TODO should do something better here.
-                }
-                (r as AbstractTDigest).add(c.mean(), c.count(), c)
-            }
-            return r
-        }
     }
+
+    //    @Test
+    //    public void testKSDrift() {
+    //        final Random gen = getRandom();
+    //        int N1 = 50;
+    //        int N2 = 10000;
+    //        double[] data = new double[N1 * N2];
+    //        System.out.printf("rep,i,ks,class\n");
+    //        for (int rep = 0; rep < 5; rep++) {
+    //            TDigest digest = factory(200).create();
+    //            for (int i = 0; i < N1; i++) {
+    //                for (int j = 0; j < N2; j++) {
+    //                    double x = gen.nextDouble();
+    //                    data[i * N2 + j] = x;
+    //                    digest.add(x);
+    //                }
+    //                System.out.printf("%d,%d,%.7f,%s,%d\n", rep, i, ks(data, (i + 1) * N2, digest), digest.getClass().getSimpleName(), digest.centroidCount());
+    //            }
+    //        }
+    //    }
+
+    //    private double ks(double[] data, int length, TDigest digest) {
+    //        double d1 = 0;
+    //        double d2 = 0;
+    //        Arrays.sort(data, 0, length);
+    //        int i = 0;
+    //        for (Centroid centroid : digest.centroids()) {
+    //            double x = centroid.mean();
+    //            while (i < length && data[i] <= x) {
+    //                i++;
+    //            }
+    //            double q0a = (double) i / (length - 1);
+    //            double q0b = (double) (i + 1) / (length - 1);
+    //            double q0;
+    //            if (i > 0) {
+    //                if (i < length) {
+    //                    q0 = (q0a * (data[i] - x) + q0b * (x - data[i - 1])) / (data[i] - data[i - 1]);
+    //                } else {
+    //                    q0 = 1;
+    //                }
+    //            } else {
+    //                q0 = 0;
+    //            }
+    //            double q1 = digest.cdf(x);
+    //            d1 = Math.max(q1 - q0, d1);
+    //            d2 = Math.max(q0 - q1, d2);
+    //        }
+    //        return Math.max(d1, d2);
+    //    }
 }

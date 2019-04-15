@@ -40,6 +40,7 @@ import java.io.Serializable
  * - easy to adapt for use with map-reduce
  */
 abstract class TDigest : Serializable {
+    protected var scale = ScaleFunction.K_2
     var min = java.lang.Double.POSITIVE_INFINITY
         internal set
     var max = java.lang.Double.NEGATIVE_INFINITY
@@ -130,6 +131,15 @@ abstract class TDigest : Serializable {
      * @return The number of bytes required.
      */
     abstract fun smallByteSize(): Int
+
+    fun setScaleFunction(scaleFunction: ScaleFunction) {
+        if (scaleFunction.toString().endsWith("NO_NORM")) {
+            throw IllegalArgumentException(
+                String.format("Can't use %s as scale with %s", scaleFunction, this.javaClass)
+            )
+        }
+        this.scale = scaleFunction
+    }
 
     /**
      * Serialize this TDigest into a byte buffer.  Note that the serialization used is

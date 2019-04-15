@@ -129,4 +129,20 @@ class FloatHistogram @JvmOverloads constructor(min: Double, max: Double, binsPer
     private fun readObjectNoData() {
         throw InvalidObjectException("Stream data required")
     }
+
+    override fun add(others: Iterable<Histogram>) {
+        for (other in others) {
+            if (this.javaClass != other.javaClass) {
+                throw IllegalArgumentException(String.format("Cannot add %s to FloatHistogram", others.javaClass))
+            }
+            val actual = other as FloatHistogram
+            if (actual.min != min || actual.max != max || actual.counts.size != counts.size) {
+                throw IllegalArgumentException("Can only merge histograms with identical bounds and precision")
+            }
+            for (i in counts.indices) {
+                counts[i] += other.counts[i]
+            }
+        }
+    }
+
 }

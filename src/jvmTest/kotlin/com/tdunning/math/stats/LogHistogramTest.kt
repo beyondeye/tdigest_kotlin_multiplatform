@@ -29,8 +29,8 @@ import org.junit.Assert.assertTrue
 class LogHistogramTest : HistogramTestCases() {
     @Before
     fun setup() {
-        useLinearBuckets=false
-        factory=object : HistogramFactory {
+        useLinearBuckets = false
+        factory = object : HistogramTestCases.HistogramFactory {
             override fun create(min: Double, max: Double): Histogram {
                 return LogHistogram(min, max, 0.05)
             }
@@ -63,7 +63,7 @@ class LogHistogramTest : HistogramTestCases() {
 
     @Test
     fun testBins() {
-        super.testBins(72, 129, LogHistogram(10e-6, 5.0, 0.1))
+        super.testBinSizes(72, 129, LogHistogram(10e-6, 5.0, 0.1))
     }
 
     @Test

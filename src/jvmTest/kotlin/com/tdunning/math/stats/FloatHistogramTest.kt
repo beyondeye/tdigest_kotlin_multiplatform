@@ -26,8 +26,8 @@ import java.io.IOException
 class FloatHistogramTest : HistogramTestCases() {
     @Before
     fun setup() {
-        useLinearBuckets=true
-        factory=object : HistogramFactory {
+        useLinearBuckets = true
+        factory = object : HistogramTestCases.HistogramFactory {
             override fun create(min: Double, max: Double): Histogram {
                 return FloatHistogram(min, max)
             }
@@ -36,7 +36,7 @@ class FloatHistogramTest : HistogramTestCases() {
 
     @Test
     fun testBins() {
-        super.testBins(79, 141, FloatHistogram(10e-6, 5.0, 20.0))
+        super.testBinSizes(79, 141, FloatHistogram(10e-6, 5.0, 20.0))
     }
 
     @Test

@@ -153,11 +153,25 @@ internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) :
     /**
      * Update values associated with a node, readjusting the tree if necessary.
      */
-    fun update(node: Int, centroid: Double, count: Int, data: MutableList<Double>?) {
-        this.centroid = centroid
-        this.count = count
-        this.data = data
-        tree.update(node)
+    fun update(node: Int, centroid: Double, count: Int, data: MutableList<Double>?, forceInPlace: Boolean) {
+        if (centroid == centroids!![node] || forceInPlace) {
+            // we prefer to update in place so repeated values don't shuffle around and for merging
+            centroids!![node] = centroid
+            counts!![node] = count
+            if (datas != null) {
+                datas!![node] = data
+            }
+        } else {
+            // have to do full scale update
+            this.centroid = centroid
+            this.count = count
+            this.data = data
+            tree.update(node)
+        }
+    }
+
+    fun remove(node: Int) {
+        tree.remove(node)
     }
 
     /**
@@ -205,6 +219,13 @@ internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) :
      */
     fun first(): Int {
         return tree.first(tree.root())
+    }
+
+    /**
+     * Return the least node in the tree.
+     */
+    fun last(): Int {
+        return tree.last(tree.root())
     }
 
     /**

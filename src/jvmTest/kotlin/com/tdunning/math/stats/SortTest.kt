@@ -28,7 +28,6 @@ import org.junit.Assert.assertTrue
 
 class SortTest {
     @Test
-    @Throws(Exception::class)
     fun testReverse() {
         var x = IntArray(0)
 
@@ -207,61 +206,6 @@ class SortTest {
     }
 
     @Test
-    fun testRandomizedInPlace() {
-        val rand = Random()
-
-        for (k in 0..99) {
-            val keys = DoubleArray(30)
-            for (i in 0..29) {
-                keys[i] = rand.nextDouble()
-            }
-
-            Sort.sort(keys)
-            checkOrder(keys, 0, keys.size)
-        }
-
-        for (k in 0..99) {
-            val keys = DoubleArray(30)
-            for (i in 0..29) {
-                keys[i] = rand.nextDouble()
-            }
-            val v0 = valuesFromKeys(keys, 0)
-
-            //*DARIO* original code
-            //Sort.sort(keys, *v0)
-            //checkOrder(keys, 0, keys.size, *v0)
-            Sort.sort(keys, v0)
-            checkOrder(keys, 0, keys.size, v0)
-        }
-
-        for (k in 0..99) {
-            val keys = DoubleArray(30)
-            for (i in 0..29) {
-                keys[i] = rand.nextDouble()
-            }
-            val v0 = valuesFromKeys(keys, 0)
-            val v1 = valuesFromKeys(keys, 1)
-
-            Sort.sort(keys, v0, v1)
-            checkOrder(keys, 0, keys.size, v0, v1)
-        }
-
-        for (k in 0..99) {
-            val keys = DoubleArray(30)
-            for (i in 0..29) {
-                keys[i] = rand.nextDouble()
-            }
-            val v0 = valuesFromKeys(keys, 0)
-            val v1 = valuesFromKeys(keys, 1)
-            val v2 = valuesFromKeys(keys, 2)
-
-            Sort.sort(keys, v0, v1, v2)
-            checkOrder(keys, 0, keys.size, v0, v1, v2)
-        }
-    }
-
-    @Test
-    @Throws(Exception::class)
     fun testRandomizedShortSort() {
         val rand = Random()
 
@@ -280,7 +224,7 @@ class SortTest {
             val v1 = valuesFromKeys(keys, 1)
 
             Sort.sort(keys, 10, 10, v0, v1)
-            checkOrder(keys, 10, 20, v0, v1)
+            checkOrder(keys, 10, 10, v0, v1)
             checkValues(keys, 0, keys.size, v0, v1)
             for (i in 0..9) {
                 assertEquals(i.toDouble(), keys[i], 0.0)

@@ -82,8 +82,11 @@ class MergingDigest
  * @param compression Compression factor for t-digest.  Same as 1/\delta in the paper.
  * @param bufferSize  How many samples to retain before merging.
  */// we can guarantee that we only need 2 * ceiling(compression).
-@JvmOverloads constructor(private val compression: Double, bufferSize: Int = -1, size: Int = -1) : AbstractTDigest() {
+@JvmOverloads constructor(compression: Double, bufferSize: Int = -1, size: Int = -1) : AbstractTDigest() {
     private var mergeCount = 0
+
+    private val publicCompression: Double
+    private val compression: Double
 
     // points to the first unused centroid
     private var lastUsedCell: Int = 0
@@ -114,18 +117,45 @@ class MergingDigest
     // to avoid allocations during operation
     private val order: IntArray
 
+    // if true, alternate upward and downward merge passes
+    var useAlternatingSort = true
+    // if true, use higher working value of compression during construction, then reduce on presentation
+    var useTwoLevelCompression = true
+
+    val scaleFunction: ScaleFunction
+        get() = scale
+
     init {
+        var compression = compression
         var bufferSize = bufferSize
         var size = size
-        if (size == -1) {
-            size = (2 * Math.ceil(compression)).toInt()
-            if (useWeightLimit) {
-                // the weight limit approach generates smaller centroids than necessary
-                // that can result in using a bit more memory than expected (but is faster)
-                size += 10
-            }
+        // ensure compression >= 10
+        // default size = 2 * ceil(compression)
+        // default bufferSize = 5 * size
+        // scale = max(2, bufferSize / size - 1)
+        // compression, publicCompression = sqrt(scale-1)*compression, compression
+        // ensure size > 2 * compression + weightLimitFudge
+        // ensure bufferSize > 2*size
+
+        // force reasonable value. Anything less than 10 doesn't make much sense because
+        // too few centroids are retained
+        if (compression < 10) {
+            compression = 10.0
         }
+
+        // the weight limit is too conservative about sizes and can require a bit of extra room
+        var sizeFudge = 0.0
+        if (useWeightLimit) {
+            sizeFudge = 10.0
+            if (compression < 30) sizeFudge += 20.0
+        }
+
+        // default size
+        size = Math.max(2 * compression + sizeFudge, size.toDouble()).toInt()
+
+        // default buffer
         if (bufferSize == -1) {
+            // TODO update with current numbers
             // having a big buffer is good for speed
             // experiments show bufferSize = 1 gives half the performance of bufferSize=10
             // bufferSize = 2 gives 40% worse performance than 10
@@ -148,7 +178,34 @@ class MergingDigest
             //   500          2         0.158364
             //   500          5         0.127552
             //   500         10         0.121505
-            bufferSize = (5 * Math.ceil(compression)).toInt()
+            bufferSize = 5 * size
+        }
+
+        // ensure enough space in buffer
+        if (bufferSize <= 2 * size) {
+            bufferSize = 2 * size
+        }
+
+        // scale is the ratio of extra buffer to the final size
+        // we have to account for the fact that we copy all live centroids into the incoming space
+        var scale = Math.max(1, bufferSize / size - 1).toDouble()
+        if (!useTwoLevelCompression) {
+            scale = 1.0
+        }
+
+        // publicCompression is how many centroids the user asked for
+        // compression is how many we actually keep
+        this.publicCompression = compression
+        this.compression = Math.sqrt(scale) * publicCompression
+
+        // changing the compression could cause buffers to be too small, readjust if so
+        if (size < this.compression + sizeFudge) {
+            size = Math.ceil(this.compression + sizeFudge).toInt()
+        }
+
+        // ensure enough space in buffer (possibly again)
+        if (bufferSize <= 2 * size) {
+            bufferSize = 2 * size
         }
 
         weight = DoubleArray(size)
@@ -191,6 +248,12 @@ class MergingDigest
         tempWeight[where] = w.toDouble()
         tempMean[where] = x
         unmergedWeight += w.toDouble()
+        if (x < min) {
+            min = x
+        }
+        if (x > max) {
+            max = x
+        }
 
         if (data != null) {
             if (tempData == null) {
@@ -225,7 +288,7 @@ class MergingDigest
         for (i in 0 until count) {
             total += w[i]
         }
-        merge(m, w, count, data, null, total, false)
+        merge(m, w, count, data, null, total, false, compression)
     }
 
     override fun add(others: List<TDigest>) {
@@ -271,18 +334,16 @@ class MergingDigest
         }
         add(m, w, size, data)
     }
-
-    private fun mergeNewValues() {
-        if (unmergedWeight > 0) {
+    private fun mergeNewValues(force: Boolean = false, compression: Double = this.compression) {
+        if (totalWeight == 0.0 && unmergedWeight == 0.0) {
+            // seriously nothing to do
+            return
+        }
+        if (force || unmergedWeight > 0) {
             // note that we run the merge in reverse every other merge to avoid left-to-right bias in merging
             merge(
-                tempMean,
-                tempWeight,
-                tempUsed,
-                tempData,
-                order,
-                unmergedWeight,
-                useAlternatingSort and (mergeCount % 2 == 1)
+                tempMean, tempWeight, tempUsed, tempData, order, unmergedWeight,
+                useAlternatingSort and (mergeCount % 2 == 1), compression
             )
             mergeCount++
             tempUsed = 0
@@ -295,13 +356,9 @@ class MergingDigest
     }
 
     private fun merge(
-        incomingMean: DoubleArray,
-        incomingWeight: DoubleArray,
-        incomingCount: Int,
-        incomingData: MutableList<MutableList<Double>>?,
-        incomingOrder: IntArray?,
-        unmergedWeight: Double,
-        runBackwards: Boolean
+        incomingMean: DoubleArray, incomingWeight: DoubleArray, incomingCount: Int,
+        incomingData: MutableList<MutableList<Double>>?, incomingOrder: IntArray?,
+        unmergedWeight: Double, runBackwards: Boolean, compression: Double
     ) {
         var incomingCount = incomingCount
         var incomingOrder = incomingOrder
@@ -326,12 +383,8 @@ class MergingDigest
         }
 
         totalWeight += unmergedWeight
-        var normalizer = compression / (2.0 * Math.PI * totalWeight)
-        if (useConservativeLimit) {
-            normalizer = normalizer / Math.log(totalWeight)
-        }
 
-        assert(incomingCount > 0)
+        assert(lastUsedCell + incomingCount > 0)
         lastUsedCell = 0
         mean[lastUsedCell] = incomingMean[incomingOrder[0]]
         weight[lastUsedCell] = incomingWeight[incomingOrder[0]]
@@ -341,25 +394,21 @@ class MergingDigest
             data!!.add(incomingData!![incomingOrder[0]])
         }
 
-        var k1 = 0.0
 
-        // weight will contain all zeros
-        var wLimit: Double
-        wLimit = totalWeight * integratedQ(k1 + 1)
+        // weight will contain all zeros after this loop
+
+        val normalizer = scale.normalizer(compression, totalWeight)
+        var k1 = scale.k(0.0, normalizer)
+        var wLimit = totalWeight * scale.q(k1 + 1, normalizer)
         for (i in 1 until incomingCount) {
             val ix = incomingOrder[i]
             val proposedWeight = weight[lastUsedCell] + incomingWeight[ix]
             val projectedW = wSoFar + proposedWeight
             val addThis: Boolean
             if (useWeightLimit) {
-                val z = proposedWeight * normalizer
                 val q0 = wSoFar / totalWeight
                 val q2 = (wSoFar + proposedWeight) / totalWeight
-                if (useConservativeLimit) {
-                    addThis = z <= q0 * (1 - q0) && z <= q2 * (1 - q2)
-                } else {
-                    addThis = z * z <= q0 * (1 - q0) && z * z <= q2 * (1 - q2)
-                }
+                addThis = proposedWeight <= totalWeight * Math.min(scale.max(q0, normalizer), scale.max(q2, normalizer))
             } else {
                 addThis = projectedW <= wLimit
             }
@@ -384,8 +433,8 @@ class MergingDigest
                 // didn't fit ... move to next output, copy out first centroid
                 wSoFar += weight[lastUsedCell]
                 if (!useWeightLimit) {
-                    k1 = integratedLocation(wSoFar / totalWeight, compression, totalWeight)
-                    wLimit = totalWeight * integratedQ(k1 + 1)
+                    k1 = scale.k(wSoFar / totalWeight, normalizer)
+                    wLimit = totalWeight * scale.q(k1 + 1, normalizer)
                 }
 
                 lastUsedCell++
@@ -418,8 +467,8 @@ class MergingDigest
         }
 
         if (totalWeight > 0) {
-            min =Math.min(min, mean[0])
-            max= Math.max(max, mean[lastUsedCell - 1])
+            min = Math.min(min, mean[0])
+            max = Math.max(max, mean[lastUsedCell - 1])
         }
     }
 
@@ -438,28 +487,19 @@ class MergingDigest
             n++
         }
 
-        var k1 = 0.0
+        val normalizer = scale.normalizer(publicCompression, totalWeight)
+        var k1 = scale.k(0.0, normalizer)
         var q = 0.0
         var left = 0.0
         var header = "\n"
         for (i in 0 until n) {
             val dq = w[i] / total
-            val k2 = integratedLocation(q + dq, compression, totalWeight)
+            val k2 = scale.k(q + dq, normalizer)
             q += dq / 2
             if (k2 - k1 > 1 && w[i] != 1.0) {
                 System.out.printf(
                     "%sOversize centroid at " + "%d, k0=%.2f, k1=%.2f, dk=%.2f, w=%.2f, q=%.4f, dq=%.4f, left=%.1f, current=%.2f maxw=%.2f\n",
-                    header,
-                    i,
-                    k1,
-                    k2,
-                    k2 - k1,
-                    w[i],
-                    q,
-                    dq,
-                    left,
-                    w[i],
-                    Math.PI * total / compression * Math.sqrt(q * (1 - q))
+                    header, i, k1, k2, k2 - k1, w[i], q, dq, left, w[i], totalWeight * scale.max(q, normalizer)
                 )
                 header = ""
                 badCount++
@@ -468,16 +508,7 @@ class MergingDigest
                 throw IllegalStateException(
                     String.format(
                         "Egregiously oversized centroid at " + "%d, k0=%.2f, k1=%.2f, dk=%.2f, w=%.2f, q=%.4f, dq=%.4f, left=%.1f, current=%.2f, maxw=%.2f\n",
-                        i,
-                        k1,
-                        k2,
-                        k2 - k1,
-                        w[i],
-                        q,
-                        dq,
-                        left,
-                        w[i],
-                        Math.PI * total / compression * Math.sqrt(q * (1 - q))
+                        i, k1, k2, k2 - k1, w[i], q, dq, left, w[i], totalWeight * scale.max(q, normalizer)
                     )
                 )
             }
@@ -490,19 +521,13 @@ class MergingDigest
     }
 
     /**
-     * Converts a k-scale value into a quantile. This is the inverse of [.integratedLocation].
-     * The virtue of using this is that sin is much cheaper than asin.
-     *
-     * @param k The k-index to be converted.
-     * @return The value of q.
+     * Merges any pending inputs and compresses the data down to the public setting.
+     * Note that this typically loses a bit of precision and thus isn't a thing to
+     * be doing all the time. It is best done only when we want to show results to
+     * the outside world.
      */
-    private fun integratedQ(k: Double): Double {
-        return (Math.sin(Math.min(k, compression) * Math.PI / compression - Math.PI / 2) + 1) / 2
-    }
-
-
     override fun compress() {
-        mergeNewValues()
+        mergeNewValues(true, publicCompression)
     }
 
     override fun size(): Long {
@@ -531,67 +556,117 @@ class MergingDigest
             }
         } else {
             val n = lastUsedCell
-            if (x <= min) {
+            if (x < min) {
                 return 0.0
             }
 
-            if (x >= max) {
+            if (x > max) {
                 return 1.0
             }
 
             // check for the left tail
-            if (x <= mean[0]) {
+            if (x < mean[0]) {
                 // note that this is different than mean[0] > min
                 // ... this guarantees we divide by non-zero number and interpolation works
                 return if (mean[0] - min > 0) {
-                    (x - min) / (mean[0] - min) * weight[0] / totalWeight / 2.0
+                    // must be a sample exactly at min
+                    if (x == min) {
+                        0.5 / totalWeight
+                    } else {
+                        (1 + (x - min) / (mean[0] - min) * (weight[0] / 2 - 1)) / totalWeight
+                    }
                 } else {
+                    // this should be redundant with the check x < min
                     0.0
                 }
             }
-            assert(x > mean[0])
+            assert(x >= mean[0])
 
             // and the right tail
-            if (x >= mean[n - 1]) {
-                return if (max - mean[n - 1] > 0) {
-                    1 - (max - x) / (max - mean[n - 1]) * weight[n - 1] / totalWeight / 2.0
+            if (x > mean[n - 1]) {
+                if (max - mean[n - 1] > 0) {
+                    if (x == max) {
+                        return 1 - 0.5 / totalWeight
+                    } else {
+                        // there has to be a single sample exactly at max
+                        val dq = (1 + (max - x) / (max - mean[n - 1]) * (weight[n - 1] / 2 - 1)) / totalWeight
+                        return 1 - dq
+                    }
                 } else {
-                    1.0
+                    return 1.0
                 }
             }
-            assert(x < mean[n - 1])
 
-            // we know that there are at least two centroids and x > mean[0] && x < mean[n-1]
-            // that means that there are either a bunch of consecutive centroids all equal at x
-            // or there are consecutive centroids, c0 <= x and c1 > x
-            var weightSoFar = weight[0] / 2
+            // we know that there are at least two centroids and mean[0] < x < mean[n-1]
+            // that means that there are either one or more consecutive centroids all at exactly x
+            // or there are consecutive centroids, c0 < x < c1
+            var weightSoFar = 0.0
             var it = 0
-            while (it < n) {
+            while (it < n - 1) {
+                // weightSoFar does not include weight[it] yet
                 if (mean[it] == x) {
-                    val w0 = weightSoFar
-                    while (it < n && mean[it + 1] == x) {
-                        weightSoFar += weight[it] + weight[it + 1]
+                    // we have one or more centroids == x, treat them as one
+                    // dw will accumulate the weight of all of the centroids at x
+                    var dw = 0.0
+                    while (it < n && mean[it] == x) {
+                        dw += weight[it]
                         it++
                     }
-                    return (w0 + weightSoFar) / 2.0 / totalWeight
-                }
-                if (mean[it] <= x && mean[it + 1] > x) {
+                    return (weightSoFar + dw / 2) / totalWeight
+                } else if (mean[it] <= x && x < mean[it + 1]) {
+                    // landed between centroids ... check for floating point madness
                     if (mean[it + 1] - mean[it] > 0) {
+                        // note how we handle singleton centroids here
+                        // the point is that for singleton centroids, we know that their entire
+                        // weight is exactly at the centroid and thus shouldn't be involved in
+                        // interpolation
+                        var leftExcludedW = 0.0
+                        var rightExcludedW = 0.0
+                        if (weight[it] == 1.0) {
+                            if (weight[it + 1] == 1.0) {
+                                // two singletons means no interpolation
+                                // left singleton is in, right is out
+                                return (weightSoFar + 1) / totalWeight
+                            } else {
+                                leftExcludedW = 0.5
+                            }
+                        } else if (weight[it + 1] == 1.0) {
+                            rightExcludedW = 0.5
+                        }
                         val dw = (weight[it] + weight[it + 1]) / 2
-                        return (weightSoFar + dw * (x - mean[it]) / (mean[it + 1] - mean[it])) / totalWeight
+
+                        // can't have double singleton (handled that earlier)
+                        assert(dw > 1)
+                        assert(leftExcludedW + rightExcludedW <= 0.5)
+
+                        // adjust endpoints for any singleton
+                        val left = mean[it]
+                        val right = mean[it + 1]
+
+                        val dwNoSingleton = dw - leftExcludedW - rightExcludedW
+
+                        // adjustments have only limited effect on endpoints
+                        assert(dwNoSingleton > dw / 2)
+                        assert(right - left > 0)
+                        val base = weightSoFar + weight[it] / 2 + leftExcludedW
+                        return (base + dwNoSingleton * (x - left) / (right - left)) / totalWeight
                     } else {
                         // this is simply caution against floating point madness
                         // it is conceivable that the centroids will be different
                         // but too near to allow safe interpolation
                         val dw = (weight[it] + weight[it + 1]) / 2
-                        return weightSoFar + dw / totalWeight
+                        return (weightSoFar + dw) / totalWeight
                     }
+                } else {
+                    weightSoFar += weight[it]
                 }
-                weightSoFar += (weight[it] + weight[it + 1]) / 2
                 it++
             }
-            // it should not be possible for the loop fall through
-            throw IllegalStateException("Can't happen ... loop fell through")
+            return if (x == mean[n - 1]) {
+                1 - 0.5 / totalWeight
+            } else {
+                throw IllegalStateException("Can't happen ... loop fell through")
+            }
         }
     }
 
@@ -601,10 +676,10 @@ class MergingDigest
         }
         mergeNewValues()
 
-        if (lastUsedCell == 0 && weight[lastUsedCell] == 0.0) {
+        if (lastUsedCell == 0) {
             // no centroids means no data, no way to get a quantile
             return java.lang.Double.NaN
-        } else if (lastUsedCell == 0) {
+        } else if (lastUsedCell == 1) {
             // with one data point, all quantiles lead to Rome
             return mean[0]
         }
@@ -615,24 +690,63 @@ class MergingDigest
         // if values were stored in a sorted array, index would be the offset we are interested in
         val index = q * totalWeight
 
-        // at the boundaries, we return min or max
-        if (index < weight[0] / 2) {
-            assert(weight[0] > 0)
-            return min + 2 * index / weight[0] * (mean[0] - min)
+        // beyond the boundaries, we return min or max
+        // usually, the first centroid will have unit weight so this will make it moot
+        if (index < 1) {
+            return min
         }
 
-        // in between we interpolate between centroids
+        // if the left centroid has more than one sample, we still know
+        // that one sample occurred at min so we can do some interpolation
+        if (weight[0] > 1 && index < weight[0] / 2) {
+            // there is a single sample at min so we interpolate with less weight
+            return min + (index - 1) / (weight[0] / 2 - 1) * (mean[0] - min)
+        }
+
+        // usually the last centroid will have unit weight so this test will make it moot
+        if (index > totalWeight - 1) {
+            return max
+        }
+
+        // if the right-most centroid has more than one sample, we still know
+        // that one sample occurred at max so we can do some interpolation
+        if (weight[n - 1] > 1 && totalWeight - index <= weight[n - 1] / 2) {
+            return max - (totalWeight - index - 1.0) / (weight[n - 1] / 2 - 1) * (max - mean[n - 1])
+        }
+
+        // in between extremes we interpolate between centroids
         var weightSoFar = weight[0] / 2
         for (i in 0 until n - 1) {
             val dw = (weight[i] + weight[i + 1]) / 2
             if (weightSoFar + dw > index) {
                 // centroids i and i+1 bracket our current point
-                val z1 = index - weightSoFar
-                val z2 = weightSoFar + dw - index
+
+                // check for unit weight
+                var leftUnit = 0.0
+                if (weight[i] == 1.0) {
+                    if (index - weightSoFar < 0.5) {
+                        // within the singleton's sphere
+                        return mean[i]
+                    } else {
+                        leftUnit = 0.5
+                    }
+                }
+                var rightUnit = 0.0
+                if (weight[i + 1] == 1.0) {
+                    if (weightSoFar + dw - index <= 0.5) {
+                        // no interpolation needed near singleton
+                        return mean[i + 1]
+                    }
+                    rightUnit = 0.5
+                }
+                val z1 = index - weightSoFar - leftUnit
+                val z2 = weightSoFar + dw - index - rightUnit
                 return weightedAverage(mean[i], z2, mean[i + 1], z1)
             }
             weightSoFar += dw
         }
+        // we handled singleton at end up above
+        assert(weight[n - 1] > 1)
         assert(index <= totalWeight)
         assert(index >= totalWeight - weight[n - 1] / 2)
 
@@ -644,6 +758,7 @@ class MergingDigest
     }
 
     override fun centroidCount(): Int {
+        mergeNewValues()
         return lastUsedCell
     }
 
@@ -678,7 +793,7 @@ class MergingDigest
     }
 
     override fun compression(): Double {
-        return compression
+        return publicCompression
     }
 
     override fun byteSize(): Int {
@@ -704,7 +819,7 @@ class MergingDigest
         buf.writeInt(Encoding.VERBOSE_ENCODING.code)
         buf.writeDouble(min)
         buf.writeDouble(max)
-        buf.writeDouble(compression)
+        buf.writeDouble(publicCompression)
         buf.writeInt(lastUsedCell)
         for (i in 0 until lastUsedCell) {
             buf.writeDouble(weight[i])
@@ -717,7 +832,7 @@ class MergingDigest
         buf.writeInt(Encoding.SMALL_ENCODING.code)    // 4
         buf.writeDouble(min)                          // + 8
         buf.writeDouble(max)                          // + 8
-        buf.writeFloat(compression.toFloat())           // + 4
+        buf.writeFloat(publicCompression.toFloat())           // + 4
         buf.writeShort(mean.size.toShort())           // + 2
         buf.writeShort(tempMean.size.toShort())       // + 2
         buf.writeShort(lastUsedCell.toShort())          // + 2 = 30
@@ -727,181 +842,21 @@ class MergingDigest
         }
     }
 
+    override fun toString(): String {
+        return ("MergingDigest"
+                + "-" + scaleFunction
+                + "-" + (if (useWeightLimit) "weight" else "kSize")
+                + "-" + (if (useAlternatingSort) "alternating" else "stable")
+                + "-" + if (useTwoLevelCompression) "twoLevel" else "oneLevel")
+    }
+
     companion object {
 
-        // if true, alternate upward and downward merge passes
-        var useAlternatingSort = false
-
-        // if useWeightLimit is false, this makes asin faster
-        internal var usePieceWiseApproximation = true
-
         // this forces centroid merging based on size limit rather than
-        // based on accumulated k-index. This is much faster since we
-        // never have to compute any sines or square roots
+        // based on accumulated k-index. This can be much faster since we
+        // scale functions are more expensive than the corresponding
+        // weight limits.
         var useWeightLimit = true
-
-        // the conservative limit limits centroids to
-        // \delta \log(N) (q/(1-q))
-        // the non-conservative limit is
-        // \delta \sqrt {q/(1-q)}
-        // the conservative limit makes the extreme centroids smaller to
-        // get more accuracy at the edges. Both options result in the
-        // same number of centroids ... it is just that the mass is
-        // distributed differently
-        var useConservativeLimit = true
-
-        /**
-         * Converts a quantile into a centroid scale value.  The centroid scale is nominally
-         * the number k of the centroid that a quantile point q should belong to.  Due to
-         * round-offs, however, we can't align things perfectly without splitting points
-         * and centroids.  We don't want to do that, so we have to allow for offsets.
-         * In the end, the criterion is that any quantile range that spans a centroid
-         * scale range more than one should be split across more than one centroid if
-         * possible.  This won't be possible if the quantile range refers to a single point
-         * or an already existing centroid.
-         *
-         *
-         * This mapping is steep near q=0 or q=1 so each centroid there will correspond to
-         * less q range.  Near q=0.5, the mapping is flatter so that centroids there will
-         * represent a larger chunk of quantiles.
-         *
-         * @param q           The quantile scale value to be mapped.
-         * @param compression
-         * @param totalWeight
-         * @return The centroid scale value corresponding to q.
-         */
-        fun integratedLocation(q: Double, compression: Double, totalWeight: Double): Double {
-            return if (!useConservativeLimit) {
-                compression * (asinApproximation(2 * q - 1) + Math.PI / 2) / Math.PI
-            } else {
-                // the k-scale for the conservative limit has infinite tails that we have to trim off
-                if (q < 1 / totalWeight) {
-                    0.0
-                } else if (1 - q < 1 / totalWeight) {
-                    1.0
-                } else {
-                    compression / 2 * (1 + Math.log(q / (1 - q)) / Math.log(totalWeight - 1))
-                }
-            }
-        }
-
-        internal fun asinApproximation(x: Double): Double {
-            if (usePieceWiseApproximation) {
-                if (x < 0) {
-                    return -asinApproximation(-x)
-                } else {
-                    // this approximation works by breaking that range from 0 to 1 into 5 regions
-                    // for all but the region nearest 1, rational polynomial models get us a very
-                    // good approximation of asin and by interpolating as we move from region to
-                    // region, we can guarantee continuity and we happen to get monotonicity as well.
-                    // for the values near 1, we just use Math.asin as our region "approximation".
-
-                    // cutoffs for models. Note that the ranges overlap. In the overlap we do
-                    // linear interpolation to guarantee the overall result is "nice"
-                    val c0High = 0.1
-                    val c1High = 0.55
-                    val c2Low = 0.5
-                    val c2High = 0.8
-                    val c3Low = 0.75
-                    val c3High = 0.9
-                    val c4Low = 0.87
-                    if (x > c3High) {
-                        return Math.asin(x)
-                    } else {
-                        // the models
-                        val m0 = doubleArrayOf(
-                            0.2955302411,
-                            1.2221903614,
-                            0.1488583743,
-                            0.2422015816,
-                            -0.3688700895,
-                            0.0733398445
-                        )
-                        val m1 = doubleArrayOf(
-                            -0.0430991920,
-                            0.9594035750,
-                            -0.0362312299,
-                            0.1204623351,
-                            0.0457029620,
-                            -0.0026025285
-                        )
-                        val m2 = doubleArrayOf(
-                            -0.034873933724,
-                            1.054796752703,
-                            -0.194127063385,
-                            0.283963735636,
-                            0.023800124916,
-                            -0.000872727381
-                        )
-                        val m3 = doubleArrayOf(
-                            -0.37588391875,
-                            2.61991859025,
-                            -2.48835406886,
-                            1.48605387425,
-                            0.00857627492,
-                            -0.00015802871
-                        )
-
-                        // the parameters for all of the models
-                        val vars = doubleArrayOf(1.0, x, x * x, x * x * x, 1 / (1 - x), 1.0 / (1 - x) / (1 - x))
-
-                        // raw grist for interpolation coefficients
-                        val x0 = bound((c0High - x) / c0High)
-                        val x1 = bound((c1High - x) / (c1High - c2Low))
-                        val x2 = bound((c2High - x) / (c2High - c3Low))
-                        val x3 = bound((c3High - x) / (c3High - c4Low))
-
-                        // interpolation coefficients
-
-                        val mix1 = (1 - x0) * x1
-                        val mix2 = (1 - x1) * x2
-                        val mix3 = (1 - x2) * x3
-                        val mix4 = 1 - x3
-
-                        // now mix all the results together, avoiding extra evaluations
-                        var r = 0.0
-                        if (x0 > 0) {
-                            r += x0 * eval(m0, vars)
-                        }
-                        if (mix1 > 0) {
-                            r += mix1 * eval(m1, vars)
-                        }
-                        if (mix2 > 0) {
-                            r += mix2 * eval(m2, vars)
-                        }
-                        if (mix3 > 0) {
-                            r += mix3 * eval(m3, vars)
-                        }
-                        if (mix4 > 0) {
-                            // model 4 is just the real deal
-                            r += mix4 * Math.asin(x)
-                        }
-                        return r
-                    }
-                }
-            } else {
-                return Math.asin(x)
-            }
-        }
-
-        private fun eval(model: DoubleArray, vars: DoubleArray): Double {
-            var r = 0.0
-            for (i in model.indices) {
-                r += model[i] * vars[i]
-            }
-            return r
-        }
-
-        private fun bound(v: Double): Double {
-            return if (v <= 0) {
-                0.0
-            } else if (v >= 1) {
-                1.0
-            } else {
-                v
-            }
-        }
-
         fun fromBytes(buf: Input): MergingDigest {
             val encoding = buf.readInt()
             if (encoding == Encoding.VERBOSE_ENCODING.code) {

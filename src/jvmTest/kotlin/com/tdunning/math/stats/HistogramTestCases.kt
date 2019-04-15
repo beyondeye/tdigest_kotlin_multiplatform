@@ -180,7 +180,7 @@ abstract class HistogramTestCases {
         }
     }
 
-    internal fun testBins(baseBinIndex: Int, bigBinIndex: Int, histogram: Histogram) {
+    internal fun testBinSizes(baseBinIndex: Int, bigBinIndex: Int, histogram: Histogram) {
         assertEquals(baseBinIndex.toLong(), histogram.bucket(10.01e-3).toLong())
         assertEquals(baseBinIndex.toLong(), histogram.bucket(10e-3).toLong())
         assertEquals(bigBinIndex.toLong(), histogram.bucket(2.235).toLong())

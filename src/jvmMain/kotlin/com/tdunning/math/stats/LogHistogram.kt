@@ -73,6 +73,20 @@ class LogHistogram @JvmOverloads constructor(min: Double, max: Double, epsilonFa
     internal override fun readObject(`in`: ObjectInputStream) {
 
     }
+    override fun add(others: Iterable<Histogram>) {
+        for (other in others) {
+            if (this.javaClass != other.javaClass) {
+                throw IllegalArgumentException(String.format("Cannot add %s to LogHistogram", others.javaClass))
+            }
+            val actual = other as LogHistogram
+            if (actual.min != min || actual.max != max || actual.counts.size != counts.size) {
+                throw IllegalArgumentException("Can only merge histograms with identical bounds and precision")
+            }
+            for (i in counts.indices) {
+                counts[i] += other.counts[i]
+            }
+        }
+    }
 
     companion object {
 

@@ -35,6 +35,7 @@ class AVLGroupTreeTest : AbstractTest() {
         val x = AVLGroupTree(false)
         Assert.assertEquals(IntAVLTree.NIL.toLong(), x.floor(34.0).toLong())
         Assert.assertEquals(IntAVLTree.NIL.toLong(), x.first().toLong())
+        Assert.assertEquals(IntAVLTree.NIL.toLong(), x.last().toLong())
         Assert.assertEquals(0, x.size.toLong())
         Assert.assertEquals(0, x.sum().toLong())
 
@@ -85,12 +86,15 @@ class AVLGroupTreeTest : AbstractTest() {
             x.add(RandomizedTest.randomDouble(), RandomizedTest.randomIntBetween(1, 10), null)
         }
         var sum: Long = 0
+        var last: Long = -1
         var node = x.first()
         while (node != IntAVLTree.NIL) {
             Assert.assertEquals(sum, x.headSum(node))
             sum += x.count(node).toLong()
+            last = x.count(node).toLong()
             node = x.next(node)
         }
+        Assert.assertEquals(last, x.count(x.last()).toLong())
     }
 
     @Test

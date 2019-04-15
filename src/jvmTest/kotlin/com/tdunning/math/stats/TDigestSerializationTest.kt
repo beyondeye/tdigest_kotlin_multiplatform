@@ -26,6 +26,7 @@ import java.util.Random
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import java.io.*
 
 /**
  * Verifies that the various TDigest implementations can be serialized.
@@ -34,25 +35,53 @@ import org.junit.Assert.assertNotNull
  */
 class TDigestSerializationTest {
     @Test
+    @Throws(IOException::class)
     fun testMergingDigest() {
         assertSerializesAndDeserializes(MergingDigest(100.0))
     }
 
     @Test
+    @Throws(IOException::class)
     fun testAVLTreeDigest() {
         assertSerializesAndDeserializes(AVLTreeDigest(100.0))
     }
 
+    @Throws(IOException::class)
     private fun <T : TDigest> assertSerializesAndDeserializes(tdigest: T) {
-        assertNotNull(SerializationUtils.deserialize(SerializationUtils.serialize(tdigest)))
+        assertNotNull(deserialize(serialize(tdigest)))
 
         val gen = Random()
         for (i in 0..99999) {
             tdigest.add(gen.nextDouble())
         }
-        val roundTrip = SerializationUtils.deserialize<T>(SerializationUtils.serialize(tdigest))
+        val roundTrip = deserialize<T>(serialize(tdigest))
 
         assertTDigestEquals(tdigest, roundTrip)
+    }
+
+    @Throws(IOException::class)
+    private fun serialize(obj: Serializable): ByteArray {
+        val baos = ByteArrayOutputStream(5120)
+        ObjectOutputStream(baos).use { out ->
+            out.writeObject(obj)
+            return baos.toByteArray()
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun <T> deserialize(objectData: ByteArray): T {
+        try {
+            ObjectInputStream(ByteArrayInputStream(objectData)).use { `in` ->
+                return `in`.readObject() as T
+            }
+        } catch (e: ClassCastException) {
+            throw IOException(e)
+        } catch (e: ClassNotFoundException) {
+            throw IOException(e)
+        } catch (e: IOException) {
+            throw IOException(e)
+        }
+
     }
 
     private fun assertTDigestEquals(t1: TDigest, t2: TDigest) {

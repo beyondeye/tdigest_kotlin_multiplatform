@@ -19,6 +19,6 @@ package com.tdunning.math.stats
 
 class BigCountTreeDigest : BigCount() {
     override fun createDigest(): TDigest {
-        return AVLTreeDigest(20.0)
+        return AVLTreeDigest(100.0)
     }
 }

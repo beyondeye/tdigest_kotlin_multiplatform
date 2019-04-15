@@ -17,10 +17,13 @@
 
 package com.tdunning.math.stats
 
+import java.util.Random
+
 /**
  * Static sorting methods
  */
 object Sort {
+    private val prng = Random() // for choosing pivots during quicksort
 
     /**
      * Quick sort using an index array.  On return,
@@ -44,11 +47,11 @@ object Sort {
      * @param n      The number of values to sort
      */
     fun sort(order: IntArray, values: DoubleArray, start: Int = 0, n: Int = values.size) {
-        for (i in 0 until n) {
+        for (i in start until start + n) {
             order[i] = i
         }
-        quickSort(order, values, start, n, 8)
-        insertionSort(order, values, start, n, 8)
+        quickSort(order, values, start, start + n, 64)
+        insertionSort(order, values, start, start + n, 64)
     }
 
     /**
@@ -66,53 +69,9 @@ object Sort {
         // the while loop implements tail-recursion to avoid excessive stack calls on nasty cases
         while (end - start > limit) {
 
-            // median of three values for the pivot
-            val a = start
-            val b = (start + end) / 2
-            val c = end - 1
-
-            val pivotIndex: Int
-            val pivotValue: Double
-            val va = values[order[a]]
-            val vb = values[order[b]]
-            val vc = values[order[c]]
-
-            if (va > vb) {
-                if (vc > va) {
-                    // vc > va > vb
-                    pivotIndex = a
-                    pivotValue = va
-                } else {
-                    // va > vb, va >= vc
-                    if (vc < vb) {
-                        // va > vb > vc
-                        pivotIndex = b
-                        pivotValue = vb
-                    } else {
-                        // va >= vc >= vb
-                        pivotIndex = c
-                        pivotValue = vc
-                    }
-                }
-            } else {
-                // vb >= va
-                if (vc > vb) {
-                    // vc > vb >= va
-                    pivotIndex = b
-                    pivotValue = vb
-                } else {
-                    // vb >= va, vb >= vc
-                    if (vc < va) {
-                        // vb >= va > vc
-                        pivotIndex = a
-                        pivotValue = va
-                    } else {
-                        // vb >= vc >= va
-                        pivotIndex = c
-                        pivotValue = vc
-                    }
-                }
-            }
+            // pivot by a random element
+            val pivotIndex = start + prng.nextInt(end - start)
+            val pivotValue = values[order[pivotIndex]]
 
             // move pivot to beginning of array
             swap(order, start, pivotIndex)
@@ -210,7 +169,7 @@ object Sort {
      */
     fun sort(key: DoubleArray, start: Int, n: Int, vararg values: DoubleArray) {
         quickSort(key, values, start, start + n, 8)
-        insertionSort(key, values, start, n, 8)
+        insertionSort(key, values, start, start + n, 8)
     }
 
     /**
@@ -362,15 +321,19 @@ object Sort {
      * @param limit  The largest amount of disorder
      */
     private fun insertionSort(key: DoubleArray, values: Array<out DoubleArray>, start: Int, end: Int, limit: Int) {
+        // loop invariant: all values start ... i-1 are ordered
         for (i in start + 1 until end) {
             val v = key[i]
             val m = Math.max(i - limit, start)
             for (j in i downTo m) {
-                if (j == 0 || key[j - 1] <= v) {
+                if (j == m || key[j - 1] <= v) {
                     if (j < i) {
                         System.arraycopy(key, j, key, j + 1, i - j)
+                        key[j] = v
                         for (value in values) {
+                            val tmp = value[i]
                             System.arraycopy(value, j, value, j + 1, i - j)
+                            value[j] = tmp
                         }
                     }
                     break
