@@ -21,7 +21,7 @@ package com.tdunning.math.stats
 /**
  * A tree of t-digest centroids.
  */
-internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) : AbstractCollection<Centroid>()
+internal class AVLGroupTree  constructor(record: Boolean = false) : AbstractCollection<Centroid>()
 //    ,Serializable
 {
 

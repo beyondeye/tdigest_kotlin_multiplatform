@@ -135,7 +135,8 @@ abstract class TDigest
 
     fun setScaleFunction(scaleFunction: ScaleFunction) {
         if (scaleFunction.toString().endsWith("NO_NORM")) {
-            throw IllegalArgumentException("Can't use $scaleFunction as scale with ${this.javaClass}")
+//            throw IllegalArgumentException("Can't use $scaleFunction as scale with ${this.javaClass}")
+            throw IllegalArgumentException("Can't use $scaleFunction as scale ")
         }
         this.scale = scaleFunction
     }

@@ -31,7 +31,7 @@ class Centroid private constructor(record: Boolean) : Comparable<Centroid>
 
     // The ID is transient because it must be unique within a given JVM. A new
     // ID should be generated from uniqueCount when a Centroid is deserialized.
-    @Transient
+//    @Transient
     private var id: Int = 0
 
     private var actualData: MutableList<Double>? = null
@@ -128,7 +128,12 @@ class Centroid private constructor(record: Boolean) : Comparable<Centroid>
                 actualData!!.add(x)
             }
         }
-        centroid = AbstractTDigest.weightedAverage(centroid, count.toDouble(), x, w.toDouble())
+        centroid = AbstractTDigest.weightedAverage(
+            centroid,
+            count.toDouble(),
+            x,
+            w.toDouble()
+        )
         count += w
     }
 

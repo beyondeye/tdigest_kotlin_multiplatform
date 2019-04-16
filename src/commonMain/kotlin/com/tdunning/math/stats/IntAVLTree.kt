@@ -30,7 +30,7 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
 {
 
     private val nodeAllocator: NodeAllocator
-    private var root: Int = 0
+    private var troot: Int = 0 //*DARIO* renamed to troot because cannot use this field name in javascript
     private var parent: IntArray
     private var left: IntArray
     private var right: IntArray
@@ -38,7 +38,7 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
 
     init {
         nodeAllocator = NodeAllocator()
-        root = NIL
+        troot = NIL
         parent = IntArray(initialCapacity)
         left = IntArray(initialCapacity)
         right = IntArray(initialCapacity)
@@ -49,7 +49,7 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
      * Return the current root of the tree.
      */
     fun root(): Int {
-        return root
+        return troot
     }
 
     /**
@@ -196,14 +196,14 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
      * to the tree or <tt>false</tt> if the node was merged into an existing node.
      */
     fun add(): Boolean {
-        if (root == NIL) {
-            root = nodeAllocator.newNode()
-            copy(root)
-            fixAggregates(root)
+        if (troot == NIL) {
+            troot = nodeAllocator.newNode()
+            copy(troot)
+            fixAggregates(troot)
             return true
         } else {
-            var node = root
-            mpassert(parent(root) == NIL)
+            var node = troot
+            mpassert(parent(troot) == NIL)
             var parent: Int
             var cmp: Int
             do {
@@ -243,7 +243,7 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
      * Find a node in this tree.
      */
     fun find(): Int {
-        var node = root
+        var node = troot
         while (node != NIL) {
             val cmp = compare(node)
             if (cmp < 0) {
@@ -302,9 +302,9 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
 
         if (child == NIL) {
             // no children
-            if (node == root) {
+            if (node == troot) {
                 mpassert(size() == 1) { size() }
-                root = NIL
+                troot = NIL
             } else {
                 if (node == left(parent)) {
                     left(parent, NIL)
@@ -315,9 +315,9 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
             }
         } else {
             // one single child
-            if (node == root) {
+            if (node == troot) {
                 mpassert(size() == 2)
-                root = child
+                troot = child
             } else if (node == left(parent)) {
                 left(parent, child)
             } else {
@@ -349,8 +349,8 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
                 right(parent1, node2)
             }
         } else {
-            mpassert(root == node1)
-            root = node2
+            mpassert(troot == node1)
+            troot = node2
         }
         if (parent2 != NIL) {
             if (node2 == left(parent2)) {
@@ -360,8 +360,8 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
                 right(parent2, node1)
             }
         } else {
-            mpassert(root == node2)
-            root = node1
+            mpassert(troot == node2)
+            troot = node1
         }
         parent(node1, parent2)
         parent(node2, parent1)
@@ -444,7 +444,7 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
         val p = parent(n)
         parent(r, p)
         if (p == NIL) {
-            root = r
+            troot = r
         } else if (left(p) == n) {
             left(p, r)
         } else {
@@ -468,7 +468,7 @@ internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
         val p = parent(n)
         parent(l, p)
         if (p == NIL) {
-            root = l
+            troot = l
         } else if (right(p) == n) {
             right(p, l)
         } else {

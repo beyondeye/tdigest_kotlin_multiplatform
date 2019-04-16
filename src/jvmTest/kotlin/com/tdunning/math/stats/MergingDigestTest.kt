@@ -18,16 +18,12 @@
 package com.tdunning.math.stats
 
 import com.carrotsearch.randomizedtesting.annotations.Seed
-import com.google.common.collect.Lists
 import kotlinx.io.core.Input
 import org.apache.mahout.common.RandomUtils
 import org.junit.Before
 import org.junit.BeforeClass
-import org.junit.Test
 
 import java.io.IOException
-import java.nio.ByteBuffer
-import java.util.Random
 
 //to freeze the tests with a particular seed, put the seed on the next line
 //@Seed("84527677CF03B566:A6FF596BDDB2D59D")

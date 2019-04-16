@@ -17,11 +17,7 @@
 
 package com.tdunning.math.stats
 
-import org.apache.commons.lang3.SerializationUtils
 import org.junit.Test
-
-import java.nio.ByteBuffer
-import java.util.Random
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

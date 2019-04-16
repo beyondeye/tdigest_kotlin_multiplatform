@@ -18,8 +18,6 @@
 package com.tdunning.math.stats
 
 import com.carrotsearch.randomizedtesting.RandomizedTest
-import java.nio.ByteBuffer
-import java.util.Random
 
 import org.junit.Test
 

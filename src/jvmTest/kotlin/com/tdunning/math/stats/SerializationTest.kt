@@ -21,7 +21,6 @@ import kotlinx.io.core.buildPacket
 import org.junit.Test
 
 import java.nio.BufferUnderflowException
-import java.nio.ByteBuffer
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

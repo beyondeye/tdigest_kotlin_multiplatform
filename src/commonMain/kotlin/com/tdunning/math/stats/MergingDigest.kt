@@ -82,7 +82,7 @@ class MergingDigest
  * @param compression Compression factor for t-digest.  Same as 1/\delta in the paper.
  * @param bufferSize  How many samples to retain before merging.
  */// we can guarantee that we only need 2 * ceiling(compression).
-@JvmOverloads constructor(compression: Double, bufferSize: Int = -1, size: Int = -1) : AbstractTDigest() {
+ constructor(compression: Double, bufferSize: Int = -1, size: Int = -1) : AbstractTDigest() {
     private var mergeCount = 0
 
     private val publicCompression: Double
@@ -497,19 +497,15 @@ class MergingDigest
             val k2 = scale.k(q + dq, normalizer)
             q += dq / 2
             if (k2 - k1 > 1 && w[i] != 1.0) {
-                System.out.printf(
-                    "%sOversize centroid at " + "%d, k0=%.2f, k1=%.2f, dk=%.2f, w=%.2f, q=%.4f, dq=%.4f, left=%.1f, current=%.2f maxw=%.2f\n",
-                    header, i, k1, k2, k2 - k1, w[i], q, dq, left, w[i], totalWeight * scale.max(q, normalizer)
+                println(
+                    "${header}Oversize centroid at $i, k0=$k1, k1=$k2, dk=${k2-k1}, w=${w[i]}, q=$q, dq=$dq, left=$left, current=${w[i]} maxw=${scale.max(q, normalizer)}"
                 )
                 header = ""
                 badCount++
             }
             if (k2 - k1 > 4 && w[i] != 1.0) {
                 throw IllegalStateException(
-                    String.format(
-                        "Egregiously oversized centroid at " + "%d, k0=%.2f, k1=%.2f, dk=%.2f, w=%.2f, q=%.4f, dq=%.4f, left=%.1f, current=%.2f, maxw=%.2f\n",
-                        i, k1, k2, k2 - k1, w[i], q, dq, left, w[i], totalWeight * scale.max(q, normalizer)
-                    )
+                    "Egregiously oversized centroid at $i, k0=$k1, k1=$k2, dk=${k2-k1}, w=${w[i]}, q=$q, dq=$dq, left=$left, current=${w[i]} maxw=${scale.max(q, normalizer)}"
                 )
             }
             q += dq / 2
@@ -775,7 +771,11 @@ class MergingDigest
                     }
 
                     override fun next(): Centroid {
-                        val rc = Centroid(mean[i], weight[i].toInt(), if (data != null) data!![i] else null)
+                        val rc = Centroid(
+                            mean[i],
+                            weight[i].toInt(),
+                            if (data != null) data!![i] else null
+                        )
                         i++
                         return rc
                     }

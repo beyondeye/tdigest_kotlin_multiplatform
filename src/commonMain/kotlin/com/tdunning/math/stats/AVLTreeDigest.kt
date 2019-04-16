@@ -18,6 +18,7 @@
 package com.tdunning.math.stats
 
 import kotlinx.io.core.*
+import kotlin.math.abs
 
 class AVLTreeDigest  : AbstractTDigest {
     private val compression: Double
@@ -110,7 +111,7 @@ class AVLTreeDigest  : AbstractTDigest {
             var n = 0.0
             var neighbor = start
             while (neighbor != lastNeighbor) {
-                mpassert(minDistance == kotlin.math.abs(summary!!.mean(neighbor) - x))
+                mpassert(minDistance == abs(summary!!.mean(neighbor) - x))
                 val q0 = summary!!.headSum(neighbor).toDouble() / count
                 val q1 = q0 + summary!!.count(neighbor).toDouble() / count
                 val k = count * kotlin.math.min(scale.max(q0, compression, count.toDouble()), scale.max(q1, compression, count.toDouble()))
@@ -141,7 +142,12 @@ class AVLTreeDigest  : AbstractTDigest {
                         d.addAll(data!!)
                     }
                 }
-                centroid = weightedAverage(centroid, count.toDouble(), x, w.toDouble())
+                centroid = weightedAverage(
+                    centroid,
+                    count.toDouble(),
+                    x,
+                    w.toDouble()
+                )
                 count += w
                 summary!!.update(closest, centroid, count, d, false)
             }
@@ -175,7 +181,12 @@ class AVLTreeDigest  : AbstractTDigest {
                 if (w0 + w1 > kotlin.math.min(k0, k1)) {
                     break
                 } else {
-                    val mean = weightedAverage(summary!!.mean(node), w0.toDouble(), summary!!.mean(after), w1.toDouble())
+                    val mean = weightedAverage(
+                        summary!!.mean(node),
+                        w0.toDouble(),
+                        summary!!.mean(after),
+                        w1.toDouble()
+                    )
                     val d1 = summary!!.data(node)
                     val d2 = summary!!.data(after)
                     if (d1 != null && d2 != null) {
@@ -415,7 +426,12 @@ class AVLTreeDigest  : AbstractTDigest {
         if (index < weightSoFar) {
             // we know that there was a sample exactly at min so we exclude that
             // from the interpolation
-            return weightedAverage(min, weightSoFar - index, values.mean(currentNode), index - 1)
+            return weightedAverage(
+                min,
+                weightSoFar - index,
+                values.mean(currentNode),
+                index - 1
+            )
         }
         for (i in 0 until values.size - 1) {
             val nextNode = values.next(currentNode)
@@ -449,7 +465,12 @@ class AVLTreeDigest  : AbstractTDigest {
                 // we interpolate, but the weights are diminished if singletons are present
                 val w1 = index - weightSoFar - leftExclusion
                 val w2 = weightSoFar + dw - index - rightExclusion
-                return weightedAverage(values.mean(currentNode), w2, values.mean(nextNode), w1)
+                return weightedAverage(
+                    values.mean(currentNode),
+                    w2,
+                    values.mean(nextNode),
+                    w1
+                )
             }
             weightSoFar += dw
             currentNode = nextNode

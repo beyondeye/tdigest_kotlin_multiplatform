@@ -21,9 +21,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 import java.io.FileNotFoundException
-import java.io.PrintStream
 import java.io.PrintWriter
-import java.io.UnsupportedEncodingException
 import java.util.*
 
 
