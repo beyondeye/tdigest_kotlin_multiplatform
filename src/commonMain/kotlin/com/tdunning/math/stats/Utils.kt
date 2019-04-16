@@ -6,4 +6,7 @@ object Utils {
 
     fun arraycopy(src: IntArray, srcPos: Int, dest: IntArray, destPos: Int, length: Int) =
         src.copyInto(dest, destPos, srcPos, srcPos + length)
+
+    fun arraycopy(src: LongArray, srcPos: Int, dest: LongArray, destPos: Int, length: Int) =
+        src.copyInto(dest, destPos, srcPos, srcPos + length)
 }

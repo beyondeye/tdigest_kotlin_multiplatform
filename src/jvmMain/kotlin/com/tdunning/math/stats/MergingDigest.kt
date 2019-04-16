@@ -278,10 +278,10 @@ class MergingDigest
         if (m.size < count + lastUsedCell) {
             // make room to add existing centroids
             val m1 = DoubleArray(count + lastUsedCell)
-            System.arraycopy(m, 0, m1, 0, count)
+            Utils.arraycopy(m, 0, m1, 0, count)
             m = m1
             val w1 = DoubleArray(count + lastUsedCell)
-            System.arraycopy(w, 0, w1, 0, count)
+            Utils.arraycopy(w, 0, w1, 0, count)
             w = w1
         }
         var total = 0.0
@@ -312,8 +312,8 @@ class MergingDigest
         var offset = 0
         for (other in others) {
             if (other is MergingDigest) {
-                System.arraycopy(other.mean, 0, m, offset, other.lastUsedCell)
-                System.arraycopy(other.weight, 0, w, offset, other.lastUsedCell)
+                Utils.arraycopy(other.mean, 0, m, offset, other.lastUsedCell)
+                Utils.arraycopy(other.weight, 0, w, offset, other.lastUsedCell)
                 if (data != null) {
                     for (centroid in other.centroids()) {
                         data.add(centroid.data()!!)
@@ -362,8 +362,8 @@ class MergingDigest
     ) {
         var incomingCount = incomingCount
         var incomingOrder = incomingOrder
-        System.arraycopy(mean, 0, incomingMean, incomingCount, lastUsedCell)
-        System.arraycopy(weight, 0, incomingWeight, incomingCount, lastUsedCell)
+        Utils.arraycopy(mean, 0, incomingMean, incomingCount, lastUsedCell)
+        Utils.arraycopy(weight, 0, incomingWeight, incomingCount, lastUsedCell)
         incomingCount += lastUsedCell
 
         if (incomingData != null) {

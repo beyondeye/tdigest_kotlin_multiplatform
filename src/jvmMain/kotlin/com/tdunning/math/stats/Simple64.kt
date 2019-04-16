@@ -392,7 +392,7 @@ class Simple64 {
                 reset()
 
                 // save leftovers:
-                System.arraycopy(pending, consumed, pending, 0, leftover)
+                Utils.arraycopy(pending, consumed, pending, 0, leftover)
                 inputCount = leftover
 
                 out[0] = s9
