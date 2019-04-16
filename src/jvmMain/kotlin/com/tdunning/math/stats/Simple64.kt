@@ -99,7 +99,7 @@ class Simple64 {
                 //System.out.println("  FLUSH count=" + inputCompressable);
 
                 // nocommit -- it should always be > 0... right??
-                assert(inputCompressable > 0)
+                mpassert(inputCompressable > 0)
 
                 // Check whether a bigger number of bits can be used:
                 while (inputCompressable * (minBits + 1) <= NUM_DATA_BITS) {
@@ -362,14 +362,14 @@ class Simple64 {
                         consumed = 60
                     }
                     else -> {
-                        assert(false)
+                        mpassert(false)
                         s9 = 0
                         consumed = 60
                     }
                 }//throw new Error("S98b.compressSingle internal error: unknown minBits: " + minBits);
 
                 val leftover = inputCount - consumed
-                assert(leftover >= 0) { "consumed=$consumed vs $inputCompressable" }
+                mpassert(leftover >= 0) { "consumed=$consumed vs $inputCompressable" }
 
                 /*
         for(int x=0;x<consumed;x++) {
@@ -381,9 +381,9 @@ class Simple64 {
         {
         int[] test = new int[consumed];
         int ct = decompressSingle(s9, test, 0);
-        assert ct == consumed;
+        mpassert ct == consumed;
         for(int x=0;x<ct;x++) {
-        assert test[x] == pending[x];
+        mpassert test[x] == pending[x];
         }
         }
         */

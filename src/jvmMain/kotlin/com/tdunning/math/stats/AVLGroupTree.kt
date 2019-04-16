@@ -296,7 +296,7 @@ internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) :
     }
 
     private fun checkAggregates(node: Int) {
-        assert(
+        mpassert(
             aggregatedCounts!![node] == counts!![node] + aggregatedCounts!![tree.left(node)] + aggregatedCounts!![tree.right(
                 node
             )]

@@ -325,7 +325,7 @@ class MergingDigest
                     m[offset] = centroid.mean()
                     w[offset] = centroid.count().toDouble()
                     if (isRecording) {
-                        assert(data != null)
+                        mpassert(data != null)
                         data!!.add(centroid.data()!!)
                     }
                     offset++
@@ -368,7 +368,7 @@ class MergingDigest
 
         if (incomingData != null) {
             for (i in 0 until lastUsedCell) {
-                assert(data != null)
+                mpassert(data != null)
                 incomingData.add(data!![i])
             }
             data = mutableListOf()
@@ -384,13 +384,13 @@ class MergingDigest
 
         totalWeight += unmergedWeight
 
-        assert(lastUsedCell + incomingCount > 0)
+        mpassert(lastUsedCell + incomingCount > 0)
         lastUsedCell = 0
         mean[lastUsedCell] = incomingMean[incomingOrder[0]]
         weight[lastUsedCell] = incomingWeight[incomingOrder[0]]
         var wSoFar = 0.0
         if (data != null) {
-            assert(incomingData != null)
+            mpassert(incomingData != null)
             data!!.add(incomingData!![incomingOrder[0]])
         }
 
@@ -425,8 +425,8 @@ class MergingDigest
                     while (data!!.size <= lastUsedCell) {
                         data!!.add(mutableListOf())
                     }
-                    assert(incomingData != null)
-                    assert(data!![lastUsedCell] !== incomingData!![ix])
+                    mpassert(incomingData != null)
+                    mpassert(data!![lastUsedCell] !== incomingData!![ix])
                     data!![lastUsedCell].addAll(incomingData!![ix])
                 }
             } else {
@@ -443,8 +443,8 @@ class MergingDigest
                 incomingWeight[ix] = 0.0
 
                 if (data != null) {
-                    assert(incomingData != null)
-                    assert(data!!.size == lastUsedCell)
+                    mpassert(incomingData != null)
+                    mpassert(data!!.size == lastUsedCell)
                     data!!.add(incomingData!![ix])
                 }
             }
@@ -457,7 +457,7 @@ class MergingDigest
         for (i in 0 until lastUsedCell) {
             sum += weight[i]
         }
-        assert(sum == totalWeight)
+        mpassert(sum == totalWeight)
         if (runBackwards) {
             Sort.reverse(mean, 0, lastUsedCell)
             Sort.reverse(weight, 0, lastUsedCell)
@@ -580,7 +580,7 @@ class MergingDigest
                     0.0
                 }
             }
-            assert(x >= mean[0])
+            mpassert(x >= mean[0])
 
             // and the right tail
             if (x > mean[n - 1]) {
@@ -636,8 +636,8 @@ class MergingDigest
                         val dw = (weight[it] + weight[it + 1]) / 2
 
                         // can't have double singleton (handled that earlier)
-                        assert(dw > 1)
-                        assert(leftExcludedW + rightExcludedW <= 0.5)
+                        mpassert(dw > 1)
+                        mpassert(leftExcludedW + rightExcludedW <= 0.5)
 
                         // adjust endpoints for any singleton
                         val left = mean[it]
@@ -646,8 +646,8 @@ class MergingDigest
                         val dwNoSingleton = dw - leftExcludedW - rightExcludedW
 
                         // adjustments have only limited effect on endpoints
-                        assert(dwNoSingleton > dw / 2)
-                        assert(right - left > 0)
+                        mpassert(dwNoSingleton > dw / 2)
+                        mpassert(right - left > 0)
                         val base = weightSoFar + weight[it] / 2 + leftExcludedW
                         return (base + dwNoSingleton * (x - left) / (right - left)) / totalWeight
                     } else {
@@ -746,9 +746,9 @@ class MergingDigest
             weightSoFar += dw
         }
         // we handled singleton at end up above
-        assert(weight[n - 1] > 1)
-        assert(index <= totalWeight)
-        assert(index >= totalWeight - weight[n - 1] / 2)
+        mpassert(weight[n - 1] > 1)
+        mpassert(index <= totalWeight)
+        mpassert(index >= totalWeight - weight[n - 1] / 2)
 
         // weightSoFar = totalWeight - weight[n-1]/2 (very nearly)
         // so we interpolate out to max value ever seen

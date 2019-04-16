@@ -84,7 +84,7 @@ class AVLTreeDigest  : AbstractTDigest {
         }
 
         if (start == IntAVLTree.NIL) { // empty summary
-            assert(summary!!.size == 0)
+            mpassert(summary!!.size == 0)
             summary!!.add(x, w, data)
             count = w.toLong()
         } else {
@@ -110,7 +110,7 @@ class AVLTreeDigest  : AbstractTDigest {
             var n = 0.0
             var neighbor = start
             while (neighbor != lastNeighbor) {
-                assert(minDistance == kotlin.math.abs(summary!!.mean(neighbor) - x))
+                mpassert(minDistance == kotlin.math.abs(summary!!.mean(neighbor) - x))
                 val q0 = summary!!.headSum(neighbor).toDouble() / count
                 val q1 = q0 + summary!!.count(neighbor).toDouble() / count
                 val k = count * kotlin.math.min(scale.max(q0, compression, count.toDouble()), scale.max(q1, compression, count.toDouble()))
@@ -231,7 +231,7 @@ class AVLTreeDigest  : AbstractTDigest {
             } else if (x == min) {
                 return 0.5 / size()
             }
-            assert(x > min)
+            mpassert(x > min)
 
             if (x > max) {
                 return 1.0
@@ -239,7 +239,7 @@ class AVLTreeDigest  : AbstractTDigest {
                 val n = size()
                 return (n - 0.5) / n
             }
-            assert(x < max)
+            mpassert(x < max)
 
             val first = values.first()
             val firstMean = values.mean(first)
@@ -252,9 +252,9 @@ class AVLTreeDigest  : AbstractTDigest {
             if (x < max && x > lastMean) {
                 return 1 - interpolateTail(values, x, last, lastMean, max)
             }
-            assert(values.size >= 2)
-            assert(x >= firstMean)
-            assert(x <= lastMean)
+            mpassert(values.size >= 2)
+            mpassert(x >= firstMean)
+            mpassert(x <= lastMean)
 
             // we scan a across the centroids
             val it = values.iterator()
@@ -265,22 +265,22 @@ class AVLTreeDigest  : AbstractTDigest {
             if (x == aMean) {
                 return aWeight / 2.0 / size().toDouble()
             }
-            assert(x > aMean)
+            mpassert(x > aMean)
 
             // b is the look-ahead to the next centroid
             var b = it.next()
             var bMean = b.mean()
             var bWeight = b.count().toDouble()
 
-            assert(bMean >= aMean)
+            mpassert(bMean >= aMean)
 
             var weightSoFar = 0.0
 
             // scan to last element
             while (bWeight > 0) {
-                assert(x > aMean)
+                mpassert(x > aMean)
                 if (x == bMean) {
-                    assert(bMean > aMean)
+                    mpassert(bMean > aMean)
                     weightSoFar += aWeight
                     while (it.hasNext()) {
                         b = it.next()
@@ -292,11 +292,11 @@ class AVLTreeDigest  : AbstractTDigest {
                     }
                     return (weightSoFar + aWeight + bWeight / 2.0) / size()
                 }
-                assert(x < bMean || x > bMean)
+                mpassert(x < bMean || x > bMean)
 
                 if (x < bMean) {
                     // we are strictly between a and b
-                    assert(aMean < bMean)
+                    mpassert(aMean < bMean)
                     if (aWeight == 1.0) {
                         // but a might be a singleton
                         if (bWeight == 1.0) {
@@ -320,7 +320,7 @@ class AVLTreeDigest  : AbstractTDigest {
                 }
                 weightSoFar += aWeight
 
-                assert(x > bMean)
+                mpassert(x > bMean)
 
                 if (it.hasNext()) {
                     aMean = bMean
@@ -330,7 +330,7 @@ class AVLTreeDigest  : AbstractTDigest {
                     bMean = b.mean()
                     bWeight = b.count().toDouble()
 
-                    assert(bMean >= aMean)
+                    mpassert(bMean >= aMean)
                 } else {
                     bWeight = 0.0
                 }
@@ -348,7 +348,7 @@ class AVLTreeDigest  : AbstractTDigest {
         extremeValue: Double
     ): Double {
         val count = values.count(node)
-        assert(count > 1)
+        mpassert(count > 1)
         if (count == 2) {
             // other sample must be on the other side of the mean
             return 1.0 / size()
@@ -443,8 +443,8 @@ class AVLTreeDigest  : AbstractTDigest {
                     }
                 }
                 // if both are singletons, we will have returned a result already
-                assert(leftExclusion + rightExclusion < 1)
-                assert(dw > 1)
+                mpassert(leftExclusion + rightExclusion < 1)
+                mpassert(dw > 1)
                 // centroids i and i+1 bracket our current point
                 // we interpolate, but the weights are diminished if singletons are present
                 val w1 = index - weightSoFar - leftExclusion
@@ -457,9 +457,9 @@ class AVLTreeDigest  : AbstractTDigest {
         }
         // index is in the right hand side of the last node, interpolate to max
         // we have already handled the case were last centroid is a singleton
-        assert(currentWeight > 1)
-        assert(index - weightSoFar < currentWeight / 2 - 1)
-        assert(count - weightSoFar > 0.5)
+        mpassert(currentWeight > 1)
+        mpassert(index - weightSoFar < currentWeight / 2 - 1)
+        mpassert(count - weightSoFar > 0.5)
 
         val w1 = index - weightSoFar
         val w2 = count.toDouble() - 1.0 - index
