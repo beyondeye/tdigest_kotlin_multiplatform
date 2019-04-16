@@ -1,20 +1,31 @@
+buildscript {
+    ext.io_version ='0.1.7'      //https://github.com/Kotlin/kotlinx-io
+    ext.tsgenerator_version= '2.9.456' // https://github.com/vojtechhabarta/typescript-generator
+    ext.atomicfu_version = '0.12.3' //https://github.com/Kotlin/kotlinx.atomicfu
+    ext.serialization_version= '0.11.0' //https://github.com/Kotlin/kotlinx.serialization
+    ext.kotlin_version = "1.3.30"
+    dependencies {
+        classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
+    }
+}
+
 plugins {
     id 'kotlin-multiplatform' version '1.3.30'
 }
 repositories {
-    mavenCentral()
     jcenter()
+    mavenCentral()
+    maven { url "https://kotlin.bintray.com/kotlinx" }
 }
-group 'com.example'
+group 'com.plensee'
 version '0.0.1'
 
-rootProject.ext.versions = [
-        ioversion : '0.1.7',      //https://github.com/Kotlin/kotlinx-io  
-        tsgenerator: '2.9.456', // https://github.com/vojtechhabarta/typescript-generator
-        atomicfu_version : '0.12.2' //https://github.com/Kotlin/kotlinx.atomicfu
-]
+
 
 apply plugin: 'maven-publish'
+apply plugin: 'kotlinx-atomicfu'
+apply plugin: 'kotlinx-serialization'
 
 kotlin {
     jvm()
@@ -28,7 +39,9 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation "org.jetbrains.kotlinx:kotlinx-io:$rootProject.versions.ioversion"
+                implementation "org.jetbrains.kotlinx:kotlinx-io:$io_version"
+                implementation "org.jetbrains.kotlinx:atomicfu-common:$atomicfu_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version"
             }
         }
         commonTest {
@@ -40,7 +53,9 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation kotlin('stdlib-jdk8')
-                implementation "org.jetbrains.kotlinx:kotlinx-io-jvm:$rootProject.versions.ioversion"
+                implementation "org.jetbrains.kotlinx:kotlinx-io-jvm:$io_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
+                compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
             }
         }
         jvmTest {
@@ -52,17 +67,21 @@ kotlin {
                 implementation 'org.apache.mahout:mahout-math:0.9'
                 implementation 'org.apache.commons:commons-lang3:3.4'
                 implementation 'com.clearspring.analytics:stream:2.5.2'
+                runtimeOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
             }
         }
         jsMain {
             dependencies {
                 implementation kotlin('stdlib-js')
-                implementation "org.jetbrains.kotlinx:kotlinx-io-js:$rootProject.versions.ioversion"
+                implementation "org.jetbrains.kotlinx:kotlinx-io-js:$io_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$serialization_version"
+                compileOnly "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
             }
         }
         jsTest {
             dependencies {
                 implementation kotlin('test-js')
+                runtimeOnly "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
             }
         }
         mingwMain {
