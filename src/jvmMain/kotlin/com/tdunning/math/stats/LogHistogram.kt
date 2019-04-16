@@ -76,7 +76,7 @@ class LogHistogram @JvmOverloads constructor(min: Double, max: Double, epsilonFa
     override fun add(others: Iterable<Histogram>) {
         for (other in others) {
             if (this.javaClass != other.javaClass) {
-                throw IllegalArgumentException(String.format("Cannot add %s to LogHistogram", others.javaClass))
+                throw IllegalArgumentException("Cannot add $others.javaClass to LogHistogram")
             }
             val actual = other as LogHistogram
             if (actual.min != min || actual.max != max || actual.counts.size != counts.size) {

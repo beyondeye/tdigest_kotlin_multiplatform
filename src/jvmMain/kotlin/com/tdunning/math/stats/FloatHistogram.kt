@@ -133,7 +133,7 @@ class FloatHistogram @JvmOverloads constructor(min: Double, max: Double, binsPer
     override fun add(others: Iterable<Histogram>) {
         for (other in others) {
             if (this.javaClass != other.javaClass) {
-                throw IllegalArgumentException(String.format("Cannot add %s to FloatHistogram", others.javaClass))
+                throw IllegalArgumentException("Cannot add ${others.javaClass} to FloatHistogram")
             }
             val actual = other as FloatHistogram
             if (actual.min != min || actual.max != max || actual.counts.size != counts.size) {

@@ -85,12 +85,7 @@ object Comparison {
      */
     fun compareChi2(dist1: Histogram, dist2: Histogram): Double {
         if (dist1.javaClass != dist2.javaClass) {
-            throw IllegalArgumentException(
-                String.format(
-                    "Must have same class arguments, got %s and %s",
-                    dist1.javaClass, dist2.javaClass
-                )
-            )
+            throw IllegalArgumentException("Must have same class arguments, got ${dist1.javaClass} and ${dist2.javaClass}")
         }
 
         val k1 = dist1.counts
@@ -130,7 +125,7 @@ object Comparison {
                 rowSums[i] += k
                 colSums[j] += k
                 if (k < 0) {
-                    throw IllegalArgumentException(String.format("Illegal negative count (%.5f) at %d,%d", k, i, j))
+                    throw IllegalArgumentException("Illegal negative count ($k) at $i,$j")
                 }
                 if (k > 0) {
                     h += k * kotlin.math.ln(k)
