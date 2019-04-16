@@ -25,7 +25,7 @@ package com.tdunning.math.stats
  * want to add data to the nodes, typically by using arrays and node
  * identifiers as indices.
  */
-internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: Int = 16)
+internal abstract class IntAVLTree  constructor(initialCapacity: Int = 16)
 //    : Serializable
 {
 
@@ -203,7 +203,7 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
             return true
         } else {
             var node = root
-            assert(parent(root) == NIL)
+            mpassert(parent(root) == NIL)
             var parent: Int
             var cmp: Int
             do {
@@ -229,7 +229,7 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
             if (cmp < 0) {
                 left(parent, node)
             } else {
-                assert(cmp > 0)
+                mpassert(cmp > 0)
                 right(parent, node)
             }
 
@@ -289,10 +289,10 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
         if (left(node) != NIL && right(node) != NIL) {
             // inner node
             val next = next(node)
-            assert(next != NIL)
+            mpassert(next != NIL)
             swap(node, next)
         }
-        assert(left(node) == NIL || right(node) == NIL)
+        mpassert(left(node) == NIL || right(node) == NIL)
 
         val parent = parent(node)
         var child = left(node)
@@ -303,25 +303,25 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
         if (child == NIL) {
             // no children
             if (node == root) {
-                assert(size() == 1) { size() }
+                mpassert(size() == 1) { size() }
                 root = NIL
             } else {
                 if (node == left(parent)) {
                     left(parent, NIL)
                 } else {
-                    assert(node == right(parent))
+                    mpassert(node == right(parent))
                     right(parent, NIL)
                 }
             }
         } else {
             // one single child
             if (node == root) {
-                assert(size() == 2)
+                mpassert(size() == 2)
                 root = child
             } else if (node == left(parent)) {
                 left(parent, child)
             } else {
-                assert(node == right(parent))
+                mpassert(node == right(parent))
                 right(parent, child)
             }
             parent(child, parent)
@@ -345,22 +345,22 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
             if (node1 == left(parent1)) {
                 left(parent1, node2)
             } else {
-                assert(node1 == right(parent1))
+                mpassert(node1 == right(parent1))
                 right(parent1, node2)
             }
         } else {
-            assert(root == node1)
+            mpassert(root == node1)
             root = node2
         }
         if (parent2 != NIL) {
             if (node2 == left(parent2)) {
                 left(parent2, node1)
             } else {
-                assert(node2 == right(parent2))
+                mpassert(node2 == right(parent2))
                 right(parent2, node1)
             }
         } else {
-            assert(root == node2)
+            mpassert(root == node2)
             root = node1
         }
         parent(node1, parent2)
@@ -448,7 +448,7 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
         } else if (left(p) == n) {
             left(p, r)
         } else {
-            assert(right(p) == n)
+            mpassert(right(p) == n)
             right(p, r)
         }
         left(r, n)
@@ -472,7 +472,7 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
         } else if (right(p) == n) {
             right(p, l)
         } else {
-            assert(left(p) == n)
+            mpassert(left(p) == n)
             left(p, l)
         }
         right(l, n)
@@ -482,32 +482,32 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
     }
 
     private fun parent(node: Int, parent: Int) {
-        assert(node != NIL)
+        mpassert(node != NIL)
         this.parent[node] = parent
     }
 
     private fun left(node: Int, left: Int) {
-        assert(node != NIL)
+        mpassert(node != NIL)
         this.left[node] = left
     }
 
     private fun right(node: Int, right: Int) {
-        assert(node != NIL)
+        mpassert(node != NIL)
         this.right[node] = right
     }
 
     private fun depth(node: Int, depth: Int) {
-        assert(node != NIL)
-        assert(depth >= 0 && depth <= Byte.MAX_VALUE)
+        mpassert(node != NIL)
+        mpassert(depth >= 0 && depth <= Byte.MAX_VALUE)
         this.depth[node] = depth.toByte()
     }
 
     fun checkBalance(node: Int) {
         if (node == NIL) {
-            assert(depth(node) == 0)
+            mpassert(depth(node) == 0)
         } else {
-            assert(depth(node) == 1 + kotlin.math.max(depth(left(node)), depth(right(node))))
-            assert(kotlin.math.abs(depth(left(node)) - depth(right(node))) <= 1)
+            mpassert(depth(node) == 1 + kotlin.math.max(depth(left(node)), depth(right(node))))
+            mpassert(kotlin.math.abs(depth(left(node)) - depth(right(node))) <= 1)
             checkBalance(left(node))
             checkBalance(right(node))
         }
@@ -567,7 +567,7 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
         }
 
         internal fun release(node: Int) {
-            assert(node < nextNode)
+            mpassert(node < nextNode)
             releasedNodes.push(node)
         }
 
