@@ -238,7 +238,7 @@ class MergingDigest
 
     private fun add(x: Double, w: Int, history: List<Double>?) {
         var history = history
-        if (java.lang.Double.isNaN(x)) {
+        if (x.isNaN()) {
             throw IllegalArgumentException("Cannot add NaN to t-digest")
         }
         if (tempUsed >= tempWeight.size - lastUsedCell - 1) {
@@ -539,7 +539,7 @@ class MergingDigest
 
         if (lastUsedCell == 0) {
             // no data to examine
-            return java.lang.Double.NaN
+            return Double.NaN
         } else if (lastUsedCell == 1) {
             // exactly one centroid, should have max==min
             val width = max - min
@@ -678,7 +678,7 @@ class MergingDigest
 
         if (lastUsedCell == 0) {
             // no centroids means no data, no way to get a quantile
-            return java.lang.Double.NaN
+            return Double.NaN
         } else if (lastUsedCell == 1) {
             // with one data point, all quantiles lead to Rome
             return mean[0]

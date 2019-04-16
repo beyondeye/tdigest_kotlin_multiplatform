@@ -181,7 +181,7 @@ internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) :
         var floor = IntAVLTree.NIL
         var node = tree.root()
         while (node != IntAVLTree.NIL) {
-            val cmp = java.lang.Double.compare(centroid, mean(node))
+            val cmp = centroid.compareTo(mean(node))
             if (cmp <= 0) {
                 node = tree.left(node)
             } else {

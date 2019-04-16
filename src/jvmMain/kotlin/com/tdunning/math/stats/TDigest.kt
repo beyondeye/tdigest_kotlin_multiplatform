@@ -42,9 +42,9 @@ abstract class TDigest
 //    : Serializable
 {
     protected var scale = ScaleFunction.K_2
-    var min = java.lang.Double.POSITIVE_INFINITY
+    var min = Double.POSITIVE_INFINITY
         internal set
-    var max = java.lang.Double.NEGATIVE_INFINITY
+    var max = Double.NEGATIVE_INFINITY
         internal set
 
     abstract val isRecording: Boolean
@@ -58,7 +58,7 @@ abstract class TDigest
     abstract fun add(x: Double, w: Int)
 
     internal fun checkValue(x: Double) {
-        if (java.lang.Double.isNaN(x)) {
+        if (x.isNaN()) {
             throw IllegalArgumentException("Cannot add NaN")
         }
     }

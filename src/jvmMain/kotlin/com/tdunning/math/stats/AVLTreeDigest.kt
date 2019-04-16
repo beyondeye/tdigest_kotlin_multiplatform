@@ -88,7 +88,7 @@ class AVLTreeDigest  : AbstractTDigest {
             summary!!.add(x, w, data)
             count = w.toLong()
         } else {
-            var minDistance = java.lang.Double.MAX_VALUE
+            var minDistance = Double.MAX_VALUE
             var lastNeighbor = IntAVLTree.NIL
             run {
                 var neighbor = start
@@ -217,7 +217,7 @@ class AVLTreeDigest  : AbstractTDigest {
     override fun cdf(x: Double): Double {
         val values = summary
         if (values!!.size == 0) {
-            return java.lang.Double.NaN
+            return Double.NaN
         } else if (values.size == 1) {
             return if (x < values.mean(values.first()))
                 0.0
@@ -374,7 +374,7 @@ class AVLTreeDigest  : AbstractTDigest {
         val values = summary
         if (values!!.size == 0) {
             // no centroids means no data, no way to get a quantile
-            return java.lang.Double.NaN
+            return Double.NaN
         } else if (values.size == 1) {
             // with one data point, all quantiles lead to Rome
             return values.iterator().next().mean()
