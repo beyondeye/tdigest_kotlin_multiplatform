@@ -102,7 +102,7 @@ class LogHistogram @JvmOverloads constructor(min: Double, max: Double, epsilonFa
         fun approxLog2(value: Double): Double {
             val valueBits = java.lang.Double.doubleToRawLongBits(value)
             val exponent = (valueBits and 0x7ff0000000000000L).ushr(52) - 1024
-            val m = java.lang.Double.longBitsToDouble(valueBits and -0x7ff0000000000001L or 0x3ff0000000000000L)
+            val m = Double.fromBits(valueBits and -0x7ff0000000000001L or 0x3ff0000000000000L)
             return m * (2 - 1.0 / 3 * m) + exponent - 2.0 / 3.0
         }
 

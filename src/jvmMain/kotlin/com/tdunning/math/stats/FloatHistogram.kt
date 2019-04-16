@@ -64,13 +64,13 @@ class FloatHistogram @JvmOverloads constructor(min: Double, max: Double, binsPer
     override fun bucketIndex(x: Double): Int {
         var x = x
         x = x / min
-        val floatBits = java.lang.Double.doubleToLongBits(x)
+        val floatBits = x.toRawBits()
         return floatBits.ushr(shift).toInt() - offset
     }
 
     // exposed for testing
     internal override fun lowerBound(k: Int): Double {
-        return min * java.lang.Double.longBitsToDouble(k + (0x3ffL shl bitsOfPrecision) shl 52 - bitsOfPrecision) /* / fuzz */
+        return min * Double.fromBits(k + (0x3ffL shl bitsOfPrecision) shl 52 - bitsOfPrecision) /* / fuzz */
     }
 
     public override fun getCompressedCounts(): LongArray {
