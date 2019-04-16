@@ -33,37 +33,30 @@ enum class ScaleFunction {
      * Generates uniform cluster sizes. Used for comparison only.
      */
     K_0 {
-        @Override
         override fun k(q: Double, compression: Double, n: Double): Double {
             return compression * q / 2
         }
 
-        @Override
         override fun k(q: Double, normalizer: Double): Double {
             return normalizer * q
         }
 
-        @Override
         override fun q(k: Double, compression: Double, n: Double): Double {
             return 2 * k / compression
         }
 
-        @Override
         override fun q(k: Double, normalizer: Double): Double {
             return k / normalizer
         }
 
-        @Override
         override fun max(q: Double, compression: Double, n: Double): Double {
             return 2 / compression
         }
 
-        @Override
         override fun max(q: Double, normalizer: Double): Double {
             return 1 / normalizer
         }
 
-        @Override
         override fun normalizer(compression: Double, n: Double): Double {
             return compression / 2
         }
@@ -74,28 +67,23 @@ enum class ScaleFunction {
      * proportional to squared cluster size. It is expected that K_2 and K_3 will give better practical results.
      */
     K_1 {
-        @Override
         override fun k(q: Double, compression: Double, n: Double): Double {
             return compression * kotlin.math.asin(2 * q - 1) / (2 * kotlin.math.PI)
         }
 
-        @Override
         override fun k(q: Double, normalizer: Double): Double {
             return normalizer * kotlin.math.asin(2 * q - 1)
         }
 
 
-        @Override
         override fun q(k: Double, compression: Double, n: Double): Double {
             return (kotlin.math.sin(k * (2 * kotlin.math.PI / compression)) + 1) / 2
         }
 
-        @Override
         override fun q(k: Double, normalizer: Double): Double {
             return (kotlin.math.sin(k / normalizer) + 1) / 2
         }
 
-        @Override
         override fun max(q: Double, compression: Double, n: Double): Double {
             return if (q <= 0) {
                 0.0
@@ -106,7 +94,6 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
         override fun max(q: Double, normalizer: Double): Double {
             return if (q <= 0) {
                 0.0
@@ -117,7 +104,6 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
         override fun normalizer(compression: Double, n: Double): Double {
             return compression / (2 * kotlin.math.PI)
         }
@@ -128,27 +114,27 @@ enum class ScaleFunction {
      * using an approximate version.
      */
     K_1_FAST {
-        @Override
+
         override fun k(q: Double, compression: Double, n: Double): Double {
             return compression * fastAsin(2 * q - 1) / (2 * kotlin.math.PI)
         }
 
-        @Override
+
         override fun k(q: Double, normalizer: Double): Double {
             return normalizer * fastAsin(2 * q - 1)
         }
 
-        @Override
+
         override fun q(k: Double, compression: Double, n: Double): Double {
             return (kotlin.math.sin(k * (2 * kotlin.math.PI / compression)) + 1) / 2
         }
 
-        @Override
+
         override fun q(k: Double, normalizer: Double): Double {
             return (kotlin.math.sin(k / normalizer) + 1) / 2
         }
 
-        @Override
+
         override fun max(q: Double, compression: Double, n: Double): Double {
             return if (q <= 0) {
                 0.0
@@ -159,7 +145,7 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun max(q: Double, normalizer: Double): Double {
             return if (q <= 0) {
                 0.0
@@ -170,7 +156,7 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun normalizer(compression: Double, n: Double): Double {
             return compression / (2 * kotlin.math.PI)
         }
@@ -181,7 +167,7 @@ enum class ScaleFunction {
      * normalizing function results in a strictly bounded number of clusters no matter how many samples.
      */
     K_2 {
-        @Override
+
         override fun k(q: Double, compression: Double, n: Double): Double {
             if (n <= 1) {
                 return if (q <= 0) {
@@ -201,7 +187,7 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun k(q: Double, normalizer: Double): Double {
             return if (q < 1e-15) {
                 // this will return something more extreme than q = 1/n
@@ -214,29 +200,29 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun q(k: Double, compression: Double, n: Double): Double {
             val w = kotlin.math.exp(k * Z(compression, n) / compression)
             return w / (1 + w)
         }
 
-        @Override
+
         override fun q(k: Double, normalizer: Double): Double {
             val w = kotlin.math.exp(k / normalizer)
             return w / (1 + w)
         }
 
-        @Override
+
         override fun max(q: Double, compression: Double, n: Double): Double {
             return Z(compression, n) * q * (1 - q) / compression
         }
 
-        @Override
+
         override fun max(q: Double, normalizer: Double): Double {
             return q * (1 - q) / normalizer
         }
 
-        @Override
+
         override fun normalizer(compression: Double, n: Double): Double {
             return compression / Z(compression, n)
         }
@@ -251,7 +237,7 @@ enum class ScaleFunction {
      * The use of a normalizing function results in a strictly bounded number of clusters no matter how many samples.
      */
     K_3 {
-        @Override
+
         override fun k(q: Double, compression: Double, n: Double): Double {
             return if (q < 0.9 / n) {
                 10 * k(1 / n, compression, n)
@@ -266,7 +252,7 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun k(q: Double, normalizer: Double): Double {
             return if (q < 1e-15) {
                 10 * k(1e-15, normalizer)
@@ -281,7 +267,7 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun q(k: Double, compression: Double, n: Double): Double {
             return if (k <= 0) {
                 kotlin.math.exp(k * Z(compression, n) / compression) / 2
@@ -290,7 +276,7 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun q(k: Double, normalizer: Double): Double {
             return if (k <= 0) {
                 kotlin.math.exp(k / normalizer) / 2
@@ -299,17 +285,17 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun max(q: Double, compression: Double, n: Double): Double {
             return Z(compression, n) * kotlin.math.min(q, 1 - q) / compression
         }
 
-        @Override
+
         override fun max(q: Double, normalizer: Double): Double {
             return kotlin.math.min(q, 1 - q) / normalizer
         }
 
-        @Override
+
         override fun normalizer(compression: Double, n: Double): Double {
             return compression / Z(compression, n)
         }
@@ -326,7 +312,7 @@ enum class ScaleFunction {
      * tree-based implementations.
      */
     K_2_NO_NORM {
-        @Override
+
         override fun k(q: Double, compression: Double, n: Double): Double {
             return if (q == 0.0) {
                 2 * k(1 / n, compression, n)
@@ -337,7 +323,7 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun k(q: Double, normalizer: Double): Double {
             return if (q <= 1e-15) {
                 2 * k(1e-15, normalizer)
@@ -348,29 +334,29 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun q(k: Double, compression: Double, n: Double): Double {
             val w = kotlin.math.exp(k / compression)
             return w / (1 + w)
         }
 
-        @Override
+
         override fun q(k: Double, normalizer: Double): Double {
             val w = kotlin.math.exp(k / normalizer)
             return w / (1 + w)
         }
 
-        @Override
+
         override fun max(q: Double, compression: Double, n: Double): Double {
             return q * (1 - q) / compression
         }
 
-        @Override
+
         override fun max(q: Double, normalizer: Double): Double {
             return q * (1 - q) / normalizer
         }
 
-        @Override
+
         override fun normalizer(compression: Double, n: Double): Double {
             return compression
         }
@@ -383,7 +369,7 @@ enum class ScaleFunction {
      * tree-based implementations.
      */
     K_3_NO_NORM {
-        @Override
+
         override fun k(q: Double, compression: Double, n: Double): Double {
             return if (q < 0.9 / n) {
                 10 * k(1 / n, compression, n)
@@ -398,7 +384,7 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun k(q: Double, normalizer: Double): Double {
             return if (q <= 1e-15) {
                 10 * k(1e-15, normalizer)
@@ -413,7 +399,7 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun q(k: Double, compression: Double, n: Double): Double {
             return if (k <= 0) {
                 kotlin.math.exp(k / compression) / 2
@@ -422,7 +408,7 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun q(k: Double, normalizer: Double): Double {
             return if (k <= 0) {
                 kotlin.math.exp(k / normalizer) / 2
@@ -431,17 +417,17 @@ enum class ScaleFunction {
             }
         }
 
-        @Override
+
         override fun max(q: Double, compression: Double, n: Double): Double {
             return kotlin.math.min(q, 1 - q) / compression
         }
 
-        @Override
+
         override fun max(q: Double, normalizer: Double): Double {
             return kotlin.math.min(q, 1 - q) / normalizer
         }
 
-        @Override
+
         override fun normalizer(compression: Double, n: Double): Double {
             return compression
         }
