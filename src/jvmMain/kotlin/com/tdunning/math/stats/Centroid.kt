@@ -17,10 +17,11 @@
 
 package com.tdunning.math.stats
 
+import kotlinx.atomicfu.atomic
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.Serializable
-import java.util.concurrent.atomic.AtomicInteger
+//import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * A single centroid which represents a number of data points.
@@ -141,7 +142,7 @@ class Centroid private constructor(record: Boolean) : Comparable<Centroid>, Seri
 
     companion object {
         //*PORT* use https://github.com/Kotlin/kotlinx.atomicfu instead or stdlib
-        private val uniqueCount = AtomicInteger(1)
+        private val uniqueCount = atomic(1)
 
         fun createWeighted(x: Double, w: Int, data: Iterable<Double>?): Centroid {
             val r = Centroid(data != null)
