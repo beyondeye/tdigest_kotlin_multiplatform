@@ -100,7 +100,7 @@ class Centroid private constructor(record: Boolean) : Comparable<Centroid>
     }
 
     override fun compareTo(o: Centroid): Int {
-        var r = java.lang.Double.compare(centroid, o.centroid)
+        var r = centroid.compareTo(o.centroid)
         if (r == 0) {
             r = id - o.id
         }

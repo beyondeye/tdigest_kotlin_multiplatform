@@ -498,7 +498,7 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
 
     private fun depth(node: Int, depth: Int) {
         assert(node != NIL)
-        assert(depth >= 0 && depth <= java.lang.Byte.MAX_VALUE)
+        assert(depth >= 0 && depth <= Byte.MAX_VALUE)
         this.depth[node] = depth.toByte()
     }
 
