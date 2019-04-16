@@ -1,8 +1,0 @@
-package com.tdunning.math.stats
-/**
- * encapsulate platfrom independent method copyInto with syntax used in java System.ArrayCopy
- */
-object Utils {
-    fun arraycopy(src:DoubleArray,srcPos:Int, dest:DoubleArray, destPos:Int, length:Int) =
-        src.copyInto(dest,destPos,srcPos,srcPos+length)
-}

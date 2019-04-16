@@ -330,11 +330,11 @@ object Sort {
             for (j in i downTo m) {
                 if (j == m || key[j - 1] <= v) {
                     if (j < i) {
-                        System.arraycopy(key, j, key, j + 1, i - j)
+                        Utils.arraycopy(key, j, key, j + 1, i - j)
                         key[j] = v
                         for (value in values) {
                             val tmp = value[i]
-                            System.arraycopy(value, j, value, j + 1, i - j)
+                            Utils.arraycopy(value, j, value, j + 1, i - j)
                             value[j] = tmp
                         }
                     }
@@ -387,26 +387,26 @@ object Sort {
         }
 
         if (!(start >= 0 && low >= start && high >= low && end >= high)) {
-            throw IllegalArgumentException(String.format("Invalid indices %d, %d, %d, %d", start, low, high, end))
+            throw IllegalArgumentException("Invalid indices $start, $low, $high, $end")
         }
 
         for (i in 0 until low) {
             val v = values[order[i]]
             if (v >= pivotValue) {
-                throw IllegalArgumentException(String.format("Value greater than pivot at %d", i))
+                throw IllegalArgumentException("Value greater than pivot at $i")
             }
         }
 
         for (i in low until high) {
             if (values[order[i]] != pivotValue) {
-                throw IllegalArgumentException(String.format("Non-pivot at %d", i))
+                throw IllegalArgumentException("Non-pivot at $i")
             }
         }
 
         for (i in high until end) {
             val v = values[order[i]]
             if (v <= pivotValue) {
-                throw IllegalArgumentException(String.format("Value less than pivot at %d", i))
+                throw IllegalArgumentException("Value less than pivot at $i")
             }
         }
     }
@@ -429,7 +429,7 @@ object Sort {
             for (j in i downTo m) {
                 if (j == 0 || values[order[j - 1]] <= v) {
                     if (j < i) {
-                        System.arraycopy(order, j, order, j + 1, i - j)
+                        Utils.arraycopy(order, j, order, j + 1, i - j)
                         order[j] = t
                     }
                     break
@@ -445,7 +445,6 @@ object Sort {
      * @param offset Where to start reversing.
      * @param length How many elements to reverse
      */
-    @JvmOverloads
     fun reverse(order: IntArray, offset: Int = 0, length: Int = order.size) {
         for (i in 0 until length / 2) {
             val t = order[offset + i]
