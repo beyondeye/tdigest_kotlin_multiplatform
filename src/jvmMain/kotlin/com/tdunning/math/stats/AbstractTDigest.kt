@@ -19,13 +19,12 @@ package com.tdunning.math.stats
 
 import kotlinx.io.core.Input
 import kotlinx.io.core.Output
-import java.util.Random
-//import kotlin.random.Random
+import kotlin.random.Random
 
 abstract class AbstractTDigest : TDigest() {
     //*PORT* multiplatform random is not serializable: define a wrapper class that is serializable at least on the jvm
 //    internal val gen = Random.Default
-    internal val gen = Random()
+    internal val gen = Random(0)
     override var isRecording = false
         internal set
 
