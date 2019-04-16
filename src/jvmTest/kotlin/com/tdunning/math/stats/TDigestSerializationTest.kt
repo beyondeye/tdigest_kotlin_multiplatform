@@ -48,6 +48,8 @@ class TDigestSerializationTest {
 
     @Throws(IOException::class)
     private fun <T : TDigest> assertSerializesAndDeserializes(tdigest: T) {
+        /* *DARIO* serialization test disabled, because in multiplatform code
+            we have currently disabled serialization
         assertNotNull(deserialize(serialize(tdigest)))
 
         val gen = Random()
@@ -57,6 +59,7 @@ class TDigestSerializationTest {
         val roundTrip = deserialize<T>(serialize(tdigest))
 
         assertTDigestEquals(tdigest, roundTrip)
+         */
     }
 
     @Throws(IOException::class)

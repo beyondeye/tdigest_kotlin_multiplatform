@@ -18,7 +18,6 @@
 package com.tdunning.math.stats
 
 import kotlinx.io.core.Output
-import java.io.Serializable
 
 /**
  * Adaptive histogram based on something like streaming k-means crossed with Q-digest.
@@ -39,7 +38,9 @@ import java.io.Serializable
  *
  * - easy to adapt for use with map-reduce
  */
-abstract class TDigest : Serializable {
+abstract class TDigest
+//    : Serializable
+{
     protected var scale = ScaleFunction.K_2
     var min = java.lang.Double.POSITIVE_INFINITY
         internal set

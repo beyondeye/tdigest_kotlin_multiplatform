@@ -17,13 +17,13 @@
 
 package com.tdunning.math.stats
 
-import java.io.Serializable
 
 /**
  * A tree of t-digest centroids.
  */
-internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) : AbstractCollection<Centroid>(),
-    Serializable {
+internal class AVLGroupTree @JvmOverloads constructor(record: Boolean = false) : AbstractCollection<Centroid>()
+//    ,Serializable
+{
 
     /* For insertions into the tree */
     private var centroid: Double = 0.toDouble()

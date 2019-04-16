@@ -17,7 +17,6 @@
 
 package com.tdunning.math.stats
 
-import java.io.Serializable
 
 
 /**
@@ -26,7 +25,9 @@ import java.io.Serializable
  * want to add data to the nodes, typically by using arrays and node
  * identifiers as indices.
  */
-internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: Int = 16) : Serializable {
+internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: Int = 16)
+//    : Serializable
+{
 
     private val nodeAllocator: NodeAllocator
     private var root: Int = 0
@@ -515,7 +516,9 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
     /**
      * A stack of int values.
      */
-    private class IntStack internal constructor() : Serializable {
+    private class IntStack internal constructor()
+    //   : Serializable
+    {
 
         private var stack: IntArray
         private var size: Int = 0
@@ -543,7 +546,9 @@ internal abstract class IntAVLTree @JvmOverloads constructor(initialCapacity: In
 
     }
 
-    private class NodeAllocator internal constructor() : Serializable {
+    private class NodeAllocator internal constructor()
+//        : Serializable
+    {
 
         private var nextNode: Int = 0
         private val releasedNodes: IntStack
