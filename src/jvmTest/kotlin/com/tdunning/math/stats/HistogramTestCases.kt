@@ -36,7 +36,7 @@ abstract class HistogramTestCases {
     @Test
     fun testEmpty() {
         val x = factory!!.create(1.0, 100.0)
-        val bins = x.bounds
+        val bins = x.getBounds()
         assertEquals(1.0, bins[0], 1e-5)
         assertTrue(x.lowerBound(bins.size) >= 100.0)
         assertTrue(bins.size >= 90)
@@ -70,7 +70,7 @@ abstract class HistogramTestCases {
             for (j in 0 until trials) {
                 val x = factory!!.create(1e-3, 10.0)
                 val counts = x.counts
-                val cuts = x.bounds
+                val cuts = x.getBounds()
                 assertTrue(min.size >= cuts.size)
                 assertTrue(max.size >= cuts.size)
 
@@ -225,7 +225,7 @@ abstract class HistogramTestCases {
         val y = factory!!.create(0.1, 10.0)
         y.readObject(ObjectInputStream(`in`))
 
-        assertArrayEquals(x.bounds, y.bounds, 1e-10)
+        assertArrayEquals(x.getBounds(), y.getBounds(), 1e-10)
         assertArrayEquals(x.counts, y.counts)
     }
 

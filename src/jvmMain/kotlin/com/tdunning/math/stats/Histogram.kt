@@ -32,8 +32,7 @@ abstract class Histogram(protected var min: Double, protected var max: Double) :
     protected var logFactor: Double = 0.toDouble()
     protected var logOffset: Double = 0.toDouble()
 
-    val bounds: DoubleArray
-        get() {
+    fun getBounds(): DoubleArray {
             val r = DoubleArray(counts.size)
             for (i in r.indices) {
                 r[i] = lowerBound(i)
