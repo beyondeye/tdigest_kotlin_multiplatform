@@ -27,14 +27,26 @@ apply plugin: 'maven-publish'
 apply plugin: 'kotlinx-atomicfu'
 apply plugin: 'kotlinx-serialization'
 
+
+
 kotlin {
     jvm()
-    js()
+    js {
+        compilations.main.kotlinOptions {
+            // Setup the Kotlin compiler options for the 'main' compilation:
+            //see https://kotlinlang.org/docs/reference/js-modules.html
+            //see https://kotlinlang.org/docs/reference/using-gradle.html#attributes-specific-for-js
+            //see https://kotlinlang.org/docs/reference/building-mpp-with-gradle.html#configuring-compilations
+            //define export format used by nodejs
+            moduleKind = "commonjs"
+        }
+    }
     // For ARM, should be changed to iosArm32 or iosArm64
     // For Linux, should be changed to e.g. linuxX64
     // For MacOS, should be changed to e.g. macosX64
     // For Windows, should be changed to e.g. mingwX64
-    mingwX64("mingw")
+    //mingwX64("mingw")
+
     sourceSets {
         commonMain {
             dependencies {
