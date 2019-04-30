@@ -4,6 +4,7 @@ buildscript {
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
 //        classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+        classpath group: 'cz.habarta.typescript-generator', name: 'typescript-generator-gradle-plugin', version: "$tsgenerator_version"
     }
 }
 
@@ -16,12 +17,14 @@ repositories {
     maven { url "https://kotlin.bintray.com/kotlinx" }
 }
 group 'com.plensee'
-version '0.0.1'
+//the tdigest-kotlin library version, used also for publishing to npm
+version '0.1.0-SNAPSHOT'
 
 
 
 apply plugin: 'maven-publish'
 apply plugin: 'kotlinx-atomicfu'
+apply plugin: 'cz.habarta.typescript-generator'
 //apply plugin: 'kotlinx-serialization'
 
 
@@ -105,7 +108,7 @@ kotlin {
 
 tasks.withType(compileKotlinJs.getClass()) {
     kotlinOptions {
-        moduleKind = "umd"
+        moduleKind = "commonjs"
         sourceMap = true
         metaInfo = true
     }
@@ -138,4 +141,26 @@ repositories.whenObjectAdded {
             artifact()
         }
     }
+}
+
+//*DARIO* DEBUG tasks for checking the full list of gradle configurations 
+task printConfigs {
+    configurations.each { println it.name }
+}
+//*DARIO* hack for copying jvm class file where a usual kotlin gradle build would put them
+task copyToCompileKotlin(type: Copy,dependsOn: [compileKotlinJvm]) {
+    from(compileKotlinJvm.destinationDir)
+    into file("$buildDir/kotlin/compileKotlin")
+}
+
+//run this gradle task for generating typescript interface definition for datamodels classes
+generateTypeScript {
+    jsonLibrary = 'jackson2'
+    classes = [
+            'com.tdunning.math.stats.Centroid',
+            'com.tdunning.math.stats.ScaleFunction'
+    ]
+    outputFileType = "implementationFile"
+    outputFile = 'npm/tdigest_data_types.ts'
+    outputKind = 'module' //see http://www.habarta.cz/typescript-generator/doc/ModulesAndNamespaces.html
 }
