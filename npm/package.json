@@ -1,0 +1,23 @@
+{
+  "name": "tdigest-kotlin",
+  "version" : "$version",
+  "description" : "port of TDigest algorithm to kotlin multiplatform",
+  "main" : "tidgest-kotlin.js",
+  "author": "eyebeyond",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/beyondeye/tdigest_kotlin_multiplatform",
+  "bugs": {
+    "url": "https://github.com/beyondeye/tdigest_kotlin_multiplatform/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beyondeye/tdigest_kotlin_multiplatform.git"
+  },
+  "keywords": [
+    "Kotlin",
+    "tdigest"
+  ],
+  "peerDependencies": {
+    $kotlinDependency
+  }
+}
