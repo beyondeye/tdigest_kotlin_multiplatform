@@ -19,5 +19,8 @@
   ],
   "peerDependencies": {
     $kotlinDependency
+  },
+  "dependencies": {
+    $npmDependencies
   }
 }

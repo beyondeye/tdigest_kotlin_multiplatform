@@ -8,42 +8,50 @@ def prop(name, defVal) {
     return value
 }
 
-def distTag(version) {
+static distTag(version) {
     def i = version.indexOf('-')
     if (i > 0) return version.substring(i + 1)
     return "latest"
 }
 
+//template dir with package.json and readme.md
 def npmTemplateDir = file("$projectDir/npm")
 def npmDeployDir = file("$buildDir/npm")
 def npmDeployTag = distTag(version)
 
-def authToken = prop("npmjs.auth.token", "")
+//def authToken = prop("npmjs.auth.token", "")
+def authToken = project.hasProperty('NPM_TOKEN') ? project.property('NPM_TOKEN') : System.getenv('NPM_TOKEN')
 def dryRun = prop("dryRun", "false")
 
-task preparePublishNpm(type: Copy, dependsOn: [compileKotlinJs]) {
-    from(npmTemplateDir) {
-        expand (project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
-    }
-    from(compileKotlinJs.destinationDir)
-    into npmDeployDir
-}
 
-task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
-    project.logger.lifecycle('npmDeployDir= '+npmDeployDir)
-    project.logger.lifecycle('npmDeployTag= '+npmDeployTag)
-    project.logger.lifecycle('authToken= '+authToken)
-    workingDir = npmDeployDir
-    def deployArgs = ['publish',
-                      '--access=public',
-                      "--//registry.npmjs.org/:_authToken=$authToken",
-                      "--tag=$npmDeployTag"]
-    doFirst {
-        if (dryRun == "true") {
-            println("$npmDeployDir \$ npm arguments: $deployArgs")
-            args = ['pack']
-        } else {
-            args = deployArgs
+// Note: publish transformed files using dependency on sourceSets.main.output
+afterEvaluate {
+    task preparePublishNpm(type: Copy) {
+        from(npmTemplateDir) {
+            project.ext.npmDependencies = project.properties.npmDependencies.join(",\n")
+            expand(project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
+        }
+        from(compileKotlinJs.destinationDir)
+        into npmDeployDir
+    }
+
+    preparePublishNpm.outputs.upToDateWhen { false }
+
+    task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
+       // project.logger.lifecycle('npmDeployDir= '+npmDeployDir)
+       // project.logger.lifecycle('npmDeployTag= '+npmDeployTag)
+       // project.logger.lifecycle('authToken= '+authToken)
+        workingDir = npmDeployDir
+        def deployArgs = ['publish',
+                          "--//registry.npmjs.org/:_authToken=$authToken",
+                          "--tag=$npmDeployTag"]
+        doFirst {
+            if (dryRun == "true") {
+                println("$npmDeployDir \$ npm arguments: $deployArgs")
+                args = ['pack']
+            } else {
+                args = deployArgs
+            }
         }
     }
 }

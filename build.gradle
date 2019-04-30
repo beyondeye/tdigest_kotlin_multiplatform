@@ -111,6 +111,14 @@ tasks.withType(compileKotlinJs.getClass()) {
     }
 }
 
+if (project.extensions.findByName("npmDependencies") == null) {
+    project.ext.npmDependencies = []
+}
+
+//define npm dependencies when publishing to npm
+project.ext.npmDependencies += """ "kotlinx-atomicfu": "${atomicfu_version}" """
+project.ext.npmDependencies += """ "kotlinx-io": "${io_version}" """
+
 compileKotlinJs {
     kotlinOptions {
         // NOTE: Module base-name must be equal to the package name declared in package.json
