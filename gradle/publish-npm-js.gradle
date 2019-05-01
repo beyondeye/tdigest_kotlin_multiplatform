@@ -15,8 +15,8 @@ static distTag(version) {
 }
 
 //template dir with package.json and readme.md
-def npmTemplateDir = file("$projectDir/npm")
-def npmDeployDir = file("$buildDir/npm")
+def npmTemplateDir = file("$projectDir/npmtemplate")
+def npmDeployDir = file("$buildDir/npmtemplate")
 def npmDeployTag = distTag(version)
 
 //def authToken = prop("npmjs.auth.token", "")
@@ -34,7 +34,11 @@ afterEvaluate {
         from(compileKotlinJs.destinationDir)
         into npmDeployDir
     }
-
+    //make sure the tests are executed  after atomicfu transformed all files
+    preparePublishNpm.mustRunAfter{
+        transformJsMainAtomicfu
+        transformJsTestAtomicfu
+    }
     preparePublishNpm.outputs.upToDateWhen { false }
 
     task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
