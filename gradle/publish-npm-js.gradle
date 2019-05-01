@@ -28,7 +28,6 @@ def dryRun = prop("dryRun", "false")
 afterEvaluate {
     task preparePublishNpm(type: Copy) {
         from(npmTemplateDir) {
-            project.ext.npmDependencies = project.properties.npmDependencies.join(",\n")
             expand(project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
         }
         from(compileKotlinJs.destinationDir)

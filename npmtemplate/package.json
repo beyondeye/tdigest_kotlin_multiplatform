@@ -1,9 +1,9 @@
 {
-  "name": "tdigest-kotlin",
+  "name": "tdigest-kt",
   "version" : "$version",
   "description" : "port of TDigest algorithm to kotlin multiplatform",
-  "main" : "tdigest-kotlin.js",
-  "types": "tdigest-kotlin.d.ts",
+  "main" : "tdigest-kt.js",
+  "types": "tdigest-kt.d.ts",
   "author": "eyebeyond",
   "license": "Apache-2.0",
   "homepage": "https://github.com/beyondeye/tdigest_kotlin_multiplatform",

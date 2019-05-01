@@ -15,7 +15,6 @@ node {
 task prepareNodePackage(type: Copy) {
    from("npmtemplate") {
        include 'package.json'
-       project.ext.npmDependencies = project.properties.npmDependencies.join(",\n")
        expand(project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
    }
    from("npmtemplate") {

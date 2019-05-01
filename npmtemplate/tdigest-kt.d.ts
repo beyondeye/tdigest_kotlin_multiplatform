@@ -1,4 +1,4 @@
-declare namespace TDigest {
+export declare namespace TDigestKt {
     interface Centroid {
         type: string;
     }
