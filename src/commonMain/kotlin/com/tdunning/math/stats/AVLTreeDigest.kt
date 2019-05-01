@@ -17,7 +17,6 @@
 
 package com.tdunning.math.stats
 
-import kotlinx.io.core.*
 import kotlin.js.JsName
 import kotlin.math.abs
 
@@ -509,13 +508,10 @@ class AVLTreeDigest  : AbstractTDigest {
      * the tighter representation.
      */
     override fun smallByteSize(): Int {
-//        val bound = byteSize()
-//        val buf = ByteBuffer.allocate(bound)
-//        asSmallBytes(this)
-//        return buf.position()
+        val bound = byteSize()
         var res=0
-        val buf= buildPacket {
-            asSmallBytes(this.toBinaryOutput())
+        val buf= buildBinaryOutput(bound) {
+            asSmallBytes(this)
             res=this.size
         }
         buf.release()

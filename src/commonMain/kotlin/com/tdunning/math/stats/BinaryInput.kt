@@ -10,5 +10,13 @@ interface BinaryInput {
     fun readLong(): Long
     fun readFloat(): Float
     fun readDouble(): Double
-    fun fromB64String(b64string:String)
+    /**
+     * release the data buffer
+     */
+    fun release()
 }
+
+/**
+ * create a binary input from a input base64 encoded string
+ */
+expect fun buildBinaryInputFromB64(b64string:String):BinaryInput

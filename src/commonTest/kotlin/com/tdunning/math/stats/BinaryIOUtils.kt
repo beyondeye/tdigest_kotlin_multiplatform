@@ -2,11 +2,15 @@ package com.tdunning.math.stats
 
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
+import kotlinx.io.core.buildPacket
 
-class BinaryOutputFromBytePacketBuilder(val bpb:BytePacketBuilder) :BinaryOutput{
+class BinaryOutputFromBytePacketBuilder(val bpb:BytePacketBuilder) : BinaryOutput {
     override fun writeByte(v: Byte) {
         bpb.writeByte(v)
     }
+
+    override val size: Int
+        get() = bpb.size
 
     override fun writeShort(v: Short) {
         bpb.writeShort(v)
@@ -33,7 +37,11 @@ class BinaryOutputFromBytePacketBuilder(val bpb:BytePacketBuilder) :BinaryOutput
     }
 }
 
-class BinaryInputFromByteReadPacket(val brp:ByteReadPacket):BinaryInput {
+class BinaryInputFromByteReadPacket(val brp:ByteReadPacket): BinaryInput {
+    override fun release() {
+        brp.release()
+    }
+
     override fun readByte(): Byte {
         return brp.readByte()
     }
@@ -57,10 +65,15 @@ class BinaryInputFromByteReadPacket(val brp:ByteReadPacket):BinaryInput {
     override fun readDouble(): Double {
         return brp.readDouble()
     }
-
-    override fun fromB64String(b64string: String) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 }
-fun BytePacketBuilder.toBinaryOutput():BinaryOutput = BinaryOutputFromBytePacketBuilder(this)
-fun ByteReadPacket.toBinaryInput():BinaryInput = BinaryInputFromByteReadPacket(this)
+fun BytePacketBuilder.toBinaryOutput(): BinaryOutput =
+    BinaryOutputFromBytePacketBuilder(this)
+fun ByteReadPacket.toBinaryInput(): BinaryInput =
+    BinaryInputFromByteReadPacket(this)
+
+//NOTE: that initialSize parameter is currently ignored
+inline fun buildBinaryOutput(initialSize:Int,block: BinaryOutput.() -> Unit): BinaryInput {
+    return buildPacket {
+        block(this.toBinaryOutput())
+    }.toBinaryInput()
+}
