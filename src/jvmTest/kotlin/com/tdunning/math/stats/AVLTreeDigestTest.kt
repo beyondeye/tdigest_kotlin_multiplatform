@@ -17,7 +17,6 @@
 
 package com.tdunning.math.stats
 
-import kotlinx.io.core.Input
 import org.junit.BeforeClass
 
 import java.io.IOException
@@ -32,7 +31,7 @@ class AVLTreeDigestTest : TDigestTest() {
         }
     }
 
-    override fun fromBytes(bytes: Input): TDigest {
+    override fun fromBytes(bytes: BinaryInput): TDigest {
         return AVLTreeDigest.fromBytes(bytes)
     }
     override fun testRepeatedValues() {

@@ -37,13 +37,13 @@ class SerializationTest {
 
 //        val output = ByteBuffer.allocate(out.smallByteSize())
         val buf = buildPacket {
-            out.asSmallBytes(this)
+            out.asSmallBytes(this.toBinaryOutput())
         }
 
 //        var input = ByteBuffer.wrap(output.array())
         var input = buf.copy()
         try {
-            val m = MergingDigest.fromBytes(input)
+            val m = MergingDigest.fromBytes(input.toBinaryInput())
             var q = 0.0
             while (q <= 1) {
                 assertEquals(m.quantile(q), out.quantile(q), 0.0)
@@ -63,7 +63,7 @@ class SerializationTest {
         input.release()
 
         input = buf
-        val `in` = MergingDigest.fromBytes(input)
+        val `in` = MergingDigest.fromBytes(input.toBinaryInput())
         input.release()
         assertEquals(out.quantile(0.95), `in`.quantile(0.95), 0.001)
     }

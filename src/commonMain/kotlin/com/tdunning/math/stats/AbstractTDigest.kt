@@ -17,8 +17,6 @@
 
 package com.tdunning.math.stats
 
-import kotlinx.io.core.Input
-import kotlinx.io.core.Output
 import kotlin.random.Random
 
 abstract class AbstractTDigest : TDigest() {
@@ -95,7 +93,7 @@ abstract class AbstractTDigest : TDigest() {
         internal fun interpolate(x: Double, x0: Double, x1: Double): Double {
             return (x - x0) / (x1 - x0)
         }
-        internal fun encode(buf: Output, n: Int) {
+        internal fun encode(buf: BinaryOutput, n: Int) {
             var n = n
             var k = 0
             while (n < 0 || n > 0x7f) {
@@ -110,7 +108,7 @@ abstract class AbstractTDigest : TDigest() {
             buf.writeByte(n.toByte())
         }
 
-        internal fun decode(buf: Input): Int {
+        internal fun decode(buf: BinaryInput): Int {
             var v = buf.readByte().toInt()
             var z = 0x7f and v
             var shift = 7

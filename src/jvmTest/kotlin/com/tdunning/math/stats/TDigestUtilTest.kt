@@ -39,13 +39,13 @@ class TDigestUtilTest : AbstractTest() {
                 var n = gen.nextInt()
                 n = n.ushr(i / 100)
                 ref.add(n)
-                AbstractTDigest.encode(this, n)
+                AbstractTDigest.encode(this.toBinaryOutput(), n)
             }
         }
 
 
         for (i in 0..2999) {
-            val n = AbstractTDigest.decode(buf)
+            val n = AbstractTDigest.decode(buf.toBinaryInput())
             Assert.assertEquals(String.format("%d:", i), ref[i].toInt().toLong(), n.toLong())
         }
         buf.release()

@@ -44,7 +44,7 @@ class MergingDigestTest : TDigestTest() {
     }
 
 
-    override fun fromBytes(bytes: Input): TDigest {
+    override fun fromBytes(bytes: BinaryInput): TDigest {
         return MergingDigest.fromBytes(bytes)
     }
 

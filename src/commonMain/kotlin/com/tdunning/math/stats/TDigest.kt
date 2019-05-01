@@ -17,7 +17,7 @@
 
 package com.tdunning.math.stats
 
-import kotlinx.io.core.Output
+import kotlin.js.JsName
 
 /**
  * Adaptive histogram based on something like streaming k-means crossed with Q-digest.
@@ -55,6 +55,7 @@ abstract class TDigest
      * @param x The value to add.
      * @param w The weight of this point.
      */
+    @JsName("addWeightedSample")
     abstract fun add(x: Double, w: Int)
 
     internal fun checkValue(x: Double) {
@@ -98,6 +99,7 @@ abstract class TDigest
      * @param q The desired fraction
      * @return The value x such that cdf(x) == q
      */
+    @JsName("quantile")
     abstract fun quantile(q: Double): Double
 
     /**
@@ -147,7 +149,7 @@ abstract class TDigest
      *
      * @param buf The byte buffer into which the TDigest should be serialized.
      */
-    abstract fun asBytes(buf: Output)
+    abstract fun asBytes(buf: BinaryOutput)
 
     /**
      * Serialize this TDigest into a byte buffer.  Some simple compression is used
@@ -157,7 +159,7 @@ abstract class TDigest
      *
      * @param buf The byte buffer into which the TDigest should be serialized.
      */
-    abstract fun asSmallBytes(buf: Output)
+    abstract fun asSmallBytes(buf: BinaryOutput)
 
     /**
      * Tell this TDigest to record the original data as much as possible for test
@@ -172,6 +174,7 @@ abstract class TDigest
      *
      * @param x The data value to add
      */
+    @JsName("addSample")
     abstract fun add(x: Double)
 
     /**
@@ -179,6 +182,7 @@ abstract class TDigest
      *
      * @param other The other TDigest
      */
+    @JsName("addOtherDigest")
     abstract fun add(other: TDigest)
 
     abstract fun centroidCount(): Int

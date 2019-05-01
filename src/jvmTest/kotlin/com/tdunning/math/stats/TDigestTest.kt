@@ -21,7 +21,6 @@ import com.carrotsearch.randomizedtesting.RandomizedTest
 import com.clearspring.analytics.stream.quantile.QDigest
 import com.google.common.collect.Lists
 import com.tdunning.math.stats.Dist.cdf
-import kotlinx.io.core.Input
 import kotlinx.io.core.buildPacket
 import org.apache.mahout.common.RandomUtils
 import org.apache.mahout.math.jet.random.AbstractContinousDistribution
@@ -331,7 +330,7 @@ abstract class TDigestTest : AbstractTest() {
         Assert.assertEquals((1 + second.count() / 8.0) / digest.size(), digest.cdf(0.25), 1e-10)
     }
 
-    protected abstract fun fromBytes(bytes: Input): TDigest
+    protected abstract fun fromBytes(bytes: BinaryInput): TDigest
 
     @Test
     fun testSingleValue() {
@@ -706,16 +705,17 @@ abstract class TDigestTest : AbstractTest() {
 //        val buf = ByteBuffer.allocate(20000)
         var writtenBytes=0
         val buf= buildPacket {
-            dist.asBytes(this)
+            dist.asBytes(this.toBinaryOutput())
             writtenBytes=this.size
         }
+//        buf.readFully()
 //       writtenBytes=buf.remaining
         Assert.assertTrue(String.format("size is %d\n", writtenBytes), writtenBytes < 12000)
         Assert.assertEquals(dist.byteSize().toLong(), writtenBytes.toLong())
 
         System.out.printf("# big %d bytes\n", writtenBytes)
 
-        var dist2 = fromBytes(buf)
+        var dist2 = fromBytes(buf.toBinaryInput())
         buf.release()
         Assert.assertEquals(dist.centroids().size.toLong(), dist2.centroids().size.toLong())
         Assert.assertEquals(dist.compression(), dist2.compression(), 1e-4)
@@ -737,14 +737,14 @@ abstract class TDigestTest : AbstractTest() {
         Assert.assertFalse(ix.hasNext())
 
         val bufsmall = buildPacket {
-            dist.asSmallBytes(this)
+            dist.asSmallBytes(this.toBinaryOutput())
             writtenBytes=this.size
         }
 
         Assert.assertTrue(writtenBytes < 6000)
         System.out.printf("# small %d bytes\n", writtenBytes)
 
-        dist2 = fromBytes(bufsmall)
+        dist2 = fromBytes(bufsmall.toBinaryInput())
         bufsmall.release()
         Assert.assertEquals(dist.centroids().size.toLong(), dist2.centroids().size.toLong())
         Assert.assertEquals(dist.compression(), dist2.compression(), 1e-4)
@@ -830,14 +830,14 @@ abstract class TDigestTest : AbstractTest() {
                 var n = gen.nextInt()
                 n = n.ushr(i / 100)
                 ref.add(n)
-                AbstractTDigest.encode(this, n)
+                AbstractTDigest.encode(this.toBinaryOutput(), n)
             }
         }
 
 
         try {
             for (i in 0..2999) {
-                val n = AbstractTDigest.decode(buf)
+                val n = AbstractTDigest.decode(buf.toBinaryInput())
                 Assert.assertEquals(String.format("%d:", i), ref[i].toInt().toLong(), n.toLong())
             }
         } catch (e:Throwable) {

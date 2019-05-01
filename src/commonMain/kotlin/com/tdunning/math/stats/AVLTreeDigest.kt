@@ -18,6 +18,7 @@
 package com.tdunning.math.stats
 
 import kotlinx.io.core.*
+import kotlin.js.JsName
 import kotlin.math.abs
 
 class AVLTreeDigest  : AbstractTDigest {
@@ -94,7 +95,7 @@ class AVLTreeDigest  : AbstractTDigest {
             run {
                 var neighbor = start
                 while (neighbor != IntAVLTree.NIL) {
-                    val z = kotlin.math.abs(summary!!.mean(neighbor) - x)
+                    val z = abs(summary!!.mean(neighbor) - x)
                     if (z < minDistance) {
                         start = neighbor
                         minDistance = z
@@ -514,7 +515,7 @@ class AVLTreeDigest  : AbstractTDigest {
 //        return buf.position()
         var res=0
         val buf= buildPacket {
-            asSmallBytes(this)
+            asSmallBytes(this.toBinaryOutput())
             res=this.size
         }
         buf.release()
@@ -524,7 +525,7 @@ class AVLTreeDigest  : AbstractTDigest {
     /**
      * Outputs a histogram as bytes using a particularly cheesy encoding.
      */
-    override fun asBytes(buf: Output) {
+    override fun asBytes(buf: BinaryOutput) {
         buf.writeInt(VERBOSE_ENCODING)
         buf.writeDouble(min)
         buf.writeDouble(max)
@@ -539,7 +540,7 @@ class AVLTreeDigest  : AbstractTDigest {
         }
     }
 
-    override fun asSmallBytes(buf: Output) {
+    override fun asSmallBytes(buf: BinaryOutput) {
         buf.writeInt(SMALL_ENCODING)
         buf.writeDouble(min)
         buf.writeDouble(max)
@@ -570,7 +571,8 @@ class AVLTreeDigest  : AbstractTDigest {
          * @param buf The buffer to read from.
          * @return The new histogram structure
          */
-        fun fromBytes(buf: Input): AVLTreeDigest {
+        @JsName("fromBytes")
+        fun fromBytes(buf: BinaryInput): AVLTreeDigest {
             val encoding = buf.readInt()
             if (encoding == VERBOSE_ENCODING) {
                 val min = buf.readDouble()

@@ -17,8 +17,7 @@
 
 package com.tdunning.math.stats
 
-import kotlinx.io.core.Input
-import kotlinx.io.core.Output
+import kotlin.js.JsName
 
 /**
  * Maintains a t-digest by collecting new points in a buffer that is then sorted occasionally and merged
@@ -814,7 +813,7 @@ class MergingDigest
         VERBOSE_ENCODING(1), SMALL_ENCODING(2)
     }
 
-    override fun asBytes(buf: Output) {
+    override fun asBytes(buf: BinaryOutput) {
         compress()
         buf.writeInt(Encoding.VERBOSE_ENCODING.code)
         buf.writeDouble(min)
@@ -827,7 +826,7 @@ class MergingDigest
         }
     }
 
-    override fun asSmallBytes(buf: Output) {
+    override fun asSmallBytes(buf: BinaryOutput) {
         compress()
         buf.writeInt(Encoding.SMALL_ENCODING.code)    // 4
         buf.writeDouble(min)                          // + 8
@@ -857,7 +856,8 @@ class MergingDigest
         // scale functions are more expensive than the corresponding
         // weight limits.
         var useWeightLimit = true
-        fun fromBytes(buf: Input): MergingDigest {
+        @JsName("fromBytes")
+        fun fromBytes(buf: BinaryInput): MergingDigest {
             val encoding = buf.readInt()
             if (encoding == Encoding.VERBOSE_ENCODING.code) {
                 val min = buf.readDouble()
