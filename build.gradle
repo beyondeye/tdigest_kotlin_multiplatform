@@ -31,16 +31,6 @@ apply plugin: 'cz.habarta.typescript-generator'
 kotlin {
     jvm()
     js()
-//    js {
-//        compilations.main.kotlinOptions {
-//            // Setup the Kotlin compiler options for the 'main' compilation:
-//            //see https://kotlinlang.org/docs/reference/js-modules.html
-//            //see https://kotlinlang.org/docs/reference/using-gradle.html#attributes-specific-for-js
-//            //see https://kotlinlang.org/docs/reference/building-mpp-with-gradle.html#configuring-compilations
-//            //define export format used by nodejs
-//            moduleKind = "commonjs"
-//        }
-//    }
     // For ARM, should be changed to iosArm32 or iosArm64
     // For Linux, should be changed to e.g. linuxX64
     // For MacOS, should be changed to e.g. macosX64
@@ -51,7 +41,6 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation "org.jetbrains.kotlinx:kotlinx-io:$io_version"
                 implementation "org.jetbrains.kotlinx:atomicfu-common:$atomicfu_version"
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version"
             }
@@ -60,12 +49,13 @@ kotlin {
             dependencies {
                 implementation kotlin('test-common')
                 implementation kotlin('test-annotations-common')
+                //kotlinxio currently used only for test because not mature enough
+                implementation "org.jetbrains.kotlinx:kotlinx-io:$io_version"
             }
         }
         jvmMain {
             dependencies {
                 implementation kotlin('stdlib-jdk8')
-                implementation "org.jetbrains.kotlinx:kotlinx-io-jvm:$io_version"
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
                 compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
             }
@@ -74,6 +64,8 @@ kotlin {
             dependencies {
                 implementation kotlin('test')
                 implementation kotlin('test-junit')
+                //kotlinxio currently used only for test because not mature enough
+                implementation "org.jetbrains.kotlinx:kotlinx-io-jvm:$io_version"
                 implementation 'com.carrotsearch.randomizedtesting:randomizedtesting-runner:2.1.11'
                 implementation 'com.google.guava:guava:19.0'
                 implementation 'org.apache.mahout:mahout-math:0.9'
@@ -85,13 +77,14 @@ kotlin {
         jsMain {
             dependencies {
                 implementation kotlin('stdlib-js')
-                implementation "org.jetbrains.kotlinx:kotlinx-io-js:$io_version"
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$serialization_version"
                 compileOnly "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
             }
         }
         jsTest {
             dependencies {
+                //kotlinxio currently used only for test because not mature enough
+                implementation "org.jetbrains.kotlinx:kotlinx-io-js:$io_version"
                 implementation kotlin('test-js')
                 runtimeOnly "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
             }
@@ -120,6 +113,7 @@ if (project.extensions.findByName("npmDependencies") == null) {
 
 //define npm dependencies when publishing to npm
 project.ext.npmDependencies += """ "kotlinx-atomicfu": "${atomicfu_version}" """
+project.ext.npmDependencies += """ "bytebuffer": "${bytebuffer_version}" """
 //project.ext.npmDependencies += """ "kotlinx-io": "${io_version}" """
 
 compileKotlinJs {
