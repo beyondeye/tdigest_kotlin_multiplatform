@@ -7,7 +7,7 @@ The API (the whole code actually) is identical to the original Java implementati
 _Java Serialization for TDigest objects is not currently supported._
 
 ### Supported platforms
-Supported platforms are JVS and JS (including Node).
+Supported platforms are JVM and JS (including Node).
 
 Kotlin Native could be also be supported with a small effort (need to implement something equivalent to Java ByteBuffer, or 
 use a library like [kotlinx.io](https://github.com/Kotlin/kotlinx-io))
