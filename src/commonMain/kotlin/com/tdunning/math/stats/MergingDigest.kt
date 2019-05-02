@@ -267,6 +267,10 @@ class MergingDigest
             tempData!![where].addAll(history)
         }
     }
+    override fun updateSample(oldValue: Double, newValue: Double) {
+        throw NotImplementedError("updateSample not implemented for MergingDigest")
+    }
+
 
     private fun add(m: DoubleArray, w: DoubleArray, count: Int, data: MutableList<MutableList<Double>>?) {
         var m = m

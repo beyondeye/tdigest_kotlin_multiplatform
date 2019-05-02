@@ -17,7 +17,9 @@
 
 package com.tdunning.math.stats
 
+import org.junit.Assert
 import org.junit.BeforeClass
+import org.junit.Test
 
 import java.io.IOException
 
@@ -43,6 +45,69 @@ class AVLTreeDigestTest : TDigestTest() {
     override fun singleSingleRange() {
         // disabled for AVLTreeDigest for now
     }
+
+    @Test
+    fun testUpdateSample() {
+        val oldValue=5.0
+        val newValue=40.0
+        val srcdata = listOf(5.0, 10.0, 15.0, 20.0, 32.0, 60.0)
+        //5 removed, 40 added
+        val targetdata = listOf(10.0, 15.0, 20.0, 32.0, 40.0, 60.0)
+
+        val td_src = AVLTreeDigest(200.0)
+        for (datum in srcdata) {
+            td_src.add(datum)
+        }
+        val td_target=AVLTreeDigest(200.0)
+        for (datum in targetdata) {
+            td_target.add(datum)
+        }
+        td_src.updateSample(oldValue,newValue)
+//        Assert.assertEquals(td_src.toString(),td_target.toString())
+
+
+//        Assert.assertEquals(td_src.quantile(0.1), td_target.quantile(0.1), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.2), td_target.quantile(0.2), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.3), td_target.quantile(0.3), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.4), td_target.quantile(0.4), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.5), td_target.quantile(0.5), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.6), td_target.quantile(0.6), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.7), td_target.quantile(0.7), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.8), td_target.quantile(0.8), 1e-10)
+    }
+    @Test
+    fun testUpdateSample2() {
+        val oldValue=5.0
+        val newValue=40.5
+        val src = Array(1000) { it.toDouble() }
+        val srcdata =src.toList()
+        val targetdata= src.toMutableList()
+        targetdata.remove(oldValue)
+        targetdata.add(newValue)
+        //5 removed, 40.5 added
+
+        val td_src = AVLTreeDigest(5.0)
+        for (datum in srcdata) {
+            td_src.add(datum)
+        }
+        val td_target=AVLTreeDigest(5.0)
+        for (datum in targetdata) {
+            td_target.add(datum)
+        }
+        td_src.updateSample(oldValue,newValue)
+//        Assert.assertEquals(td_src.toString(),td_target.toString())
+
+
+//        Assert.assertEquals(td_src.quantile(0.1), td_target.quantile(0.1), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.2), td_target.quantile(0.2), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.3), td_target.quantile(0.3), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.4), td_target.quantile(0.4), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.5), td_target.quantile(0.5), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.6), td_target.quantile(0.6), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.7), td_target.quantile(0.7), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.8), td_target.quantile(0.8), 1e-10)
+    }
+
     companion object {
         @BeforeClass
         @Throws(IOException::class)

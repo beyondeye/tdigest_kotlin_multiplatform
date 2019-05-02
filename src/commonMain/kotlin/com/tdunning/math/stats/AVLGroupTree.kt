@@ -36,6 +36,15 @@ internal class AVLGroupTree  constructor(record: Boolean = false) : AbstractColl
     private var aggregatedCounts: IntArray? = null
     private val tree: IntAVLTree
 
+    /**DARIO*
+     * for debugging
+     */
+    override fun toString():String {
+        val sb=StringBuilder()
+        sb.append("centroids=${centroids?.joinToString()};")
+        sb.append("counts=${counts?.joinToString()};")
+        return sb.toString()
+    }
     init {
         tree = object : IntAVLTree() {
 

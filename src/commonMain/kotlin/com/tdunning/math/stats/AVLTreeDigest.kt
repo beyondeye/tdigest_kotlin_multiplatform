@@ -39,6 +39,12 @@ class AVLTreeDigest  : AbstractTDigest {
         summary = AVLGroupTree(false)
     }
 
+    /**
+     * *DARIO* for debugging
+     */
+    override fun toString(): String {
+        return summary?.toString()?:""
+    }
     override fun recordAllData(): TDigest {
         if (summary!!.size != 0) {
             throw IllegalStateException("Can only ask to record added data on an empty summary")
@@ -158,6 +164,91 @@ class AVLTreeDigest  : AbstractTDigest {
                 compress()
             }
         }
+    }
+    /**
+     * *DARIO* method that remove an existing sample and add a new one
+     * (w is assumed to be 1)
+     * the implementation is based on the code from method [add] above
+     */
+    override fun updateSample(oldValue: Double, newValue: Double) {
+        checkValue(oldValue)
+        checkValue(newValue)
+        if(oldValue>max|| oldValue<min) {
+            throw IllegalArgumentException("oldValue not in range")
+        }
+        val x=oldValue
+        var start = summary!!.floor(x)
+        if (start == IntAVLTree.NIL) {
+            start = summary!!.first()
+        }
+
+        var minDistance = Double.MAX_VALUE
+        var lastNeighbor = IntAVLTree.NIL
+        run {
+            var neighbor = start
+            while (neighbor != IntAVLTree.NIL) {
+                val z = abs(summary!!.mean(neighbor) - x)
+                if (z < minDistance) {
+                    start = neighbor
+                    minDistance = z
+                } else if (z > minDistance) {
+                    // as soon as z increases, we have passed the nearest neighbor and can quit
+                    lastNeighbor = neighbor
+                    break
+                }
+                neighbor = summary!!.next(neighbor)
+            }
+        }
+
+        var closest = IntAVLTree.NIL
+        var n = 0.0
+        var neighbor = start
+        while (neighbor != lastNeighbor) {
+            mpassert(minDistance == abs(summary!!.mean(neighbor) - x))
+
+            // this slightly clever selection method improves accuracy with lots of repeated points
+            // what it does is sample uniformly from all clusters that have room
+            n++
+            if (gen.nextDouble() < 1 / n) {
+                closest = neighbor
+            }
+            neighbor = summary!!.next(neighbor)
+        }
+        mpassert(closest != IntAVLTree.NIL)
+
+        //-----
+        // if the nearest point was not unique, then we may not be modifying the first copy
+        // which means that ordering can change
+        var centroid_closest = summary!!.mean(closest)
+        var count_closest = summary!!.count(closest)
+        val d_closest = summary!!.data(closest)
+        if (d_closest != null) {
+            d_closest.remove(x)
+        }
+        if(count_closest>1) {
+            centroid_closest = weightedAverage(
+                centroid_closest,
+                count_closest.toDouble(),
+                x,
+                -1.0
+            )
+            count_closest += -1
+            summary!!.update(closest, centroid_closest, count_closest, d_closest, false)
+        } else { //only one element in this centroid, simply remove it
+            mpassert(minDistance==0.0)
+            summary!!.remove(closest)
+        }
+        //-----
+
+        count += -1
+
+        if (summary!!.size > 20 * compression ) {
+            // may happen in case of sequential points
+            compress()
+        }
+
+        //we are done removing old value: now add new one
+        add(newValue,1,null)
     }
 
     override fun compress() {

@@ -67,6 +67,11 @@ abstract class TDigest
     abstract fun add(others: List<TDigest>)
 
     /**
+     * *DARIO* method that remove an existing sample and add a new one
+     * (w is assumed to be 1)
+     */
+    abstract fun updateSample(oldValue: Double, newValue: Double)
+    /**
      * Re-examines a t-digest to determine whether some centroids are redundant.  If your data are
      * perversely ordered, this may be a good idea.  Even if not, this may save 20% or so in space.
      *
