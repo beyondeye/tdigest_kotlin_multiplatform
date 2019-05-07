@@ -1,0 +1,16 @@
+{
+  "name": "tdigest-kt",
+  "peerDependencies": {
+    "kotlin": "1.3.30"
+  },
+  "dependencies": {
+    "kotlin": "^1.3.30",
+    "tdigest-kt": "file:./libs/tdigest-kt",
+    "kotlinx-atomicfu": "file:./libs/kotlinx-atomicfu"
+  },
+  "devDependencies": {
+    "ts-node": "^6.2.0",
+    "tslint": "^5.16.0",
+    "typescript": "^3.4.5"
+  }
+}

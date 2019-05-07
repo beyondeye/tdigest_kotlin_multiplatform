@@ -1,0 +1,55 @@
+{
+  "_from": "tdigest-kt@0.1.4",
+  "_id": "tdigest-kt@0.1.4",
+  "_inBundle": false,
+  "_integrity": "sha512-0Aq9z7IeE8b874y3UaqFpkIUq0JAYDT+/o+EiLFt8xErTXVsZobvtDyFekHB2KBaYmn84w6dZmiY6dnYeHKnVQ==",
+  "_location": "/tdigest-kt",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "tdigest-kt@0.1.4",
+    "name": "tdigest-kt",
+    "escapedName": "tdigest-kt",
+    "rawSpec": "0.1.4",
+    "saveSpec": null,
+    "fetchSpec": "0.1.4"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/tdigest-kt/-/tdigest-kt-0.1.4.tgz",
+  "_shasum": "230eb5d0c1cc409806e07d6e20b2b8211c523e94",
+  "_spec": "tdigest-kt@0.1.4",
+  "_where": "C:\\startup\\WORK\\plensee_backend\\tdigest_kotlin_multiplatform\\types\\tdigest-kt",
+  "author": {
+    "name": "eyebeyond"
+  },
+  "bugs": {
+    "url": "https://github.com/beyondeye/tdigest_kotlin_multiplatform/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "bytebuffer": "5.0.1",
+    "kotlinx-atomicfu": "0.12.7"
+  },
+  "deprecated": false,
+  "description": "port of TDigest algorithm to kotlin multiplatform",
+  "homepage": "https://github.com/beyondeye/tdigest_kotlin_multiplatform",
+  "keywords": [
+    "Kotlin",
+    "tdigest"
+  ],
+  "license": "Apache-2.0",
+  "main": "tdigest-kt.js",
+  "name": "tdigest-kt",
+  "peerDependencies": {
+    "kotlin": "1.3.30"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beyondeye/tdigest_kotlin_multiplatform.git"
+  },
+  "types": "tdigest-kt.d.ts",
+  "version": "0.1.4"
+}
