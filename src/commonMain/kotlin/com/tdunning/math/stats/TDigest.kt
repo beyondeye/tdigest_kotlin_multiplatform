@@ -209,6 +209,7 @@ abstract class TDigest
          * The number of centroids retained will be a smallish (usually less than 10) multiple of this number.
          * @return the MergingDigest
          */
+        @JsName("createMergingDigest")
         fun createMergingDigest(compression: Double): TDigest {
             return MergingDigest(compression)
         }
@@ -220,6 +221,7 @@ abstract class TDigest
          * The number of centroids retained will be a smallish (usually less than 10) multiple of this number.
          * @return the AvlTreeDigest
          */
+        @JsName("createAvlTreeDigest")
         fun createAvlTreeDigest(compression: Double): TDigest {
             return AVLTreeDigest(compression)
         }
@@ -232,6 +234,7 @@ abstract class TDigest
          * The number of centroids retained will be a smallish (usually less than 10) multiple of this number.
          * @return the TDigest
          */
+        @JsName("createDigest")
         fun createDigest(compression: Double): TDigest {
             return createMergingDigest(compression)
         }
