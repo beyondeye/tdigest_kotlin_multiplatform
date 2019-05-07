@@ -3,8 +3,8 @@ import tdigest_kt = require("tdigest-kt");
 var a:number =3;
 var b:number=2;
 
-const centroid = new tdigest_kt.com.tdunning.math.stats.Centroid(false)
 const t=tdigest_kt.com.tdunning.math.stats;
+const centroid = new t.Centroid(false);
 var digest = t.TDigest.Companion.createAvlTreeDigest(200);
 digest.addSample(10);
 digest.addSample(20);
