@@ -14,18 +14,18 @@ declare namespace Kotlin {
     }
 }
 declare namespace tdigesttypes {
-    class Centroid {
+    export class Centroid {
         Companion:Centroid$Companion
     }
-    class Centroid$Companion {
+    export class Centroid$Companion {
     }
-    interface BinaryOutput {
+    export interface BinaryOutput {
 
     }
-    interface BinaryInput {
+    export interface BinaryInput {
 
     }
-    interface TDigest {
+    export interface TDigest {
         /**
          * Adds a sample to a histogram
          *
@@ -142,7 +142,7 @@ declare namespace tdigesttypes {
 
         Companion:TDigest$Companion
     }
-    class TDigest$Companion {
+    export class TDigest$Companion {
         /**
          * create a TDigest with the specified compression
          * use [createAvlTreeDigest] or [createMergingDigest] if you use a specific algorithm
@@ -166,7 +166,7 @@ declare const tdigest_kt: {
                     BinaryInputFromByteBuffer: any;
                     BinaryOutput: any;
                     BinaryOutputFromByteBuffer: any;
-                    Centroid: tdigesttypes.Centroid;
+                    Centroid: any;
                     Centroid_init_12fank$: any;
                     Centroid_init_14dthe$: any;
                     Centroid_init_87xbef$: any;
