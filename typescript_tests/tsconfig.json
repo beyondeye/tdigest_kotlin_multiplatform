@@ -4,6 +4,8 @@
         "lib": [
             "es2017"
         ],
+        "target": "ES2017",
+
         "noImplicitAny": true,
         "noImplicitThis": true,
         "strictNullChecks": true,
