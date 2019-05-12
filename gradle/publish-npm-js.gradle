@@ -17,6 +17,7 @@ static distTag(version) {
 //template dir with package.json and readme.md
 def npmTemplateDir = file("$projectDir/npmtemplate")
 def npmDeployDir = file("$buildDir/npmtemplate")
+def typescriptTestsTDigestLibDeployDir = file("$projectDir/typescript_tests/libs/tdigest-kt")
 def npmDeployTag = distTag(version)
 
 //def authToken = prop("npmjs.auth.token", "")
@@ -26,18 +27,33 @@ def dryRun = prop("dryRun", "false")
 
 // Note: publish transformed files using dependency on sourceSets.main.output
 afterEvaluate {
-    task preparePublishNpm(type: Copy) {
+    task preparePublishNpm(type: Copy,dependsOn:[compileKotlinJs]) {
         from(npmTemplateDir) {
+            exclude "**/*.d.ts" //do not expand type definition file: see https://stackoverflow.com/questions/25152045/gradle-copy-files-and-expand-only-some-of-them-and-or-ignore-dollar-signs-in-oth
             expand(project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
+        }
+        //now copy .d.ts files without gradle properties expansion
+        from(npmTemplateDir) {
+            include "**/*.d.ts"
         }
         from(compileKotlinJs.destinationDir)
         into npmDeployDir
+    }
+    //copy compiled tdigest library to typescript tests (but without typescript type definition, since the
+    //purpose of typescript tests is exactly working on these typescript definitions
+      task prepareTypescriptTests(type: Copy,dependsOn: [preparePublishNpm]) {
+        from(npmDeployDir) {
+            exclude 'package.json'
+            exclude 'tdigest-kt.d.ts'
+        }
+        into typescriptTestsTDigestLibDeployDir
     }
     //make sure the tests are executed  after atomicfu transformed all files
     preparePublishNpm.mustRunAfter{
         transformJsMainAtomicfu
         transformJsTestAtomicfu
     }
+
     preparePublishNpm.outputs.upToDateWhen { false }
 
     task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
