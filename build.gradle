@@ -148,17 +148,19 @@ repositories.whenObjectAdded {
     }
 }
 
-//*DARIO* DEBUG tasks for checking the full list of gradle configurations 
-task printConfigs {
-    configurations.each { println it.name }
-}
-//*DARIO* hack for copying jvm class file where a usual kotlin gradle build would put them
+//DEBUG tasks for checking the full list of gradle configurations 
+//task printConfigs {
+//    configurations.each { println it.name }
+//}
+//hack for copying jvm class file where a usual kotlin gradle build would put them
+//this task in not currently in use
 task copyToCompileKotlin(type: Copy,dependsOn: [compileKotlinJvm]) {
     from(compileKotlinJvm.destinationDir)
     into file("$buildDir/kotlin/compileKotlin")
 }
 
-//run this gradle task for generating typescript interface definition for datamodels classes
+//run this gradle task for automatically generating typescript interface definition for datamodels classes
+//NOTE: that this not currently used, typescript definition where created manually
 generateTypeScript {
     jsonLibrary = 'jackson2'
     classes = [
