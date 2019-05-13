@@ -46,5 +46,6 @@ it in your `package.json` as
 
 (see the example [here](typescript_tests/package.json))
 
-###License
+
+### License
 Like the original code [Apache License 2.0](LICENSE)
