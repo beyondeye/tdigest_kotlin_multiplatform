@@ -1,7 +1,8 @@
 # TDigest for kotlin multiplatform
 
-This is a port of the [TDigest algorithm](https://github.com/tdunning/t-digest) to kotlin multiplatform 
-that outputs a javascript code
+This is a full port of the reference implementation of [TDigest algorithm](https://github.com/tdunning/t-digest) to kotlin multiplatform 
+(original code retrieved May 2019)
+that outputs javascript code, with typescript type definitions
 You can install this library  with
 ```commandline
 npm i tdigest-kt

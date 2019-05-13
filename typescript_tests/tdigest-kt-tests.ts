@@ -1,7 +1,8 @@
 import tdigest_kt = require("tdigest-kt");
 import * as ByteBuffer from "bytebuffer";
-//import toBinaryOutput = com.tdunning.math.stats.toBinaryOutput;
-//import toBinaryInput = com.tdunning.math.stats.toBinaryInput;
+import {com} from "tdigest-kt";
+import toBinaryOutput = com.basicio.toBinaryOutput;
+import toBinaryInput = com.basicio.toBinaryInput;
 
 var a:number =3;
 var b:number=2;
@@ -27,12 +28,12 @@ var digest_size = digest.size();
 //now test serialization and deserialization
 const size=digest.byteSize();
 const buf = new ByteBuffer(size);
-const output=t.toBinaryOutput(buf);
+const output=toBinaryOutput(buf);
 digest.asBytes(output);
 const serializedString=output.toB64();
 //now try to deserialize
 //const input=buildBinaryInputFromB64(serializedString);
-const input=t.toBinaryInput(ByteBuffer.fromBase64(serializedString));
+const input=toBinaryInput(ByteBuffer.fromBase64(serializedString));
 
 const digest_deserialized=t.AVLTreeDigest.Companion.fromBytes(input);
 

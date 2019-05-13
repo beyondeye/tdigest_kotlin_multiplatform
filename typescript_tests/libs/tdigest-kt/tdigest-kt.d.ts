@@ -13,8 +13,35 @@ declare namespace  Kotlin{
     }
 
 }
+export namespace com.basicio {
+    export interface BinaryOutput {
+        /**
+         * convert the current content of this BinaryOutput
+         * (a wrapped ByteBuffer) into base64 encoded string
+         */
+        toB64():string
+    }
+    export interface BinaryInput {
+
+    }
+    /**
+     * create a [[BinaryInput]] to be used to deserialize a TDigest
+     * @param bb a bytebuffer containing the data to be deserialized
+     */
+    export function toBinaryInput(bb:ByteBuffer):BinaryInput;
+
+    /**
+     * create a [[BinaryOutput]] to be used to serialize a TDigest, from a
+     * preallocated [[ByteBuffer]]
+     * @param bb a preallocated bytebuffer
+     */
+    export function toBinaryOutput(bb:ByteBuffer):BinaryOutput;
+}
 
 export namespace com.tdunning.math.stats {
+    import BinaryOutput = com.basicio.BinaryOutput;
+    import BinaryInput = com.basicio.BinaryInput;
+
     export class Centroid {
         constructor(record:boolean)
 
@@ -37,16 +64,7 @@ export namespace com.tdunning.math.stats {
          */
         id(): number
     }
-    export interface BinaryOutput {
-        /**
-         * convert the current content of this BinaryOutput
-         * (a wrapped ByteBuffer) into base64 encoded string
-         */
-        toB64():string
-    }
-    export interface BinaryInput {
 
-    }
 
     /**
      * this class does not exist in original kotlin code,
@@ -215,16 +233,5 @@ export namespace com.tdunning.math.stats {
     }
 
 
-    /**
-     * create a [[BinaryInput]] to be used to deserialize a TDigest
-     * @param bb a bytebuffer containing the data to be deserialized
-     */
-    export function toBinaryInput(bb:ByteBuffer):BinaryInput;
 
-    /**
-     * create a [[BinaryOutput]] to be used to serialize a TDigest, from a
-     * preallocated [[ByteBuffer]]
-     * @param bb a preallocated bytebuffer
-     */
-    export function toBinaryOutput(bb:ByteBuffer):BinaryOutput;
 }

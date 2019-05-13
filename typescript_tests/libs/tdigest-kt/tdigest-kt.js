@@ -1,6 +1,7 @@
 (function (_, Kotlin, $module$kotlinx_atomicfu) {
   'use strict';
   var $$importsForInline$$ = _.$$importsForInline$$ || (_.$$importsForInline$$ = {});
+  var Kind_INTERFACE = Kotlin.Kind.INTERFACE;
   var shuffle = Kotlin.kotlin.collections.shuffle_9jeydg$;
   var toByte = Kotlin.toByte;
   var IllegalStateException_init = Kotlin.kotlin.IllegalStateException_init_pdl1vj$;
@@ -29,7 +30,6 @@
   var Unit = Kotlin.kotlin.Unit;
   var IllegalArgumentException_init_0 = Kotlin.kotlin.IllegalArgumentException_init_pdl1vj$;
   var L0 = Kotlin.Long.ZERO;
-  var Kind_INTERFACE = Kotlin.Kind.INTERFACE;
   var atomic = $module$kotlinx_atomicfu.kotlinx.atomicfu.atomic$int$;
   var Comparable = Kotlin.kotlin.Comparable;
   var numberToInt = Kotlin.numberToInt;
@@ -82,6 +82,20 @@
   ScaleFunction$K_2_NO_NORM.prototype.constructor = ScaleFunction$K_2_NO_NORM;
   ScaleFunction$K_3_NO_NORM.prototype = Object.create(ScaleFunction.prototype);
   ScaleFunction$K_3_NO_NORM.prototype.constructor = ScaleFunction$K_3_NO_NORM;
+  function BinaryInput() {
+  }
+  BinaryInput.$metadata$ = {
+    kind: Kind_INTERFACE,
+    simpleName: 'BinaryInput',
+    interfaces: []
+  };
+  function BinaryOutput() {
+  }
+  BinaryOutput.$metadata$ = {
+    kind: Kind_INTERFACE,
+    simpleName: 'BinaryOutput',
+    interfaces: []
+  };
   function AbstractTDigest() {
     AbstractTDigest$Companion_getInstance();
     TDigest.call(this);
@@ -143,7 +157,7 @@
   AbstractTDigest$Companion.prototype.interpolate_hln2n9$ = function (x, x0, x1) {
     return (x - x0) / (x1 - x0);
   };
-  AbstractTDigest$Companion.prototype.encode_7kbole$ = function (buf, n) {
+  AbstractTDigest$Companion.prototype.encode_ydee4o$ = function (buf, n) {
     var n_0 = n;
     var k = 0;
     while (n_0 < 0 || n_0 > 127) {
@@ -157,7 +171,7 @@
     }
     buf.writeByte_s8j3t7$(toByte(n_0));
   };
-  AbstractTDigest$Companion.prototype.decode_ue5jad$ = function (buf) {
+  AbstractTDigest$Companion.prototype.decode_51dx0l$ = function (buf) {
     var v = buf.readByte();
     var z = 127 & v;
     var shift = 7;
@@ -914,7 +928,7 @@
     while (tmp$_0.hasNext()) {
       var centroid_0 = tmp$_0.next();
       var n = centroid_0.count();
-      AbstractTDigest$Companion_getInstance().encode_7kbole$(buf, n);
+      AbstractTDigest$Companion_getInstance().encode_ydee4o$(buf, n);
     }
   };
   function AVLTreeDigest$Companion() {
@@ -955,7 +969,7 @@
         means_0[i_1] = x;
       }
       for (var i_2 = 0; i_2 < n_0; i_2++) {
-        var z = AbstractTDigest$Companion_getInstance().decode_ue5jad$(buf);
+        var z = AbstractTDigest$Companion_getInstance().decode_51dx0l$(buf);
         r_0.addWeightedSample(means_0[i_2], z);
       }
       return r_0;
@@ -989,20 +1003,6 @@
     $this.summary_0 = new AVLGroupTree(false);
     return $this;
   }
-  function BinaryInput() {
-  }
-  BinaryInput.$metadata$ = {
-    kind: Kind_INTERFACE,
-    simpleName: 'BinaryInput',
-    interfaces: []
-  };
-  function BinaryOutput() {
-  }
-  BinaryOutput.$metadata$ = {
-    kind: Kind_INTERFACE,
-    simpleName: 'BinaryOutput',
-    interfaces: []
-  };
   function Centroid(record) {
     Centroid$Companion_getInstance();
     this.centroid_0 = 0.0;
@@ -3507,10 +3507,13 @@
     }
     return Platform_instance;
   }
+  var package$com = _.com || (_.com = {});
+  var package$basicio = package$com.basicio || (package$com.basicio = {});
+  package$basicio.BinaryInput = BinaryInput;
+  package$basicio.BinaryOutput = BinaryOutput;
   Object.defineProperty(AbstractTDigest, 'Companion', {
     get: AbstractTDigest$Companion_getInstance
   });
-  var package$com = _.com || (_.com = {});
   var package$tdunning = package$com.tdunning || (package$com.tdunning = {});
   var package$math = package$tdunning.math || (package$tdunning.math = {});
   var package$stats = package$math.stats || (package$math.stats = {});
@@ -3521,8 +3524,6 @@
   });
   package$stats.AVLTreeDigest_init_14dthe$ = AVLTreeDigest_init;
   package$stats.AVLTreeDigest = AVLTreeDigest;
-  package$stats.BinaryInput = BinaryInput;
-  package$stats.BinaryOutput = BinaryOutput;
   Object.defineProperty(Centroid, 'Companion', {
     get: Centroid$Companion_getInstance
   });
@@ -3589,12 +3590,12 @@
   package$stats.mpassert_6taknv$ = mpassert;
   var package$sample = _.sample || (_.sample = {});
   package$sample.hello = hello;
-  package$stats.BinaryInputFromByteBuffer = BinaryInputFromByteBuffer;
-  package$stats.toBinaryInput = toBinaryInput;
-  package$stats.buildBinaryInputFromB64_61zpoe$ = buildBinaryInputFromB64;
-  package$stats.BinaryOutputFromByteBuffer = BinaryOutputFromByteBuffer;
-  package$stats.toBinaryOutput = toBinaryOutput;
-  package$stats.buildBinaryOutput_h6gvc6$ = buildBinaryOutput;
+  package$basicio.BinaryInputFromByteBuffer = BinaryInputFromByteBuffer;
+  package$basicio.toBinaryInput = toBinaryInput;
+  package$basicio.buildBinaryInputFromB64_61zpoe$ = buildBinaryInputFromB64;
+  package$basicio.BinaryOutputFromByteBuffer = BinaryOutputFromByteBuffer;
+  package$basicio.toBinaryOutput = toBinaryOutput;
+  package$basicio.buildBinaryOutput_pfnpwk$ = buildBinaryOutput;
   package$stats.mpassert_4ina18$ = mpassert_0;
   package$sample.Sample = Sample;
   Object.defineProperty(package$sample, 'Platform', {
