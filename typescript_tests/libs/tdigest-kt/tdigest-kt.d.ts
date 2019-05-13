@@ -6,6 +6,8 @@ declare namespace  Kotlin{
      * unfortunately no d.ts files for kotlinjs standard library available
      */
     class Long {
+        high_:number;
+        low_:number;
         toNumber():number
     }
     interface Collection<T> {

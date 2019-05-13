@@ -3395,6 +3395,10 @@
   function hello() {
     return 'Hello from JS';
   }
+  function LongFromBits(lowBits, highBits) {
+    var tmp$;
+    return Kotlin.isType(tmp$ = Kotlin.Long.fromBits(lowBits, highBits), Kotlin.Long) ? tmp$ : throwCCE();
+  }
   function BinaryInputFromByteBuffer(bb) {
     this.bb = bb;
   }
@@ -3408,7 +3412,8 @@
     return this.bb.readInt();
   };
   BinaryInputFromByteBuffer.prototype.readLong = function () {
-    return this.bb.readLong();
+    var value = this.bb.readLongJs();
+    return LongFromBits(value.getLowBits(), value.getHighBits());
   };
   BinaryInputFromByteBuffer.prototype.readFloat = function () {
     return this.bb.readFloat();
@@ -3447,7 +3452,8 @@
     this.bb.writeInt(v);
   };
   BinaryOutputFromByteBuffer.prototype.writeLong_s8cxhz$ = function (v) {
-    this.bb.writeLong(v);
+    var v_ = v;
+    this.bb.writeLongJs(LongJs.fromBits(v_.low_, v_.high_));
   };
   BinaryOutputFromByteBuffer.prototype.writeFloat_mx4ult$ = function (v) {
     this.bb.writeFloat(v);
@@ -3590,6 +3596,7 @@
   package$stats.mpassert_6taknv$ = mpassert;
   var package$sample = _.sample || (_.sample = {});
   package$sample.hello = hello;
+  package$basicio.LongFromBits_vux9f0$ = LongFromBits;
   package$basicio.BinaryInputFromByteBuffer = BinaryInputFromByteBuffer;
   package$basicio.toBinaryInput = toBinaryInput;
   package$basicio.buildBinaryInputFromB64_61zpoe$ = buildBinaryInputFromB64;

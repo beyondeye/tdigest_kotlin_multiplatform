@@ -3,6 +3,7 @@ import * as ByteBuffer from "bytebuffer";
 import {com} from "tdigest-kt";
 import toBinaryOutput = com.basicio.toBinaryOutput;
 import toBinaryInput = com.basicio.toBinaryInput;
+import * as Long from "long";
 
 var a:number =3;
 var b:number=2;
@@ -24,6 +25,11 @@ var perc40=digest.quantile(0.5);
 
 var count = digest.centroidCount();
 var digest_size = digest.size();
+var low_ = digest_size.low_;
+var high_ = digest_size.high_;
+
+var digest_size_l = Long.fromBits(low_,high_);
+var digest_size_num = digest_size_l.toNumber();
 
 //now test serialization and deserialization
 const size=digest.byteSize();

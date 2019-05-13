@@ -1,5 +1,9 @@
 package com.basicio
 
+//see https://discuss.kotlinlang.org/t/approaches-to-convert-to-from-longs-in-kotlin-js/8075
+fun LongFromBits(lowBits: Int, highBits: Int): Long
+        = js("Kotlin").Long.fromBits(lowBits, highBits) as Long
+
 class BinaryInputFromByteBuffer(val bb: ByteBuffer) : BinaryInput {
     override fun readByte(): Byte {
         return bb.readByte()
@@ -14,7 +18,11 @@ class BinaryInputFromByteBuffer(val bb: ByteBuffer) : BinaryInput {
     }
 
     override fun readLong(): Long {
-        return bb.readLong()
+        //need to convert longjs representation to kotlin representation, so pass through string representation
+        //we use here the toString(radix) method from https://github.com/dcodeIO/long.js#methods
+        // (it is not kotlin.toString() method)
+        val value:LongJs= bb.readLongJs()
+        return LongFromBits(value.getLowBits(),value.getHighBits())
     }
 
     override fun readFloat(): Float {

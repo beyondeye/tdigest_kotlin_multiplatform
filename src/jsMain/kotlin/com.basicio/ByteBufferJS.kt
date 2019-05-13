@@ -5,13 +5,13 @@ external class ByteBuffer(initialCapacity:Int) {
     fun readByte():Byte
     fun readShort():Short
     fun readInt():Int
-    fun readLong():Long
+    fun readLongJs():LongJs
     fun readFloat():Float
     fun readDouble():Double
     fun writeByte(v:Byte)
     fun writeShort(v:Short)
     fun writeInt(v:Int)
-    fun writeLong(v:Long)
+    fun writeLongJs(v:LongJs) /* number | string | longjs*/
     fun writeFloat(v:Float)
     fun writeDouble(v:Double)
     fun toBase64():String
@@ -20,5 +20,14 @@ external class ByteBuffer(initialCapacity:Int) {
     companion object {
         fun fromBase64(str:String): ByteBuffer
     }
+}
 
+//see https://github.com/dcodeIO/long.js#methods
+external class LongJs {
+    fun getHighBits(): Int
+    fun getLowBits(): Int
+    companion object {
+        fun fromBits(lowBits: Int, highBits: Int, unsigned: Boolean = definedExternally): LongJs
+
+    }
 }
