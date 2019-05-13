@@ -1,4 +1,4 @@
-package com.tdunning.math.stats
+package com.basicio
 
 /**
  * create a binary input from a input base64 encoded string

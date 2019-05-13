@@ -17,6 +17,7 @@
 
 package com.tdunning.math.stats
 
+import com.basicio.BinaryInput
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test

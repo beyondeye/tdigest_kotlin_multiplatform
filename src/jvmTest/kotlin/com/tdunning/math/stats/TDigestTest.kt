@@ -17,6 +17,9 @@
 
 package com.tdunning.math.stats
 
+import com.basicio.BinaryInput
+import com.basicio.toBinaryInput
+import com.basicio.toBinaryOutput
 import com.carrotsearch.randomizedtesting.RandomizedTest
 import com.clearspring.analytics.stream.quantile.QDigest
 import com.google.common.collect.Lists

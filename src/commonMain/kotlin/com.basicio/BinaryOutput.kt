@@ -1,4 +1,4 @@
-package com.tdunning.math.stats
+package com.basicio
 
 /**
  * interface inspired by kotlinx-io Output interface

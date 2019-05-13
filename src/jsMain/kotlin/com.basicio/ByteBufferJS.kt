@@ -1,4 +1,4 @@
-package com.tdunning.math.stats
+package com.basicio
 
 //see https://github.com/protobufjs/bytebuffer.js/wiki/API
 external class ByteBuffer(initialCapacity:Int) {
@@ -15,10 +15,10 @@ external class ByteBuffer(initialCapacity:Int) {
     fun writeFloat(v:Float)
     fun writeDouble(v:Double)
     fun toBase64():String
-    fun flip():ByteBuffer
+    fun flip(): ByteBuffer
     var offset:Int
     companion object {
-        fun fromBase64(str:String):ByteBuffer
+        fun fromBase64(str:String): ByteBuffer
     }
 
 }

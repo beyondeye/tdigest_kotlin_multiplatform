@@ -17,6 +17,7 @@
 
 package com.tdunning.math.stats
 
+import com.basicio.BinaryOutput
 import kotlin.js.JsName
 
 /**

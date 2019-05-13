@@ -17,6 +17,8 @@
 
 package com.tdunning.math.stats
 
+import com.basicio.BinaryInput
+import com.basicio.BinaryOutput
 import kotlin.random.Random
 
 abstract class AbstractTDigest : TDigest() {

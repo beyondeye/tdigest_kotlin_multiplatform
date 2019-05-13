@@ -17,8 +17,8 @@
 
 package com.tdunning.math.stats
 
+import com.basicio.BinaryInput
 import com.carrotsearch.randomizedtesting.annotations.Seed
-import kotlinx.io.core.Input
 import org.apache.mahout.common.RandomUtils
 import org.junit.Before
 import org.junit.BeforeClass

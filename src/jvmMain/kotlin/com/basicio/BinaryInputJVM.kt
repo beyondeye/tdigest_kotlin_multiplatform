@@ -1,4 +1,4 @@
-package com.tdunning.math.stats
+package com.basicio
 
 import sun.nio.ch.DirectBuffer
 import java.nio.ByteBuffer

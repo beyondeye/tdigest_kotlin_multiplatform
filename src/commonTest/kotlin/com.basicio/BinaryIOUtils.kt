@@ -1,4 +1,4 @@
-package com.tdunning.math.stats
+package com.basicio
 
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket

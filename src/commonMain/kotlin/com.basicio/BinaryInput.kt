@@ -1,4 +1,4 @@
-package com.tdunning.math.stats
+package com.basicio
 
 /**
  * interface inspired by kotlinx-io Input interface
@@ -19,4 +19,4 @@ interface BinaryInput {
 /**
  * create a binary input from a input base64 encoded string
  */
-expect fun buildBinaryInputFromB64(b64string:String):BinaryInput
+expect fun buildBinaryInputFromB64(b64string:String): BinaryInput

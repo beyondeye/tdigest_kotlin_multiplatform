@@ -1,4 +1,4 @@
-package com.tdunning.math.stats
+package com.basicio
 
 import java.nio.ByteBuffer
 import java.util.*

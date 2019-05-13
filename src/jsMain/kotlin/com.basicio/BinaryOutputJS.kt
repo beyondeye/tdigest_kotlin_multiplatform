@@ -1,4 +1,4 @@
-package com.tdunning.math.stats
+package com.basicio
 
 
 class BinaryOutputFromByteBuffer(val bb: ByteBuffer) : BinaryOutput {

@@ -17,6 +17,8 @@
 
 package com.tdunning.math.stats
 
+import com.basicio.toBinaryInput
+import com.basicio.toBinaryOutput
 import kotlinx.io.core.buildPacket
 import org.junit.Test
 

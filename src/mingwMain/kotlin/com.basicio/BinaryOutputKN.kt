@@ -1,4 +1,4 @@
-package com.tdunning.math.stats
+package com.basicio
 
 /**
  * create a binary output that can be written to

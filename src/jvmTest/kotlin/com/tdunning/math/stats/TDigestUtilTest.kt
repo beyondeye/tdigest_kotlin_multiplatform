@@ -17,6 +17,8 @@
 
 package com.tdunning.math.stats
 
+import com.basicio.toBinaryInput
+import com.basicio.toBinaryOutput
 import com.carrotsearch.randomizedtesting.RandomizedTest
 
 import org.junit.Test
