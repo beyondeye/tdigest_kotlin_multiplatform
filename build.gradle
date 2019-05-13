@@ -27,7 +27,7 @@ repositories {
 }
 group 'com.plensee'
 //the tdigest-kt library version, used also for publishing to npm
-version '0.1.5'
+version '0.1.6'
 
 
 
