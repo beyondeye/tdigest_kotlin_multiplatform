@@ -1,7 +1,3 @@
-// Type definitions for tdigest-kt 0.1
-// Project: https://github.com/beyondeye/tdigest_kotlin_multiplatform
-// Definitions by: My Self <https://github.com/me>
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 import * as ByteBuffer from "bytebuffer";
 
 declare namespace  Kotlin{
