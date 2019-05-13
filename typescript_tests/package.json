@@ -4,7 +4,6 @@
     "kotlin": "1.3.30"
   },
   "dependencies": {
-    "kotlin": "^1.3.30",
     "tdigest-kt": "file:./libs/tdigest-kt",
     "kotlinx-atomicfu": "file:./libs/kotlinx-atomicfu"
   },
