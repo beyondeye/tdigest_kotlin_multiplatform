@@ -30,10 +30,11 @@ class BinaryOutputFromByteBuffer(val bb: ByteBuffer) : BinaryOutput {
     }
 
     override fun toB64(): String {
+        bb.flip()
         return bb.toBase64()
     }
 }
-
+@JsName("toBinaryOutput")
 fun ByteBuffer.toBinaryOutput() = BinaryOutputFromByteBuffer(this)
 /**
  * create a binary output that can be written to

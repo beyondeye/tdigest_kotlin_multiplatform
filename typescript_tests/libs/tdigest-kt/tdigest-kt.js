@@ -865,7 +865,7 @@
   };
   function AVLTreeDigest$smallByteSize$lambda(this$AVLTreeDigest, closure$res) {
     return function ($receiver) {
-      this$AVLTreeDigest.asSmallBytes_53qmgj$($receiver);
+      this$AVLTreeDigest.asSmallBytes($receiver);
       closure$res.v = $receiver.size;
       return Unit;
     };
@@ -877,7 +877,7 @@
     buf.release();
     return res.v;
   };
-  AVLTreeDigest.prototype.asBytes_53qmgj$ = function (buf) {
+  AVLTreeDigest.prototype.asBytes = function (buf) {
     var tmp$, tmp$_0;
     buf.writeInt_za3lpa$(AVLTreeDigest$Companion_getInstance().VERBOSE_ENCODING_0);
     buf.writeDouble_14dthe$(this.min);
@@ -895,7 +895,7 @@
       buf.writeInt_za3lpa$(centroid_0.count());
     }
   };
-  AVLTreeDigest.prototype.asSmallBytes_53qmgj$ = function (buf) {
+  AVLTreeDigest.prototype.asSmallBytes = function (buf) {
     var tmp$, tmp$_0;
     buf.writeInt_za3lpa$(AVLTreeDigest$Companion_getInstance().SMALL_ENCODING_0);
     buf.writeDouble_14dthe$(this.min);
@@ -2305,7 +2305,7 @@
     }
   }
   MergingDigest$Encoding.valueOf_61zpoe$ = MergingDigest$Encoding$valueOf;
-  MergingDigest.prototype.asBytes_53qmgj$ = function (buf) {
+  MergingDigest.prototype.asBytes = function (buf) {
     var tmp$;
     this.compress();
     buf.writeInt_za3lpa$(MergingDigest$Encoding$VERBOSE_ENCODING_getInstance().code);
@@ -2319,7 +2319,7 @@
       buf.writeDouble_14dthe$(this.mean_0[i]);
     }
   };
-  MergingDigest.prototype.asSmallBytes_53qmgj$ = function (buf) {
+  MergingDigest.prototype.asSmallBytes = function (buf) {
     var tmp$;
     this.compress();
     buf.writeInt_za3lpa$(MergingDigest$Encoding$SMALL_ENCODING_getInstance().code);
@@ -3456,6 +3456,7 @@
     this.bb.writeDouble(v);
   };
   BinaryOutputFromByteBuffer.prototype.toB64 = function () {
+    this.bb.flip();
     return this.bb.toBase64();
   };
   BinaryOutputFromByteBuffer.$metadata$ = {
@@ -3589,10 +3590,10 @@
   var package$sample = _.sample || (_.sample = {});
   package$sample.hello = hello;
   package$stats.BinaryInputFromByteBuffer = BinaryInputFromByteBuffer;
-  package$stats.toBinaryInput_2wezti$ = toBinaryInput;
+  package$stats.toBinaryInput = toBinaryInput;
   package$stats.buildBinaryInputFromB64_61zpoe$ = buildBinaryInputFromB64;
   package$stats.BinaryOutputFromByteBuffer = BinaryOutputFromByteBuffer;
-  package$stats.toBinaryOutput_2wezti$ = toBinaryOutput;
+  package$stats.toBinaryOutput = toBinaryOutput;
   package$stats.buildBinaryOutput_h6gvc6$ = buildBinaryOutput;
   package$stats.mpassert_4ina18$ = mpassert_0;
   package$sample.Sample = Sample;

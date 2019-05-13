@@ -2,9 +2,15 @@
 // Project: https://github.com/beyondeye/tdigest_kotlin_multiplatform
 // Definitions by: My Self <https://github.com/me>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-declare namespace  Kotlin{
-    class Long {
+import * as ByteBuffer from "bytebuffer";
 
+declare namespace  Kotlin{
+    /**
+     * this are real partial definitions:
+     * unfortunately no d.ts files for kotlinjs standard library available
+     */
+    class Long {
+        toNumber():number
     }
     interface Collection<T> {
 
@@ -15,14 +21,46 @@ declare namespace  Kotlin{
 export namespace com.tdunning.math.stats {
     export class Centroid {
         constructor(record:boolean)
+
+        /**
+         *
+         * @param x double
+         * @param w must be INT
+         */
+        add(x: number, w: number):void
+
+        mean(): number
+
+        /**
+         * @return return integer
+         */
+        count(): number
+
+        /**
+         * @return return integer
+         */
+        id(): number
     }
     export interface BinaryOutput {
-
+        /**
+         * convert the current content of this BinaryOutput
+         * (a wrapped ByteBuffer) into base64 encoded string
+         */
+        toB64():string
     }
     export interface BinaryInput {
 
     }
-    export abstract class TDigest {
+
+    /**
+     * this class does not exist in original kotlin code,
+     * it has been artificially introduced, in order to allow independent
+     * companion object between base class TDigest and child classes
+     * AVLTreeDigest and MergeDigest, because in typescript static properties
+     * of child objects are assumed to be subclasses of static properties of
+     * parent objects. This is obviously not the case in kotlin
+     */
+    export abstract class ITDigest {
         /**
          * Adds a sample to a histogram
          *
@@ -110,6 +148,7 @@ export namespace com.tdunning.math.stats {
          */
         asBytes(buf: BinaryOutput):void
 
+
         /**
          * Serialize this TDigest into a byte buffer.  Some simple compression is used
          * such as using variable byte representation to store the centroid weights and
@@ -135,9 +174,22 @@ export namespace com.tdunning.math.stats {
         addOtherDigest(other: TDigest):void
 
         centroidCount(): number
+    }
 
 
-        static Companion:TDigest$Companion
+    export  abstract class TDigest extends ITDigest {
+        static readonly Companion:TDigest$Companion
+    }
+
+    /**
+     * AVLTreeDigest is actually a subclsas of TDigest
+     */
+    export class AVLTreeDigest extends ITDigest {
+        static readonly Companion:AVLTreeDigest$Companion
+    }
+    export  class MergeDigest extends ITDigest {
+
+        static readonly Companion:MergeDigest$Companion
     }
     export class TDigest$Companion {
         /**
@@ -146,8 +198,37 @@ export namespace com.tdunning.math.stats {
          * @param compression
          */
         createDigest(compression: number):TDigest
-        createMergingDigest(compression: number): TDigest
-        createAvlTreeDigest(compression: number): TDigest
+        createMergingDigest(compression: number): MergeDigest
+        createAvlTreeDigest(compression: number): AVLTreeDigest
+    }
+    export class AVLTreeDigest$Companion {
+
+        /**
+         * Reads a [[AVLTreeDigest]] from a [[BinaryInput]]
+         */
+        fromBytes(buf: BinaryInput): AVLTreeDigest
+
     }
 
+
+    export class MergeDigest$Companion {
+        /**
+         * Reads a [[MergeDigest]] from a [[BinaryInput]]
+         */
+        fromBytes(buf: BinaryInput): MergeDigest
+    }
+
+
+    /**
+     * create a [[BinaryInput]] to be used to deserialize a TDigest
+     * @param bb a bytebuffer containing the data to be deserialized
+     */
+    export function toBinaryInput(bb:ByteBuffer):BinaryInput;
+
+    /**
+     * create a [[BinaryOutput]] to be used to serialize a TDigest, from a
+     * preallocated [[ByteBuffer]]
+     * @param bb a preallocated bytebuffer
+     */
+    export function toBinaryOutput(bb:ByteBuffer):BinaryOutput;
 }

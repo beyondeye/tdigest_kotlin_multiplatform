@@ -9,6 +9,7 @@
     "kotlinx-atomicfu": "file:./libs/kotlinx-atomicfu"
   },
   "devDependencies": {
+    "@types/bytebuffer": "^5.0.40",
     "ts-node": "^6.2.0",
     "tslint": "^5.16.0",
     "typescript": "^3.4.5"

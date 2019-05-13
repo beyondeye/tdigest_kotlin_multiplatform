@@ -154,6 +154,7 @@ abstract class TDigest
      *
      * @param buf The byte buffer into which the TDigest should be serialized.
      */
+    @JsName("asBytes")
     abstract fun asBytes(buf: BinaryOutput)
 
     /**
@@ -164,6 +165,7 @@ abstract class TDigest
      *
      * @param buf The byte buffer into which the TDigest should be serialized.
      */
+    @JsName("asSmallBytes")
     abstract fun asSmallBytes(buf: BinaryOutput)
 
     /**

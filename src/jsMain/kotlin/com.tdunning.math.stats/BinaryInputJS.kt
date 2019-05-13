@@ -29,7 +29,7 @@ class BinaryInputFromByteBuffer(val bb: ByteBuffer) : BinaryInput {
         //do nothing
     }
 }
-
+@JsName("toBinaryInput")
 fun ByteBuffer.toBinaryInput() = BinaryInputFromByteBuffer(this)
 
 /**
