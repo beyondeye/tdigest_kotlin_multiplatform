@@ -17,12 +17,12 @@ Supported platforms are JVM and JS (including Node).
 Kotlin Native could be also supported with a small effort (need to implement something equivalent to Java ByteBuffer, or 
 use a library like [kotlinx.io](https://github.com/Kotlin/kotlinx-io))
 
-###Using the library with Typescript
+### Using the library with Typescript
 Type definitions for the main TDigest classes are included, see [here](npmtemplate/tdigest-kt.d.ts)
 There is also some basic typescript test code you can look at [here](typescript_tests/tdigest-kt-tests.ts).
 before running this test you need to run ```npm install``` in the [typescript_tests](typescript_tests) directory
 and run the tests with node.js
-###Using the library in Node.js environment
+### Using the library in Node.js environment
 In theory, all you need to do is to install the library with 
 
 ```npm i tdigest-kt```
