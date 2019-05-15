@@ -1,9 +1,9 @@
-(function (_, Kotlin, $module$kotlinx_atomicfu) {
+(function (_, Kotlin, $module$kotlinx_atomicfu, $module$bytebuffer, $module$long) {
   'use strict';
   var $$importsForInline$$ = _.$$importsForInline$$ || (_.$$importsForInline$$ = {});
+  var toByte = Kotlin.toByte;
   var Kind_INTERFACE = Kotlin.Kind.INTERFACE;
   var shuffle = Kotlin.kotlin.collections.shuffle_9jeydg$;
-  var toByte = Kotlin.toByte;
   var IllegalStateException_init = Kotlin.kotlin.IllegalStateException_init_pdl1vj$;
   var Kind_OBJECT = Kotlin.Kind.OBJECT;
   var Random = Kotlin.kotlin.random.Random_za3lpa$;
@@ -84,6 +84,9 @@
   ScaleFunction$K_3_NO_NORM.prototype.constructor = ScaleFunction$K_3_NO_NORM;
   function BinaryInput() {
   }
+  BinaryInput.prototype.readBoolean = function () {
+    return this.readByte() === toByte(0) ? false : true;
+  };
   BinaryInput.$metadata$ = {
     kind: Kind_INTERFACE,
     simpleName: 'BinaryInput',
@@ -91,6 +94,9 @@
   };
   function BinaryOutput() {
   }
+  BinaryOutput.prototype.writeBoolean_6taknv$ = function (v) {
+    this.writeByte_s8j3t7$(v ? 1 : 0);
+  };
   BinaryOutput.$metadata$ = {
     kind: Kind_INTERFACE,
     simpleName: 'BinaryOutput',
@@ -3395,7 +3401,7 @@
   function hello() {
     return 'Hello from JS';
   }
-  function LongFromBits(lowBits, highBits) {
+  function KotlinLongFromBits(lowBits, highBits) {
     var tmp$;
     return Kotlin.isType(tmp$ = Kotlin.Long.fromBits(lowBits, highBits), Kotlin.Long) ? tmp$ : throwCCE();
   }
@@ -3412,8 +3418,8 @@
     return this.bb.readInt();
   };
   BinaryInputFromByteBuffer.prototype.readLong = function () {
-    var value = this.bb.readLongJs();
-    return LongFromBits(value.getLowBits(), value.getHighBits());
+    var value = this.bb.readLong();
+    return KotlinLongFromBits(value.getLowBits(), value.getHighBits());
   };
   BinaryInputFromByteBuffer.prototype.readFloat = function () {
     return this.bb.readFloat();
@@ -3432,7 +3438,7 @@
     return new BinaryInputFromByteBuffer($receiver);
   }
   function buildBinaryInputFromB64(b64string) {
-    return toBinaryInput(ByteBuffer.fromBase64(b64string));
+    return toBinaryInput($module$bytebuffer.fromBase64(b64string));
   }
   function BinaryOutputFromByteBuffer(bb) {
     this.bb = bb;
@@ -3453,7 +3459,7 @@
   };
   BinaryOutputFromByteBuffer.prototype.writeLong_s8cxhz$ = function (v) {
     var v_ = v;
-    this.bb.writeLongJs(LongJs.fromBits(v_.low_, v_.high_));
+    this.bb.writeLong($module$long.fromBits(v_.low_, v_.high_));
   };
   BinaryOutputFromByteBuffer.prototype.writeFloat_mx4ult$ = function (v) {
     this.bb.writeFloat(v);
@@ -3474,7 +3480,7 @@
     return new BinaryOutputFromByteBuffer($receiver);
   }
   function buildBinaryOutput(initialSize, block) {
-    var buf = new ByteBuffer(initialSize);
+    var buf = new $module$bytebuffer(initialSize);
     block(toBinaryOutput(buf));
     return toBinaryInput(buf.flip());
   }
@@ -3596,7 +3602,7 @@
   package$stats.mpassert_6taknv$ = mpassert;
   var package$sample = _.sample || (_.sample = {});
   package$sample.hello = hello;
-  package$basicio.LongFromBits_vux9f0$ = LongFromBits;
+  package$basicio.KotlinLongFromBits_vux9f0$ = KotlinLongFromBits;
   package$basicio.BinaryInputFromByteBuffer = BinaryInputFromByteBuffer;
   package$basicio.toBinaryInput = toBinaryInput;
   package$basicio.buildBinaryInputFromB64_61zpoe$ = buildBinaryInputFromB64;
@@ -3608,8 +3614,10 @@
   Object.defineProperty(package$sample, 'Platform', {
     get: Platform_getInstance
   });
+  BinaryInputFromByteBuffer.prototype.readBoolean = BinaryInput.prototype.readBoolean;
+  BinaryOutputFromByteBuffer.prototype.writeBoolean_6taknv$ = BinaryOutput.prototype.writeBoolean_6taknv$;
   Kotlin.defineModule('tdigest-kt', _);
   return _;
-}(module.exports, require('kotlin'), require('kotlinx-atomicfu')));
+}(module.exports, require('kotlin'), require('kotlinx-atomicfu'), require('bytebuffer'), require('long')));
 
 //# sourceMappingURL=tdigest-kt.js.map
