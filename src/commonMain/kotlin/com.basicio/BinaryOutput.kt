@@ -8,10 +8,13 @@ interface BinaryOutput {
     fun writeByte(v: Byte)
     fun writeShort(v: Short)
     fun writeInt(v: Int)
-    fun writeLong(v: Long)
+    fun writeLong(v: kotlin.Long)
     fun writeFloat(v: Float)
     fun writeDouble(v: Double)
     fun toB64():String
+    fun writeBoolean(v:Boolean) {
+        writeByte(if(v) 1 else 0)
+    }
 }
 
 /**

@@ -7,9 +7,12 @@ interface BinaryInput {
     fun readByte(): Byte
     fun readShort(): Short
     fun readInt(): Int
-    fun readLong(): Long
+    fun readLong(): kotlin.Long
     fun readFloat(): Float
     fun readDouble(): Double
+    fun readBoolean():Boolean {
+        return if(readByte()==0.toByte()) false else true
+    }
     /**
      * release the data buffer
      */

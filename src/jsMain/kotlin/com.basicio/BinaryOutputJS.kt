@@ -17,9 +17,9 @@ class BinaryOutputFromByteBuffer(val bb: ByteBuffer) : BinaryOutput {
         bb.writeInt(v)
     }
 
-    override fun writeLong(v: Long) {
+    override fun writeLong(v: kotlin.Long) {
         val v_ =v.asDynamic()
-        bb.writeLongJs(LongJs.fromBits(v_.low_,v_.high_))
+        bb.writeLong(Long.fromBits(v_.low_,v_.high_))
     }
 
     override fun writeFloat(v: Float) {
