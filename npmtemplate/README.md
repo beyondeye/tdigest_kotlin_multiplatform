@@ -6,6 +6,12 @@ You can install this library  with
 ```commandline
 npm i tdigest-kt
 ```
+You also need to have installed the kotlin runtime peer dependency:
+```commandline
+npm i kotlin@1.3.30
+```
+
+
 TDigest binary compressed serialization is supported, with the same format used by the reference Java implementation
  
 See the [README](https://github.com/beyondeye/tdigest_kotlin_multiplatform/blob/master/README.md) for more details.
