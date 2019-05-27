@@ -141,6 +141,7 @@ abstract class TDigest
      */
     abstract fun smallByteSize(): Int
 
+    @JsName("setScaleFunction")
     fun setScaleFunction(scaleFunction: ScaleFunction) {
         if (scaleFunction.toString().endsWith("NO_NORM")) {
 //            throw IllegalArgumentException("Can't use $scaleFunction as scale with ${this.javaClass}")
