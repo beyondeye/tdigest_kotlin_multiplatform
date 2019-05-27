@@ -4,6 +4,7 @@ import {com} from "tdigest-kt";
 import toBinaryOutput = com.basicio.toBinaryOutput;
 import toBinaryInput = com.basicio.toBinaryInput;
 import * as Long from "long";
+import ScaleFunction = com.tdunning.math.stats.ScaleFunction;
 
 var a:number =3;
 var b:number=2;
@@ -11,6 +12,7 @@ var b:number=2;
 const t=tdigest_kt.com.tdunning.math.stats;
 const centroid = new t.Centroid(false);
 var digest = t.TDigest.Companion.createAvlTreeDigest(200);
+digest.setScaleFunction(ScaleFunction.K_0);
 digest.addSample(10);
 digest.addSample(20);
 digest.addSample(30);
