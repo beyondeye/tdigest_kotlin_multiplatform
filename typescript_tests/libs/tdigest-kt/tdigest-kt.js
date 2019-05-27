@@ -3326,7 +3326,7 @@
       throw IllegalArgumentException_init_0('Cannot add NaN');
     }
   };
-  TDigest.prototype.setScaleFunction_sdntld$ = function (scaleFunction) {
+  TDigest.prototype.setScaleFunction = function (scaleFunction) {
     if (endsWith(scaleFunction.toString(), 'NO_NORM')) {
       throw IllegalArgumentException_init_0("Can't use " + scaleFunction + ' as scale ');
     }
