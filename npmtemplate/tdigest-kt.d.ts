@@ -40,7 +40,50 @@ export namespace com.basicio {
     export function toBinaryOutput(bb:ByteBuffer):BinaryOutput;
 }
 
+
 export namespace com.tdunning.math.stats {
+
+    export class ScaleFunction {
+        /**
+         * Generates uniform cluster sizes: for reference only
+         */
+        static readonly K_0: ScaleFunction;
+        /**
+         * Generates cluster sizes proportional to sqrt(q*(1-q)). This gives constant relative accuracy if accuracy is
+         * proportional to squared cluster size. It is expected that K_2 and K_3 will give better practical results.
+         */
+        static readonly K_1: ScaleFunction;
+        /**
+         * Generates cluster sizes proportional to sqrt(q*(1-q)) but avoids computation of asin in the critical path by
+         * using an approximate version.
+         */
+        static readonly K_1_FAST: ScaleFunction;
+        /**
+         * Generates cluster sizes proportional to q*(1-q). This makes tail error bounds tighter than for K_1. The use of a
+         * normalizing function results in a strictly bounded number of clusters no matter how many samples.
+         */
+        static readonly K_2: ScaleFunction;
+        /**
+         * Generates cluster sizes proportional to min(q, 1-q). This makes tail error bounds tighter than for K_1 or K_2.
+         * The use of a normalizing function results in a strictly bounded number of clusters no matter how many samples.
+         */
+        static readonly K_3: ScaleFunction;
+        /**
+         * Generates cluster sizes proportional to q*(1-q). This makes the tail error bounds tighter. This version does not
+         * use a normalizer function and thus the number of clusters increases roughly proportional to log(n). That is good
+         * for accuracy, but bad for size and bad for the statically allocated MergingDigest, but can be useful for
+         * tree-based implementations.
+         */
+        static readonly K_2_NO_NORM: ScaleFunction;
+        /**
+         * Generates cluster sizes proportional to min(q, 1-q). This makes the tail error bounds tighter. This version does
+         * not use a normalizer function and thus the number of clusters increases roughly proportional to log(n). That is
+         * good for accuracy, but bad for size and bad for the statically allocated MergingDigest, but can be useful for
+         * tree-based implementations.
+         */
+        static readonly K_3_NO_NORM: ScaleFunction;
+    }
+
     import BinaryOutput = com.basicio.BinaryOutput;
     import BinaryInput = com.basicio.BinaryInput;
 
@@ -155,6 +198,12 @@ export namespace com.tdunning.math.stats {
          */
         smallByteSize(): number
 
+        /**
+         * set the scale function (see method [ScaleFunction$valueOf])
+         * default scale function is 'K2'
+         * @param scaleFunction
+         */
+        setScaleFunction(scaleFunction: ScaleFunction):void
 
         /**
          * Serialize this TDigest into a byte buffer.  Note that the serialization used is
