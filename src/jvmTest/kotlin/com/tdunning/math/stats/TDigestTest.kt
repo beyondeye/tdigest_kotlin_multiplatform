@@ -104,11 +104,10 @@ abstract class TDigestTest : AbstractTest() {
         }
         digest.add(1000000.0)
 
-        Assert.assertEquals(18.0, digest.quantile(0.89999999), 0.0)
-        Assert.assertEquals(19.0, digest.quantile(0.9), 0.0)
-        Assert.assertEquals(19.0, digest.quantile(0.949999999), 0.0)
-        Assert.assertEquals(1000000.0, digest.quantile(0.95), 0.0)
-
+        Assert.assertEquals(18.0, digest.quantile(0.885), 0.0);
+        Assert.assertEquals(19.0, digest.quantile(0.915), 0.0);
+        Assert.assertEquals(19.0, digest.quantile(0.935), 0.0);
+        Assert.assertEquals(1_000_000.0, digest.quantile(0.965), 0.0);
         Assert.assertEquals(0.925, digest.cdf(19.0), 1e-11)
         Assert.assertEquals(0.95, digest.cdf(19.0000001), 1e-11)
         Assert.assertEquals(0.9, digest.cdf(19 - 0.0000001), 1e-11)
