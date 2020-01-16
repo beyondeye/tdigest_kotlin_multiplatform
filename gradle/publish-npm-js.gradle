@@ -41,6 +41,10 @@ afterEvaluate {
     }
     //copy compiled tdigest library to typescript tests (but without typescript type definition, since the
     //purpose of typescript tests is exactly working on these typescript definitions
+    //also don't copy package.json, because we want to edit it manually
+    //if you want to reinitialize it, you can grab it manually from directory build/npmtemplate
+    //IMPORTANT: REMEMBER that package.json IS NOT AUTOMATICALLY COPIED!! THIS CAN CAUSE PROBLEM, IF YOU
+    //ACTUALLY NEED IT TO BE COPIED
       task prepareTypescriptTests(type: Copy,dependsOn: [preparePublishNpm]) {
         from(npmDeployDir) {
             exclude 'package.json'
