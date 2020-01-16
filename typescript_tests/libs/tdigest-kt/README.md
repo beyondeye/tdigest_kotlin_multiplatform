@@ -8,7 +8,7 @@ npm i tdigest-kt
 ```
 You also need to have installed the kotlin runtime peer dependency:
 ```commandline
-npm i kotlin@1.3.30
+npm i kotlin@1.3.60
 ```
 
 

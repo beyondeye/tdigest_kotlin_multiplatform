@@ -1,25 +1,53 @@
 {
-  "name": "kotlinx-atomicfu",
-  "version" : "0.12.7",
-  "description" : "AtomicFU utilities for JS",
-  "main" : "kotlinx-atomicfu.js",
-  "author": "JetBrains",
-  "license": "Apache-2.0",
-  "homepage": "https://github.com/Kotlin/atomicfu",
+  "_from": "kotlinx-atomicfu",
+  "_id": "kotlinx-atomicfu@0.14.1",
+  "_inBundle": false,
+  "_integrity": "sha512-ey1bv5dkzdrBfIhvW6JC7SuVrEF2kBCxjjZ1B8pRyJvSzPzL7wLsQ333txRWSWrH5VjDvXPJ2nl8Yl2Q9urhgA==",
+  "_location": "/kotlinx-atomicfu",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "kotlinx-atomicfu",
+    "name": "kotlinx-atomicfu",
+    "escapedName": "kotlinx-atomicfu",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/kotlinx-atomicfu/-/kotlinx-atomicfu-0.14.1.tgz",
+  "_shasum": "2b9f74090adbc142b016736c845f28394733e7d1",
+  "_spec": "kotlinx-atomicfu",
+  "_where": "C:\\startup\\WORK\\test",
+  "author": {
+    "name": "JetBrains"
+  },
   "bugs": {
     "url": "https://github.com/Kotlin/atomicfu/issues"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Kotlin/atomicfu.git"
-  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "AtomicFU utilities for JS",
+  "homepage": "https://github.com/Kotlin/atomicfu",
   "keywords": [
     "Kotlin",
     "atomic",
     "JavaScript",
     "JetBrains"
   ],
+  "license": "Apache-2.0",
+  "main": "kotlinx-atomicfu.js",
+  "name": "kotlinx-atomicfu",
   "peerDependencies": {
-    "kotlin": "1.3.30"
-  }
+    "kotlin": "1.3.60"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kotlin/atomicfu.git"
+  },
+  "version": "0.14.1"
 }

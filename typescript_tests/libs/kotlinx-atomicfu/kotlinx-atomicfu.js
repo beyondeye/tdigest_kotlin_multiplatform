@@ -18,6 +18,7 @@
   var Array_0 = Array;
   var toString = Kotlin.toString;
   var equals = Kotlin.equals;
+  var wrapFunction = Kotlin.wrapFunction;
   function atomicArrayOfNulls(size) {
     return new AtomicArray(size);
   }
@@ -375,6 +376,33 @@
     simpleName: 'AtomicLong',
     interfaces: []
   };
+  var Lock;
+  var reentrantLock = defineInlineFunction('kotlinx-atomicfu.kotlinx.atomicfu.locks.reentrantLock', wrapFunction(function () {
+    var locks = _.kotlinx.atomicfu.locks;
+    return function () {
+      return locks.reentrantLock$atomicfu;
+    };
+  }));
+  function ReentrantLock() {
+  }
+  ReentrantLock.prototype.lock = defineInlineFunction('kotlinx-atomicfu.kotlinx.atomicfu.locks.ReentrantLock.lock', function () {
+  });
+  ReentrantLock.prototype.tryLock = defineInlineFunction('kotlinx-atomicfu.kotlinx.atomicfu.locks.ReentrantLock.tryLock', function () {
+    return true;
+  });
+  ReentrantLock.prototype.unlock = defineInlineFunction('kotlinx-atomicfu.kotlinx.atomicfu.locks.ReentrantLock.unlock', function () {
+  });
+  ReentrantLock.$metadata$ = {
+    kind: Kind_CLASS,
+    simpleName: 'ReentrantLock',
+    interfaces: []
+  };
+  var withLock = defineInlineFunction('kotlinx-atomicfu.kotlinx.atomicfu.locks.withLock_1uzpy$', function ($receiver, block) {
+    return block();
+  });
+  var synchronized = defineInlineFunction('kotlinx-atomicfu.kotlinx.atomicfu.locks.synchronized_eocq09$', function (lock, block) {
+    return block();
+  });
   var package$kotlinx = _.kotlinx || (_.kotlinx = {});
   var package$atomicfu = package$kotlinx.atomicfu || (package$kotlinx.atomicfu = {});
   package$atomicfu.AtomicLongArray$ofNulls = atomicArrayOfNulls;
@@ -407,6 +435,17 @@
   package$atomicfu.AtomicBoolean = AtomicBoolean;
   package$atomicfu.AtomicInt = AtomicInt;
   package$atomicfu.AtomicLong = AtomicLong;
+  var package$locks = package$atomicfu.locks || (package$atomicfu.locks = {});
+  Object.defineProperty(package$locks, 'reentrantLock$atomicfu', {
+    get: function () {
+      return Lock;
+    }
+  });
+  package$locks.reentrantLock = reentrantLock;
+  package$locks.ReentrantLock = ReentrantLock;
+  package$locks.withLock_1uzpy$ = withLock;
+  package$locks.synchronized_eocq09$ = synchronized;
+  Lock = new ReentrantLock();
   Kotlin.defineModule('kotlinx-atomicfu', _);
   return _;
 }));

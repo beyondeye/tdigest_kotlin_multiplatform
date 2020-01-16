@@ -29,7 +29,7 @@ In theory, all you need to do is to install the library with
 
 and also its peer dependency from kotlin runtime
 
-```npm i kotlin@1.3.30```
+```npm i kotlin@1.3.60```
 
 Because of issues with releases of the ```kotlinx-atomicfu``` dependency, it is recommended to install ```kotlinx-atomicfu```
 as a local npm package, like it is done in ```typescript tests```. In other words, copy the content of 

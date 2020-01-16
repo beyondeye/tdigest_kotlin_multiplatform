@@ -67,7 +67,7 @@ class AVLTreeDigestTest : TDigestTest() {
 //        Assert.assertEquals(td_src.toString(),td_target.toString())
 
 
-//        Assert.assertEquals(td_src.quantile(0.1), td_target.quantile(0.1), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.1), td_target.quantile(0.1), 1e-10)
         Assert.assertEquals(td_src.quantile(0.2), td_target.quantile(0.2), 1e-10)
         Assert.assertEquals(td_src.quantile(0.3), td_target.quantile(0.3), 1e-10)
         Assert.assertEquals(td_src.quantile(0.4), td_target.quantile(0.4), 1e-10)
@@ -75,6 +75,7 @@ class AVLTreeDigestTest : TDigestTest() {
         Assert.assertEquals(td_src.quantile(0.6), td_target.quantile(0.6), 1e-10)
         Assert.assertEquals(td_src.quantile(0.7), td_target.quantile(0.7), 1e-10)
         Assert.assertEquals(td_src.quantile(0.8), td_target.quantile(0.8), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.9), td_target.quantile(0.9), 1e-10)
     }
     @Test
     fun testUpdateSample2() {
@@ -99,7 +100,7 @@ class AVLTreeDigestTest : TDigestTest() {
 //        Assert.assertEquals(td_src.toString(),td_target.toString())
 
 
-//        Assert.assertEquals(td_src.quantile(0.1), td_target.quantile(0.1), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.1), td_target.quantile(0.1), 1e-10)
         Assert.assertEquals(td_src.quantile(0.2), td_target.quantile(0.2), 1e-10)
         Assert.assertEquals(td_src.quantile(0.3), td_target.quantile(0.3), 1e-10)
         Assert.assertEquals(td_src.quantile(0.4), td_target.quantile(0.4), 1e-10)
@@ -107,6 +108,44 @@ class AVLTreeDigestTest : TDigestTest() {
         Assert.assertEquals(td_src.quantile(0.6), td_target.quantile(0.6), 1e-10)
         Assert.assertEquals(td_src.quantile(0.7), td_target.quantile(0.7), 1e-10)
         Assert.assertEquals(td_src.quantile(0.8), td_target.quantile(0.8), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.9), td_target.quantile(0.9), 1e-10)
+    }
+    @Test
+    fun testUpdateSample3() {
+        val oldValue=5.0
+        val newValue=40.5
+        val src = Array(1000) { it.toDouble() }
+        val srcdata =src.toList()
+        val targetdata= src.toMutableList()
+        targetdata.remove(oldValue)
+        targetdata.add(newValue)
+        //5 removed, 40.5 added
+
+        val nreps=2
+        val td_src = AVLTreeDigest(5.0)
+        for(reps in 0 until nreps) {
+            for (datum in srcdata) {
+                td_src.add(datum)
+            }
+        }
+        val td_target=AVLTreeDigest(5.0)
+        for(reps in 0 until nreps) {
+            for (datum in targetdata) {
+                td_target.add(datum)
+            }
+        }
+        for(reps in 0 until nreps) {
+            td_src.updateSample(oldValue, newValue)
+        }
+
+        Assert.assertEquals(td_src.quantile(0.1), td_target.quantile(0.1), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.2), td_target.quantile(0.2), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.3), td_target.quantile(0.3), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.4), td_target.quantile(0.4), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.6), td_target.quantile(0.6), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.7), td_target.quantile(0.7), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.8), td_target.quantile(0.8), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.9), td_target.quantile(0.9), 1e-10)
     }
 
     companion object {

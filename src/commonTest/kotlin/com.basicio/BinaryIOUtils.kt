@@ -20,7 +20,7 @@ class BinaryOutputFromBytePacketBuilder(val bpb:BytePacketBuilder) : BinaryOutpu
         bpb.writeInt(v)
     }
 
-    override fun writeLong(v: Long) {
+    override fun writeLong(v: kotlin.Long) {
         bpb.writeLong(v)
     }
 
@@ -54,7 +54,7 @@ class BinaryInputFromByteReadPacket(val brp:ByteReadPacket): BinaryInput {
         return brp.readInt()
     }
 
-    override fun readLong(): Long {
+    override fun readLong(): kotlin.Long {
         return brp.readLong()
     }
 
