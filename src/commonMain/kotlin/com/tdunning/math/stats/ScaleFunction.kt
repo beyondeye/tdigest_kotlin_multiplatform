@@ -260,7 +260,7 @@ enum class ScaleFunction {
                 10 * k(1 - 1e-15, normalizer)
             } else {
                 if (q <= 0.5) {
-                    kotlin.math.ln(2 * q) / normalizer
+                    kotlin.math.ln(2 * q) * normalizer
                 } else {
                     -k(1 - q, normalizer)
                 }
