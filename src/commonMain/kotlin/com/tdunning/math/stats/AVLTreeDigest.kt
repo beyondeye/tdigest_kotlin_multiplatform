@@ -22,8 +22,12 @@ import com.basicio.BinaryOutput
 import com.basicio.buildBinaryOutput
 import kotlin.js.JsName
 import kotlin.math.abs
+import kotlin.random.Random
 
 class AVLTreeDigest  : AbstractTDigest {
+    //*PORT* multiplatform random is not serializable: define a wrapper class that is serializable at least on the jvm
+//    internal val gen = Random.Default
+    internal val gen = Random(0)
     private val compression: Double
     private var summary: AVLGroupTree?
 

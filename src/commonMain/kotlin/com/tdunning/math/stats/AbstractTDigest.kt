@@ -22,9 +22,6 @@ import com.basicio.BinaryOutput
 import kotlin.random.Random
 
 abstract class AbstractTDigest : TDigest() {
-    //*PORT* multiplatform random is not serializable: define a wrapper class that is serializable at least on the jvm
-//    internal val gen = Random.Default
-    internal val gen = Random(0)
     override var isRecording = false
         internal set
 
@@ -48,14 +45,7 @@ abstract class AbstractTDigest : TDigest() {
     }
 
     override fun add(other: TDigest) {
-        val tmp = mutableListOf<Centroid>()
         for (centroid in other.centroids()) {
-            tmp.add(centroid)
-        }
-
-//        Collections.shuffle(tmp, gen)
-        tmp.shuffle(gen)
-        for (centroid in tmp) {
             add(centroid.mean(), centroid.count(), centroid)
         }
     }
@@ -83,8 +73,9 @@ abstract class AbstractTDigest : TDigest() {
          * Compute the weighted average between `x1` with a weight of
          * `w1` and `x2` with a weight of `w2`.
          * This expects `x1` to be less than or equal to `x2`
-         * and is guaranteed to return a number between `x1` and
-         * `x2`.
+         * and is guaranteed to return a number in <code>[x1, x2]</code>. An
+         * explicit check is required since this isn't guaranteed with floating-point
+         * numbers.
          */
         private fun weightedAverageSorted(x1: Double, w1: Double, x2: Double, w2: Double): Double {
             mpassert(x1 <= x2)

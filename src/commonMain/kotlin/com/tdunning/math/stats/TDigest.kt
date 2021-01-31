@@ -42,7 +42,7 @@ import kotlin.js.JsName
 abstract class TDigest
 //    : Serializable
 {
-    protected var scale = ScaleFunction.K_2
+    var scale = ScaleFunction.K_2
     var min = Double.POSITIVE_INFINITY
         internal set
     var max = Double.NEGATIVE_INFINITY

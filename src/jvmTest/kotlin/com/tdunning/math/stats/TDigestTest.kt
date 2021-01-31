@@ -37,6 +37,10 @@ import java.io.*
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.ArrayList
+
+
+
 
 
 /**
@@ -97,36 +101,35 @@ abstract class TDigestTest : AbstractTest() {
         }
     }
 
+
     @Test
-    fun bigJump() {
+    open fun bigJump() {
         var digest = factory(100.0).create()
         for (i in 1..19) {
             digest.add(i.toDouble())
         }
         digest.add(1000000.0)
-
-        Assert.assertEquals(18.0, digest.quantile(0.885), 0.0)
-        Assert.assertEquals(19.0, digest.quantile(0.915), 0.0)
-        Assert.assertEquals(19.0, digest.quantile(0.935), 0.0)
-        Assert.assertEquals(1_000_000.0, digest.quantile(0.965), 0.0)
-        Assert.assertEquals(0.925, digest.cdf(19.0), 1e-11)
-        Assert.assertEquals(0.95, digest.cdf(19.0000001), 1e-11)
-        Assert.assertEquals(0.9, digest.cdf(19 - 0.0000001), 1e-11)
-
+        assertEquals(18.0, digest.quantile(0.89999999), 0.0)
+        assertEquals(19.0, digest.quantile(0.9), 0.0)
+        assertEquals(19.0, digest.quantile(0.949999999), 0.0)
+        assertEquals(1000000.0, digest.quantile(0.95), 0.0)
+        assertEquals(0.925, digest.cdf(19.0), 1e-11)
+        assertEquals(0.95, digest.cdf(19.0000001), 1e-11)
+        assertEquals(0.9, digest.cdf(19 - 0.0000001), 1e-11)
         digest = factory(80.0).create()
         digest.setScaleFunction(ScaleFunction.K_0)
-
         for (j in 0..99) {
             for (i in 1..19) {
                 digest.add(i.toDouble())
             }
             digest.add(1000000.0)
         }
-        Assert.assertEquals(18.0, digest.quantile(0.885), 0.0)
-        Assert.assertEquals(19.0, digest.quantile(0.915), 0.0)
-        Assert.assertEquals(19.0, digest.quantile(0.935), 0.0)
-        Assert.assertEquals(1_000_000.0, digest.quantile(0.95), 0.0)
+        assertEquals(18.0, digest.quantile(0.885), 0.0)
+        assertEquals(19.0, digest.quantile(0.915), 0.0)
+        assertEquals(19.0, digest.quantile(0.935), 0.0)
+        assertEquals(1000000.0, digest.quantile(0.965), 0.0)
     }
+
 
     @Test
     fun testSmallCountQuantile() {
@@ -188,6 +191,41 @@ abstract class TDigestTest : AbstractTest() {
             digest.add(x)
         }
         assertEquals(quantile(0.5, data), digest.quantile(0.5), 0.0)
+    }
+
+    /**
+     * See https://github.com/tdunning/t-digest/issues/114
+     *
+     *
+     * The problem in that issue seems to have been due to adding samples with non-unit weight.
+     * This resulted in a violation of the t-digest invariant.
+     *
+     *
+     * The question in the issue about the origin of the shuffle still applies.
+     */
+    @Test
+    open fun testQuantile() {
+        val compression = 100.0
+        val samples = doubleArrayOf(1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 3.0, 4.0, 5.0, 6.0, 7.0)
+        System.out.printf("actual,hist1,hist2\n")
+        for (i in 1..9999) {
+            val hist1: TDigest = MergingDigest(compression)
+            val data: MutableList<Double> = ArrayList()
+            for (j in 0..99) {
+                for (x in samples) {
+                    data.add(x)
+                    hist1.add(x)
+                }
+            }
+            val hist2: TDigest = MergingDigest(compression)
+            hist1.compress()
+            hist2.add(hist1)
+            Collections.sort(data)
+            hist2.compress()
+            val x1 = hist1.quantile(0.5)
+            val h2 = hist2.quantile(0.5)
+            System.out.printf("%.3f,%.3f,%.3f\n", quantile(0.5, data), x1, h2)
+        }
     }
 
 
@@ -305,15 +343,16 @@ abstract class TDigestTest : AbstractTest() {
             digest.add(2.0)
             digest.add(3.0)
         }
-        // This sample will be added to the first cluster that already exists
-        // the effect will be to (slightly) nudge the mean of that cluster
-        // but also decrease the min. As such, near q=0, cdf and quantiles
+        // This sample would normally be added to the first cluster that already exists
+        // but there is special code in place to prevent that centroid from ever
+        // having weight of more than one
+        // As such, near q=0, cdf and quantiles
         // should reflect this single sample as a singleton
         digest.add(0.0)
         Assert.assertTrue(digest.centroidCount() > 0)
         val first = digest.centroids().iterator().next()
-        Assert.assertTrue(first.count() > 1)
-        Assert.assertTrue(first.mean() > digest.min)
+        assertEquals(1, first.count())
+        assertEquals(first.mean(), digest.min, 0.0)
         Assert.assertEquals(0.0, digest.min, 0.0)
         Assert.assertEquals(0.0, digest.cdf(0 - 1e-9), 0.0)
         Assert.assertEquals(0.5 / digest.size(), digest.cdf(0.0), 1e-10)
@@ -323,17 +362,13 @@ abstract class TDigestTest : AbstractTest() {
         Assert.assertEquals(0.0, digest.quantile(0.5 / digest.size()), 0.0)
         Assert.assertEquals(0.0, digest.quantile(1.0 / digest.size() - 1e-10), 0.0)
         Assert.assertEquals(0.0, digest.quantile(1.0 / digest.size()), 0.0)
-        Assert.assertEquals(2.0 / first.count().toDouble() / 100.0, digest.quantile(1.01 / digest.size()), 5e-5)
-        Assert.assertEquals(
-            first.mean(),
-            digest.quantile(first.count().toDouble() / 2.0 / digest.size().toDouble()),
-            1e-5
-        )
+        assertEquals(first.mean(), 0.0, 1e-5)
 
         digest.add(4.0)
         val last = Lists.reverse(Lists.newArrayList(digest.centroids())).iterator().next()
-        Assert.assertTrue(last.count() > 1)
-        Assert.assertTrue(last.mean() < digest.max)
+        assertEquals(1.0, last.count().toDouble(), 0.0)
+        assertEquals(4.0, last.mean(), 0.0)
+
         Assert.assertEquals(1.0, digest.cdf(digest.max + 1e-9), 0.0)
         Assert.assertEquals(1 - 0.5 / digest.size(), digest.cdf(digest.max), 0.0)
         Assert.assertEquals(1 - 1.0 / digest.size(), digest.cdf(digest.max - 1e-9), 1e-10)
@@ -342,44 +377,7 @@ abstract class TDigestTest : AbstractTest() {
         Assert.assertEquals(4.0, digest.quantile(1 - 0.5 / digest.size()), 0.0)
         Assert.assertEquals(4.0, digest.quantile(1 - 1.0 / digest.size() + 1e-10), 0.0)
         Assert.assertEquals(4.0, digest.quantile(1 - 1.0 / digest.size()), 0.0)
-        val slope = 1.0 / (last.count() / 2.0 - 1) * (digest.max - last.mean())
-        val x = 4 - digest.quantile(1 - 1.01 / digest.size())
-        Assert.assertEquals(slope * 0.01, x, 1e-10)
-        Assert.assertEquals(
-            last.mean(),
-            digest.quantile(1 - last.count().toDouble() / 2.0 / digest.size().toDouble()),
-            1e-10
-        )
-    }
-
-    /**
-     * Verifies interpolation between a singleton and a larger centroid.
-     */
-    @Test
-    fun singleMultiRange() {
-        val digest = MergingDigest(10.0)
-        digest.setScaleFunction(ScaleFunction.K_0)
-        for (i in 0..99) {
-            digest.add(1.0)
-            digest.add(2.0)
-            digest.add(3.0)
-        }
-        // this check is, of course true, but it also forces merging before we change scale
-        Assert.assertTrue(digest.centroidCount() < 300)
-        digest.setScaleFunction(ScaleFunction.K_2)
-        digest.add(0.0)
-        // we now have a digest with a singleton first, then a heavier centroid next
-        val ix = digest.centroids().iterator()
-        val first = ix.next()
-        val second = ix.next()
-        Assert.assertEquals(1, first.count().toLong())
-        Assert.assertEquals(0.0, first.mean(), 0.0)
-        Assert.assertTrue(second.count() > 1)
-        Assert.assertEquals(1.0, second.mean(), 0.0)
-
-        Assert.assertEquals(0.5 / digest.size(), digest.cdf(0.0), 0.0)
-        Assert.assertEquals(1.0 / digest.size(), digest.cdf(1e-10), 1e-10)
-        Assert.assertEquals((1 + second.count() / 8.0) / digest.size(), digest.cdf(0.25), 1e-10)
+        assertEquals(last.mean(), 4.0, 0.0)
     }
 
     protected abstract fun fromBytes(bytes: BinaryInput): TDigest
@@ -556,21 +554,24 @@ abstract class TDigestTest : AbstractTest() {
 
     @Test
     fun testMoreThan2BValues() {
-        val digest = factory().create()
-        val gen = RandomizedTest.getRandom()
-        for (i in 0..999) {
-            val next = gen.nextDouble()
-            digest.add(next)
+        val digest = factory(100.0).create()
+        // carefully build a t-digest that is as if we added 3 uniform values from [0,1]
+        val n = 3e9
+        var q0 = 0.0
+        var i = 0
+        while (i < 200 && q0 < 1 - 1e-10) {
+            val k0 = digest.scale.k(q0, digest.compression(), n)
+            val q = digest.scale.q(k0 + 1, digest.compression(), n)
+            val m = Math.max(1.0, n * (q - q0)).toInt()
+            digest.add((q + q0) / 2, m)
+            q0 = q0 + m / n
+            ++i
         }
-        for (i in 0..9) {
-            val next = gen.nextDouble()
-            val count = 1 shl 28
-            digest.add(next, count)
-        }
-        Assert.assertEquals(1000 + 10L * (1 shl 28), digest.size())
+        digest.compress()
+        assertEquals(3000000000L, digest.size())
         Assert.assertTrue(digest.size() > Integer.MAX_VALUE)
-        val quantiles = doubleArrayOf(0.0, 0.1, 0.5, 0.9, 1.0, gen.nextDouble())
-        Arrays.sort(quantiles)
+
+        val quantiles = doubleArrayOf(0.0, 0.1, 0.5, 0.9, 1.0)
         var prev = java.lang.Double.NEGATIVE_INFINITY
         for (q in quantiles) {
             val v = digest.quantile(q)
@@ -584,7 +585,11 @@ abstract class TDigestTest : AbstractTest() {
         val digest = factory().create()
         val gen = RandomizedTest.getRandom()
         for (i in 0..9999) {
-            digest.add(gen.nextDouble(), 1 + gen.nextInt(10))
+            val w = 1 + gen.nextInt(10)
+            val x = gen.nextDouble()
+            for (j in 0 until w) {
+                digest.add(x)
+            }
         }
         var previous: Centroid? = null
         for (centroid in digest.centroids()) {
@@ -1107,24 +1112,6 @@ abstract class TDigestTest : AbstractTest() {
         }
     }
 
-    @Test
-    fun testExtremeQuantiles() {
-        // t-digest shouldn't merge extreme nodes, but let's still test how it would
-        // answer to extreme quantiles in that case ('extreme' in the sense that the
-        // quantile is either before the first node or after the last one)
-        val digest = factory().create()
-        digest.add(10.0, 3)
-        digest.add(20.0, 1)
-        digest.add(40.0, 5)
-        // this group tree is roughly equivalent to the following sorted array:
-        // [ ?, 10, ?, 20, ?, ?, 50, ?, ? ]
-        // and we expect it to compute approximate missing values:
-        // [ 5, 10, 15, 20, 30, 40, 50, 60, 70]
-        val values = Arrays.asList(5.0, 10.0, 15.0, 20.0, 30.0, 35.0, 40.0, 45.0, 50.0)
-        for (q in doubleArrayOf(1.5 / 9, 3.5 / 9, 6.5 / 9)) {
-            Assert.assertEquals(String.format("q=%.2f ", q), Dist.quantile(q, values), digest.quantile(q), 0.01)
-        }
-    }
 
     @Test
     fun testMonotonicity() {

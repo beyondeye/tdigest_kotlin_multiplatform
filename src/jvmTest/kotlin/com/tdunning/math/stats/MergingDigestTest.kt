@@ -109,6 +109,62 @@ class MergingDigestTest : TDigestTest() {
             )
         }
     }
+
+
+    /**
+     * Verifies interpolation between a singleton and a larger centroid.
+     */
+    @Test
+    fun singleMultiRange() {
+        val digest = factory(50.0).create()
+        digest.setScaleFunction(ScaleFunction.K_0)
+        for (i in 0..99) {
+            digest.add(1.0)
+            digest.add(2.0)
+            digest.add(3.0)
+        }
+        // this check is, of course true, but it also forces merging before we change scale
+        assertTrue(digest.centroidCount() < 300)
+        digest.add(0.0)
+        // we now have a digest with a singleton first, then a heavier centroid next
+        val ix = digest.centroids().iterator()
+        val first = ix.next()
+        val second = ix.next()
+        assertEquals(1, first.count().toLong())
+        assertEquals(0.0, first.mean(), 0.0)
+        //        assertTrue(second.count() > 1);
+        assertEquals(1.0, second.mean(), 0.0)
+        assertEquals(0.5 / digest.size(), digest.cdf(0.0), 0.0)
+        assertEquals(1.0 / digest.size(), digest.cdf(1e-10), 1e-10)
+        assertEquals(1.0 / digest.size(), digest.cdf(0.25), 1e-10)
+    }
+
+    /**
+     * Make sure that the first and last centroids have unit weight
+     */
+    @Test
+    fun testSingletonsAtEnds() {
+        val d: TDigest = MergingDigest(50.0)
+        d.recordAllData()
+        val gen = Random(1)
+        val data = DoubleArray(100)
+        for (i in data.indices) {
+            data[i] = Math.floor(gen.nextGaussian() * 3)
+        }
+        for (i in 0..99) {
+            for (x in data) {
+                d.add(x)
+            }
+        }
+        var last = 0
+        for (centroid in d.centroids()) {
+            if (last == 0) {
+                assertEquals(1, centroid.count().toLong())
+            }
+            last = centroid.count()
+        }
+        assertEquals(1, last.toLong())
+    }
     companion object {
         @BeforeClass
         @Throws(IOException::class)

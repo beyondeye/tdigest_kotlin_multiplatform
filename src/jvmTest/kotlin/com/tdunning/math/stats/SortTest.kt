@@ -18,6 +18,8 @@
 package com.tdunning.math.stats
 
 import com.google.common.collect.HashMultiset
+import com.tdunning.math.stats.Sort.sort
+import com.tdunning.math.stats.Sort.stableSort
 import org.junit.Test
 
 import java.util.Random
@@ -65,13 +67,13 @@ class SortTest {
 
     @Test
     fun testEmpty() {
-        Sort.sort(intArrayOf(), doubleArrayOf())
+        Sort.sort(intArrayOf(), doubleArrayOf(),null,0)
     }
 
     @Test
     fun testOne() {
         val order = IntArray(1)
-        Sort.sort(order, doubleArrayOf(1.0))
+        Sort.sort(order, doubleArrayOf(1.0), doubleArrayOf(1.0),1)
         assertEquals(0, order[0].toLong())
     }
 
@@ -80,7 +82,7 @@ class SortTest {
         val order = IntArray(6)
         val values = DoubleArray(6)
 
-        Sort.sort(order, values)
+        Sort.sort(order, values, null, values.size)
         checkOrder(order, values)
     }
 
@@ -93,9 +95,149 @@ class SortTest {
             values[i] = Math.rint(10 * (i.toDouble() / n)) / 10.0
         }
 
-        Sort.sort(order, values)
+        Sort.sort(order, values,null,values.size)
         checkOrder(order, values)
     }
+
+    @Test
+    fun testRepeatedSortByWeight() {
+        // this needs to be long enough to force coverage of both quicksort and insertion sort
+        // (i.e. >64)
+        val n = 125
+        val order = IntArray(n)
+        val values = DoubleArray(n)
+        val weights = DoubleArray(n)
+        var totalWeight = 0.0
+
+        // generate evenly distributed values and weights
+        for (i in 0 until n) {
+            val k = (i + 5) * 37 % n
+            values[i] = Math.floor(k / 25.0)
+            weights[i] = (k % 25 + 1).toDouble()
+            totalWeight += weights[i]
+        }
+
+        // verify: test weights should be evenly distributed
+        val tmp = DoubleArray(5)
+        for (i in 0 until n) {
+            tmp[values[i].toInt()] += weights[i]
+        }
+        for (v in tmp) {
+            assertEquals(totalWeight / tmp.size, v, 0.0)
+        }
+
+        // now sort ...
+        sort(order, values, weights, n)
+
+        // and verify our somewhat unusual ordering of the result
+        // within the first two quintiles, value is constant, weights increase within each quintile
+        val delta = order.size / 5
+        var sum = checkSubOrder(0.0, order, values, weights, 0, delta, 1)
+        assertEquals(totalWeight * 0.2, sum, 0.0)
+        sum = checkSubOrder(sum, order, values, weights, delta, 2 * delta, 1)
+        assertEquals(totalWeight * 0.4, sum, 0.0)
+
+        // in the middle quintile, weights go up and then down after the median
+        sum = checkMidOrder(totalWeight / 2, sum, order, values, weights, 2 * delta, 3 * delta)
+        assertEquals(totalWeight * 0.6, sum, 0.0)
+
+        // in the last two quintiles, weights decrease
+        sum = checkSubOrder(sum, order, values, weights, 3 * delta, 4 * delta, -1)
+        assertEquals(totalWeight * 0.8, sum, 0.0)
+        sum = checkSubOrder(sum, order, values, weights, 4 * delta, 5 * delta, -1)
+        assertEquals(totalWeight, sum, 0.0)
+    }
+
+    @Test
+    fun testStableSort() {
+        // this needs to be long enough to force coverage of both quicksort and insertion sort
+        // (i.e. >64)
+        val n = 70
+        val z = 10
+        val order = IntArray(n)
+        val values = DoubleArray(n)
+        val weights = DoubleArray(n)
+        var totalWeight = 0.0
+
+        // generate evenly distributed values and weights
+        for (i in 0 until n) {
+            val k = (i + 5) * 37 % n
+            values[i] = Math.floor(k / z.toDouble())
+            weights[i] = (k % z + 1).toDouble()
+            totalWeight += weights[i]
+        }
+
+        // verify: test weights should be evenly distributed
+        val tmp = DoubleArray(n / z)
+        for (i in 0 until n) {
+            tmp[values[i].toInt()] += weights[i]
+        }
+        for (v in tmp) {
+            assertEquals(totalWeight / tmp.size, v, 0.0)
+        }
+
+        // now sort ...
+        stableSort(order, values, n)
+
+        // and verify stability of the ordering
+        // values must be in order and they must appear in their original ordering
+        var last = -1.0
+        for (j in order) {
+            val m = values[j] * n + j
+            assertTrue(m > last)
+            last = m
+        }
+    }
+
+    private fun checkMidOrder(
+        medianWeight: Double,
+        sofar: Double,
+        order: IntArray,
+        values: DoubleArray,
+        weights: DoubleArray,
+        start: Int,
+        end: Int
+    ): Double {
+        var sofar = sofar
+        val value = values[order[start]]
+        val last = 0.0
+        assertTrue(sofar < medianWeight)
+        for (i in start until end) {
+            assertEquals(value, values[order[i]], 0.0)
+            var w = weights[order[i]]
+            assertTrue(w > 0)
+            if (sofar > medianWeight) {
+                w = 2 * medianWeight - w
+            }
+            assertTrue(w >= last)
+            sofar += weights[order[i]]
+        }
+        assertTrue(sofar > medianWeight)
+        return sofar
+    }
+
+    private fun checkSubOrder(
+        sofar: Double,
+        order: IntArray,
+        values: DoubleArray,
+        weights: DoubleArray,
+        start: Int,
+        end: Int,
+        ordering: Int
+    ): Double {
+        var sofar = sofar
+        var lastWeight = weights[order[start]] * ordering
+        val value = values[order[start]]
+        for (i in start until end) {
+            assertEquals(value, values[order[i]], 0.0)
+            val newOrderedWeight = weights[order[i]] * ordering
+            assertTrue(newOrderedWeight >= lastWeight)
+            lastWeight = newOrderedWeight
+            sofar += weights[order[i]]
+        }
+        return sofar
+    }
+
 
     @Test
     fun testShort() {
@@ -107,19 +249,19 @@ class SortTest {
             values[i] = 1.0
         }
 
-        Sort.sort(order, values)
+        Sort.sort(order, values,null,values.size)
         checkOrder(order, values)
 
         values[0] = 0.8
         values[1] = 0.3
 
-        Sort.sort(order, values)
+        Sort.sort(order, values,null,values.size)
         checkOrder(order, values)
 
         values[5] = 1.5
         values[4] = 1.2
 
-        Sort.sort(order, values)
+        Sort.sort(order, values,null,values.size)
         checkOrder(order, values)
     }
 
@@ -130,7 +272,7 @@ class SortTest {
         for (i in 0..19) {
             values[i] = (i * 13 % 20).toDouble()
         }
-        Sort.sort(order, values)
+        Sort.sort(order, values,null,values.size)
         checkOrder(order, values)
     }
 
@@ -155,7 +297,7 @@ class SortTest {
         values[24] = 25.0
         values[26] = 25.0
 
-        Sort.sort(order, values)
+        Sort.sort(order, values,null,values.size)
         checkOrder(order, values)
     }
 
@@ -199,7 +341,7 @@ class SortTest {
                 values[i] = rand.nextDouble()
             }
 
-            Sort.sort(order, values)
+            Sort.sort(order, values,null,values.size)
             checkOrder(order, values)
         }
     }

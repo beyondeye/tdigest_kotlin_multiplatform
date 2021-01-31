@@ -14,101 +14,191 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.tdunning.math.stats
 
+import kotlin.jvm.JvmOverloads
 import kotlin.random.Random
-
-//import java.util.Random
 
 /**
  * Static sorting methods
  */
 object Sort {
-    private val prng:Random = Random(0) // for choosing pivots during quicksort
+    private val prng = Random(0) // for choosing pivots during quicksort
 
     /**
-     * Quick sort using an index array.  On return,
-     * values[order[i]] is in order as i goes 0..n
+     * Single-key stabilized quick sort on using an index array
      *
-     * @param order  Indexes into values
-     * @param values The values to sort.
-     * @param n      The number of values to sort
+     * @param order   Indexes into values
+     * @param values  The values to sort.
+     * @param n       The number of values to sort
      */
-    fun sort(order: IntArray, values: DoubleArray, n: Int) {
-        sort(order, values, 0, n)
-    }
-
-    /**
-     * Quick sort using an index array.  On return,
-     * values[order[i]] is in order as i goes start..n
-     *
-     * @param order  Indexes into values
-     * @param values The values to sort.
-     * @param start  The first element to sort
-     * @param n      The number of values to sort
-     */
-    fun sort(order: IntArray, values: DoubleArray, start: Int = 0, n: Int = values.size) {
-        for (i in start until start + n) {
+    fun stableSort(order: IntArray, values: DoubleArray, n: Int) {
+        for (i in 0 until n) {
             order[i] = i
         }
-        quickSort(order, values, start, start + n, 64)
-        insertionSort(order, values, start, start + n, 64)
+        stableQuickSort(order, values, 0, n, 64)
+        stableInsertionSort(order, values, 0, n, 64)
     }
 
     /**
-     * Standard quick sort except that sorting is done on an index array rather than the values themselves
+     * Two-key quick sort on (values, weights) using an index array
      *
-     * @param order  The pre-allocated index array
-     * @param values The values to sort
-     * @param start  The beginning of the values to sort
-     * @param end    The value after the last value to sort
-     * @param limit  The minimum size to recurse down to.
+     * @param order   Indexes into values
+     * @param values  The values to sort.
+     * @param weights The secondary sort key
+     * @param n       The number of values to sort
+     * @return true if the values were already sorted
      */
-    private fun quickSort(order: IntArray, values: DoubleArray, start: Int, end: Int, limit: Int) {
+    fun sort(order: IntArray, values: DoubleArray, weights: DoubleArray?, n: Int): Boolean {
+        var weights = weights
+        if (weights == null) {
+            weights = values.copyOf(values.size)
+        }
+        val r = sort(order, values, weights, 0, n)
+        // now adjust all runs with equal value so that bigger weights are nearer
+        // the median
+        var medianWeight = 0.0
+        for (i in 0 until n) {
+            medianWeight += weights[i]
+        }
+        medianWeight = medianWeight / 2
+        var i = 0
+        var soFar = 0.0
+        var nextGroup = 0.0
+        while (i < n) {
+            var j = i
+            while (j < n && values[order[j]] == values[order[i]]) {
+                val w = weights[order[j]]
+                nextGroup += w
+                j++
+            }
+            if (j > i + 1) {
+                if (soFar >= medianWeight) {
+                    // entire group is in last half, reverse the order
+                    reverse(order, i, j - i)
+                } else if (nextGroup > medianWeight) {
+                    // group straddles the median, but not necessarily evenly
+                    // most elements are probably unit weight if there are many
+                    val scratch = DoubleArray(j - i)
+                    var netAfter = nextGroup + soFar - 2 * medianWeight
+                    // heuristically adjust weights to roughly balance around median
+                    val max = weights[order[j - 1]]
+                    for (k in j - i - 1 downTo 0) {
+                        val weight = weights[order[i + k]]
+                        if (netAfter < 0) {
+                            // sort in normal order
+                            scratch[k] = weight
+                            netAfter += weight
+                        } else {
+                            // sort reversed, but after normal items
+                            scratch[k] = 2 * max + 1 - weight
+                            netAfter -= weight
+                        }
+                    }
+                    // sort these balanced weights
+                    val sub = IntArray(j - i)
+                    sort(sub, scratch, scratch, 0, j - i)
+                    val tmp: IntArray = order.copyOfRange( i, j)
+                    for (k in 0 until j - i) {
+                        order[i + k] = tmp[sub[k]]
+                    }
+                }
+            }
+            soFar = nextGroup
+            i = j
+        }
+        return r
+    }
+
+    /**
+     * Two-key quick sort on (values, weights) using an index array
+     *
+     * @param order   Indexes into values
+     * @param values  The values to sort
+     * @param weights The weights that define the secondary ordering
+     * @param start   The first element to sort
+     * @param n       The number of values to sort
+     * @return True if the values were in order without sorting
+     */
+    private fun sort(order: IntArray, values: DoubleArray, weights: DoubleArray, start: Int, n: Int): Boolean {
+        var inOrder = true
+        for (i in start until start + n) {
+            if (inOrder && i < start + n - 1) {
+                inOrder = values[i] < values[i + 1] || values[i] == values[i + 1] && weights[i] <= weights[i + 1]
+            }
+            order[i] = i
+        }
+        if (inOrder) {
+            return true
+        }
+        quickSort(order, values, weights, start, start + n, 64)
+        insertionSort(order, values, weights, start, start + n, 64)
+        return false
+    }
+
+    /**
+     * Standard two-key quick sort on (values, weights) except that sorting is done on an index array
+     * rather than the values themselves
+     *
+     * @param order   The pre-allocated index array
+     * @param values  The values to sort
+     * @param weights The weights (secondary key)
+     * @param start   The beginning of the values to sort
+     * @param end     The value after the last value to sort
+     * @param limit   The minimum size to recurse down to.
+     */
+    private fun quickSort(
+        order: IntArray,
+        values: DoubleArray,
+        weights: DoubleArray,
+        start: Int,
+        end: Int,
+        limit: Int
+    ) {
+        // the while loop implements tail-recursion to avoid excessive stack calls on nasty cases
         var start = start
         var end = end
-        // the while loop implements tail-recursion to avoid excessive stack calls on nasty cases
         while (end - start > limit) {
 
             // pivot by a random element
-            val pivotIndex = start + prng.nextInt(end - start)
+            val pivotIndex: Int = start + prng.nextInt(end - start)
             val pivotValue = values[order[pivotIndex]]
+            val pivotWeight = weights[order[pivotIndex]]
 
             // move pivot to beginning of array
             swap(order, start, pivotIndex)
 
             // we use a three way partition because many duplicate values is an important case
-
-            var low = start + 1   // low points to first value not known to be equal to pivotValue
-            var high = end        // high points to first value > pivotValue
-            var i = low           // i scans the array
+            var low = start + 1 // low points to first value not known to be equal to pivotValue
+            var high = end // high points to first value > pivotValue
+            var i = low // i scans the array
             while (i < high) {
-                // invariant:  values[order[k]] == pivotValue for k in [0..low)
-                // invariant:  values[order[k]] < pivotValue for k in [low..i)
-                // invariant:  values[order[k]] > pivotValue for k in [high..end)
+                // invariant:  (values,weights)[order[k]] == (pivotValue, pivotWeight) for k in [0..low)
+                // invariant:  (values,weights)[order[k]] < (pivotValue, pivotWeight) for k in [low..i)
+                // invariant:  (values,weights)[order[k]] > (pivotValue, pivotWeight) for k in [high..end)
                 // in-loop:  i < high
                 // in-loop:  low < high
                 // in-loop:  i >= low
                 val vi = values[order[i]]
-                if (vi == pivotValue) {
+                val wi = weights[order[i]]
+                if (vi == pivotValue && wi == pivotWeight) {
                     if (low != i) {
                         swap(order, low, i)
                     } else {
                         i++
                     }
                     low++
-                } else if (vi > pivotValue) {
+                } else if (vi > pivotValue || vi == pivotValue && wi > pivotWeight) {
                     high--
                     swap(order, i, high)
                 } else {
-                    // vi < pivotValue
+                    // vi < pivotValue || (vi == pivotValue && wi < pivotWeight)
                     i++
                 }
             }
-            // invariant:  values[order[k]] == pivotValue for k in [0..low)
-            // invariant:  values[order[k]] < pivotValue for k in [low..i)
-            // invariant:  values[order[k]] > pivotValue for k in [high..end)
+            // invariant:  (values,weights)[order[k]] == (pivotValue, pivotWeight) for k in [0..low)
+            // invariant:  (values,weights)[order[k]] < (pivotValue, pivotWeight) for k in [low..i)
+            // invariant:  (values,weights)[order[k]] > (pivotValue, pivotWeight) for k in [high..end)
             // assert i == high || low == high therefore, we are done with partition
 
             // at this point, i==high, from [start,low) are == pivot, [low,high) are < and [high,end) are >
@@ -122,26 +212,128 @@ object Sort {
                 swap(order, from++, to--)
                 i++
             }
-            if (from == low) {
+            low = if (from == low) {
                 // ran out of things to copy.  This means that the the last destination is the boundary
-                low = to + 1
+                to + 1
             } else {
                 // ran out of places to copy to.  This means that there are uncopied pivots and the
                 // boundary is at the beginning of those
-                low = from
+                from
             }
 
-            //            checkPartition(order, values, pivotValue, start, low, high, end);
+//            checkPartition(order, values, pivotValue, start, low, high, end);
 
             // now recurse, but arrange it so we handle the longer limit by tail recursion
+            // we have to sort the pivot values because they may have different weights
+            // we can't do that, however until we know how much weight is in the left and right
             if (low - start < end - high) {
-                quickSort(order, values, start, low, limit)
+                // left side is smaller
+                quickSort(order, values, weights, start, low, limit)
 
                 // this is really a way to do
                 //    quickSort(order, values, high, end, limit);
                 start = high
             } else {
-                quickSort(order, values, high, end, limit)
+                quickSort(order, values, weights, high, end, limit)
+                // this is really a way to do
+                //    quickSort(order, values, start, low, limit);
+                end = low
+            }
+        }
+    }
+
+    /**
+     * Stablized quick sort on an index array. This is a normal quick sort that uses the
+     * original index as a secondary key. Since we are really just sorting an index array
+     * we can do this nearly for free.
+     *
+     * @param order  The pre-allocated index array
+     * @param values The values to sort
+     * @param start  The beginning of the values to sort
+     * @param end    The value after the last value to sort
+     * @param limit  The minimum size to recurse down to.
+     */
+    private fun stableQuickSort(order: IntArray, values: DoubleArray, start: Int, end: Int, limit: Int) {
+        // the while loop implements tail-recursion to avoid excessive stack calls on nasty cases
+        var start = start
+        var end = end
+        while (end - start > limit) {
+
+            // pivot by a random element
+            val pivotIndex: Int = start + prng.nextInt(end - start)
+            val pivotValue = values[order[pivotIndex]]
+            val pv = order[pivotIndex]
+
+            // move pivot to beginning of array
+            swap(order, start, pivotIndex)
+
+            // we use a three way partition because many duplicate values is an important case
+            var low = start + 1 // low points to first value not known to be equal to pivotValue
+            var high = end // high points to first value > pivotValue
+            var i = low // i scans the array
+            while (i < high) {
+                // invariant:  (values[order[k]],order[k]) == (pivotValue, pv) for k in [0..low)
+                // invariant:  (values[order[k]],order[k]) < (pivotValue, pv) for k in [low..i)
+                // invariant:  (values[order[k]],order[k]) > (pivotValue, pv) for k in [high..end)
+                // in-loop:  i < high
+                // in-loop:  low < high
+                // in-loop:  i >= low
+                val vi = values[order[i]]
+                val pi = order[i]
+                if (vi == pivotValue && pi == pv) {
+                    if (low != i) {
+                        swap(order, low, i)
+                    } else {
+                        i++
+                    }
+                    low++
+                } else if (vi > pivotValue || vi == pivotValue && pi > pv) {
+                    high--
+                    swap(order, i, high)
+                } else {
+                    // vi < pivotValue || (vi == pivotValue && pi < pv)
+                    i++
+                }
+            }
+            // invariant:  (values[order[k]],order[k]) == (pivotValue, pv) for k in [0..low)
+            // invariant:  (values[order[k]],order[k]) < (pivotValue, pv) for k in [low..i)
+            // invariant:  (values[order[k]],order[k]) > (pivotValue, pv) for k in [high..end)
+            // assert i == high || low == high therefore, we are done with partition
+
+            // at this point, i==high, from [start,low) are == pivot, [low,high) are < and [high,end) are >
+            // we have to move the values equal to the pivot into the middle.  To do this, we swap pivot
+            // values into the top end of the [low,high) range stopping when we run out of destinations
+            // or when we run out of values to copy
+            var from = start
+            var to = high - 1
+            i = 0
+            while (from < low && to >= low) {
+                swap(order, from++, to--)
+                i++
+            }
+            low = if (from == low) {
+                // ran out of things to copy.  This means that the the last destination is the boundary
+                to + 1
+            } else {
+                // ran out of places to copy to.  This means that there are uncopied pivots and the
+                // boundary is at the beginning of those
+                from
+            }
+
+//            checkPartition(order, values, pivotValue, start, low, high, end);
+
+            // now recurse, but arrange it so we handle the longer limit by tail recursion
+            // we have to sort the pivot values because they may have different weights
+            // we can't do that, however until we know how much weight is in the left and right
+            if (low - start < end - high) {
+                // left side is smaller
+                stableQuickSort(order, values, start, low, limit)
+
+                // this is really a way to do
+                //    quickSort(order, values, high, end, limit);
+                start = high
+            } else {
+                stableQuickSort(order, values, high, end, limit)
                 // this is really a way to do
                 //    quickSort(order, values, start, low, limit);
                 end = low
@@ -184,22 +376,20 @@ object Sort {
      * @param limit  The minimum size to recurse down to.
      */
     private fun quickSort(key: DoubleArray, values: Array<out DoubleArray>, start: Int, end: Int, limit: Int) {
+        // the while loop implements tail-recursion to avoid excessive stack calls on nasty cases
         var start = start
         var end = end
-        // the while loop implements tail-recursion to avoid excessive stack calls on nasty cases
         while (end - start > limit) {
 
             // median of three values for the pivot
             val a = start
             val b = (start + end) / 2
             val c = end - 1
-
-            val pivotIndex: Int
-            val pivotValue: Double
+            var pivotIndex: Int
+            var pivotValue: Double
             val va = key[a]
             val vb = key[b]
             val vc = key[c]
-
             if (va > vb) {
                 if (vc > va) {
                     // vc > va > vb
@@ -241,10 +431,9 @@ object Sort {
             swap(start, pivotIndex, key, *values)
 
             // we use a three way partition because many duplicate values is an important case
-
-            var low = start + 1   // low points to first value not known to be equal to pivotValue
-            var high = end        // high points to first value > pivotValue
-            var i = low           // i scans the array
+            var low = start + 1 // low points to first value not known to be equal to pivotValue
+            var high = end // high points to first value > pivotValue
+            var i = low // i scans the array
             while (i < high) {
                 // invariant:  values[order[k]] == pivotValue for k in [0..low)
                 // invariant:  values[order[k]] < pivotValue for k in [low..i)
@@ -284,16 +473,16 @@ object Sort {
                 swap(from++, to--, key, *values)
                 i++
             }
-            if (from == low) {
+            low = if (from == low) {
                 // ran out of things to copy.  This means that the the last destination is the boundary
-                low = to + 1
+                to + 1
             } else {
                 // ran out of places to copy to.  This means that there are uncopied pivots and the
                 // boundary is at the beginning of those
-                low = from
+                from
             }
 
-            //            checkPartition(order, values, pivotValue, start, low, high, end);
+//            checkPartition(order, values, pivotValue, start, low, high, end);
 
             // now recurse, but arrange it so we handle the longer limit by tail recursion
             if (low - start < end - high) {
@@ -311,7 +500,6 @@ object Sort {
         }
     }
 
-
     /**
      * Limited range insertion sort.  We assume that no element has to move more than limit steps
      * because quick sort has done its thing. This version works on parallel arrays of keys and values.
@@ -326,7 +514,7 @@ object Sort {
         // loop invariant: all values start ... i-1 are ordered
         for (i in start + 1 until end) {
             val v = key[i]
-            val m = kotlin.math.max(i - limit, start)
+            val m: Int = kotlin.math.max(i - limit, start)
             for (j in i downTo m) {
                 if (j == m || key[j - 1] <= v) {
                     if (j < i) {
@@ -354,7 +542,6 @@ object Sort {
         var t = key[i]
         key[i] = key[j]
         key[j] = t
-
         for (k in values.indices) {
             t = values[k][i]
             values[k][i] = values[k][j]
@@ -374,35 +561,26 @@ object Sort {
      * @param end        Values from high to end are above the pivot.
      */
     fun checkPartition(
-        order: IntArray,
-        values: DoubleArray,
-        pivotValue: Double,
-        start: Int,
-        low: Int,
-        high: Int,
-        end: Int
+        order: IntArray, values: DoubleArray, pivotValue: Double, start: Int, low: Int,
+        high: Int, end: Int
     ) {
         if (order.size != values.size) {
             throw IllegalArgumentException("Arguments must be same size")
         }
-
         if (!(start >= 0 && low >= start && high >= low && end >= high)) {
             throw IllegalArgumentException("Invalid indices $start, $low, $high, $end")
         }
-
         for (i in 0 until low) {
             val v = values[order[i]]
             if (v >= pivotValue) {
                 throw IllegalArgumentException("Value greater than pivot at $i")
             }
         }
-
         for (i in low until high) {
             if (values[order[i]] != pivotValue) {
                 throw IllegalArgumentException("Non-pivot at $i")
             }
         }
-
         for (i in high until end) {
             val v = values[order[i]]
             if (v <= pivotValue) {
@@ -412,22 +590,39 @@ object Sort {
     }
 
     /**
-     * Limited range insertion sort.  We assume that no element has to move more than limit steps
-     * because quick sort has done its thing.
+     * Limited range insertion sort with primary and secondary key.  We assume that no
+     * element has to move more than limit steps because quick sort has done its thing.
      *
-     * @param order  The permutation index
-     * @param values The values we are sorting
-     * @param start  Where to start the sort
-     * @param n      How many elements to sort
-     * @param limit  The largest amount of disorder
+     * If weights (the secondary key) is null, then only the primary key is used.
+     *
+     * This sort is inherently stable.
+     *
+     * @param order   The permutation index
+     * @param values  The values we are sorting
+     * @param weights The secondary key for sorting
+     * @param start   Where to start the sort
+     * @param n       How many elements to sort
+     * @param limit   The largest amount of disorder
      */
-    private fun insertionSort(order: IntArray, values: DoubleArray, start: Int, n: Int, limit: Int) {
+    private fun insertionSort(
+        order: IntArray,
+        values: DoubleArray,
+        weights: DoubleArray?,
+        start: Int,
+        n: Int,
+        limit: Int
+    ) {
         for (i in start + 1 until n) {
             val t = order[i]
             val v = values[order[i]]
-            val m = kotlin.math.max(i - limit, start)
+            val w: Double = weights?.get(order[i]) ?: 0.0
+            val m: Int = kotlin.math.max(i - limit, start)
+            // values in [start, i) are ordered
+            // scan backwards to find where to stick t
             for (j in i downTo m) {
-                if (j == 0 || values[order[j - 1]] <= v) {
+                if (j == 0 || values[order[j - 1]] < v ||
+                    values[order[j - 1]] == v && (weights == null || weights[order[j - 1]] <= w)
+                ) {
                     if (j < i) {
                         Utils.arraycopy(order, j, order, j + 1, i - j)
                         order[j] = t
@@ -439,12 +634,48 @@ object Sort {
     }
 
     /**
+     * Limited range insertion sort with primary key stabilized by the use of the
+     * original position to break ties.  We assume that no element has to move more
+     * than limit steps because quick sort has done its thing.
+     *
+     * @param order   The permutation index
+     * @param values  The values we are sorting
+     * @param start   Where to start the sort
+     * @param n       How many elements to sort
+     * @param limit   The largest amount of disorder
+     */
+    private fun stableInsertionSort(order: IntArray, values: DoubleArray, start: Int, n: Int, limit: Int) {
+        for (i in start + 1 until n) {
+            val t = order[i]
+            val v = values[order[i]]
+            val vi = order[i]
+            val m: Int = kotlin.math.max(i - limit, start)
+            // values in [start, i) are ordered
+            // scan backwards to find where to stick t
+            for (j in i downTo m) {
+                if (j == 0 || values[order[j - 1]] < v || values[order[j - 1]] == v && order[j - 1] <= vi) {
+                    if (j < i) {
+                        Utils.arraycopy(order, j, order, j + 1, i - j)
+                        order[j] = t
+                    }
+                    break
+                }
+            }
+        }
+    }
+    /**
      * Reverses part of an array. See [.reverse]
      *
      * @param order  The array containing the data to reverse.
      * @param offset Where to start reversing.
      * @param length How many elements to reverse
      */
+    /**
+     * Reverses an array in-place.
+     *
+     * @param order The array to reverse
+     */
+    @JvmOverloads
     fun reverse(order: IntArray, offset: Int = 0, length: Int = order.size) {
         for (i in 0 until length / 2) {
             val t = order[offset + i]
@@ -468,15 +699,3 @@ object Sort {
         }
     }
 }
-/**
- * Quick sort using an index array.  On return,
- * values[order[i]] is in order as i goes 0..values.length
- *
- * @param order  Indexes into values
- * @param values The values to sort.
- */
-/**
- * Reverses an array in-place.
- *
- * @param order The array to reverse
- */

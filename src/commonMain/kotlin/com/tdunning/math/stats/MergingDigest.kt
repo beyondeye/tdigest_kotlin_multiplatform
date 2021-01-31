@@ -373,7 +373,10 @@ class MergingDigest
         var incomingOrder = incomingOrder
         // when our incoming buffer fills up, we combine our existing centroids with the incoming data,
         // and then reduce the centroids by merging if possible
+        mpassert(lastUsedCell <= 0 || weight[0] == 1.0)
+        mpassert(lastUsedCell <= 0 || weight[lastUsedCell - 1] == 1.0)
         Utils.arraycopy(mean, 0, incomingMean, incomingCount, lastUsedCell)
+
         Utils.arraycopy(weight, 0, incomingWeight, incomingCount, lastUsedCell)
         incomingCount += lastUsedCell
 
@@ -387,14 +390,17 @@ class MergingDigest
         if (incomingOrder == null) {
             incomingOrder = IntArray(incomingCount)
         }
-        Sort.sort(incomingOrder, incomingMean, incomingCount)
+        Sort.stableSort(incomingOrder, incomingMean, incomingCount)
+
+        totalWeight += unmergedWeight
+
+
         // option to run backwards is to help investigate bias in errors
         if (runBackwards) {
             Sort.reverse(incomingOrder, 0, incomingCount)
         }
 
-        totalWeight += unmergedWeight
-
+        // start by copying the least incoming value to the normal buffer
         lastUsedCell = 0
         mean[lastUsedCell] = incomingMean[incomingOrder[0]]
         weight[lastUsedCell] = incomingWeight[incomingOrder[0]]
@@ -414,13 +420,18 @@ class MergingDigest
             val ix = incomingOrder[i]
             val proposedWeight = weight[lastUsedCell] + incomingWeight[ix]
             val projectedW = wSoFar + proposedWeight
-            val addThis: Boolean
+            var addThis: Boolean
             if (useWeightLimit) {
                 val q0 = wSoFar / totalWeight
                 val q2 = (wSoFar + proposedWeight) / totalWeight
                 addThis = proposedWeight <= totalWeight * kotlin.math.min(scale.max(q0, normalizer), scale.max(q2, normalizer))
             } else {
                 addThis = projectedW <= wLimit
+            }
+
+            if (i == 1 || i == incomingCount - 1) {
+                // force last centroid to never merge
+                addThis = false
             }
 
             if (addThis) {
@@ -475,6 +486,8 @@ class MergingDigest
                 data!!.reverse()
             }
         }
+        mpassert(weight[0] == 1.0)
+        mpassert(weight[lastUsedCell - 1] == 1.0)
 
         if (totalWeight > 0) {
             min = kotlin.math.min(min, mean[0])
