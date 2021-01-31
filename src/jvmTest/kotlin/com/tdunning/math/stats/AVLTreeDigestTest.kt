@@ -59,23 +59,31 @@ class AVLTreeDigestTest : TDigestTest() {
         for (datum in srcdata) {
             td_src.add(datum)
         }
-        val td_target=AVLTreeDigest(200.0)
+        val td_trgt=AVLTreeDigest(200.0)
         for (datum in targetdata) {
-            td_target.add(datum)
+            td_trgt.add(datum)
         }
         td_src.updateSample(oldValue,newValue)
 //        Assert.assertEquals(td_src.toString(),td_target.toString())
 
+        val src_quantiles= listOf(td_src.quantile(0.1),td_src.quantile(0.2),
+            td_src.quantile(0.3),td_src.quantile(0.4),td_src.quantile(0.5),
+            td_src.quantile(0.6),td_src.quantile(0.7),td_src.quantile(0.8),
+            td_src.quantile(0.9))
+        val dst_quantiles= listOf(td_trgt.quantile(0.1),td_trgt.quantile(0.2),
+            td_trgt.quantile(0.3),td_trgt.quantile(0.4),td_trgt.quantile(0.5),
+            td_trgt.quantile(0.6),td_trgt.quantile(0.7),td_trgt.quantile(0.8),
+            td_trgt.quantile(0.9))
 
-        Assert.assertEquals(td_src.quantile(0.1), td_target.quantile(0.1), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.2), td_target.quantile(0.2), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.3), td_target.quantile(0.3), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.4), td_target.quantile(0.4), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.5), td_target.quantile(0.5), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.6), td_target.quantile(0.6), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.7), td_target.quantile(0.7), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.8), td_target.quantile(0.8), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.9), td_target.quantile(0.9), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.1), td_trgt.quantile(0.1), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.2), td_trgt.quantile(0.2), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.3), td_trgt.quantile(0.3), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.4), td_trgt.quantile(0.4), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.5), td_trgt.quantile(0.5), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.6), td_trgt.quantile(0.6), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.7), td_trgt.quantile(0.7), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.8), td_trgt.quantile(0.8), 1e-10)
+        Assert.assertEquals(td_src.quantile(0.9), td_trgt.quantile(0.9), 1e-10)
     }
     @Test
     fun testUpdateSample2() {

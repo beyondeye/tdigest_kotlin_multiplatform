@@ -24,6 +24,7 @@ import com.carrotsearch.randomizedtesting.RandomizedTest
 import com.clearspring.analytics.stream.quantile.QDigest
 import com.google.common.collect.Lists
 import com.tdunning.math.stats.Dist.cdf
+import com.tdunning.math.stats.Dist.quantile
 import kotlinx.io.core.buildPacket
 import org.apache.mahout.common.RandomUtils
 import org.apache.mahout.math.jet.random.AbstractContinousDistribution
@@ -104,10 +105,10 @@ abstract class TDigestTest : AbstractTest() {
         }
         digest.add(1000000.0)
 
-        Assert.assertEquals(18.0, digest.quantile(0.885), 0.0);
-        Assert.assertEquals(19.0, digest.quantile(0.915), 0.0);
-        Assert.assertEquals(19.0, digest.quantile(0.935), 0.0);
-        Assert.assertEquals(1_000_000.0, digest.quantile(0.965), 0.0);
+        Assert.assertEquals(18.0, digest.quantile(0.885), 0.0)
+        Assert.assertEquals(19.0, digest.quantile(0.915), 0.0)
+        Assert.assertEquals(19.0, digest.quantile(0.935), 0.0)
+        Assert.assertEquals(1_000_000.0, digest.quantile(0.965), 0.0)
         Assert.assertEquals(0.925, digest.cdf(19.0), 1e-11)
         Assert.assertEquals(0.95, digest.cdf(19.0000001), 1e-11)
         Assert.assertEquals(0.9, digest.cdf(19 - 0.0000001), 1e-11)
@@ -121,10 +122,10 @@ abstract class TDigestTest : AbstractTest() {
             }
             digest.add(1000000.0)
         }
-        Assert.assertEquals(18.0, digest.quantile(0.89999999), 0.0)
-        Assert.assertEquals(19.0, digest.quantile(0.9), 0.0)
-        Assert.assertEquals(19.0, digest.quantile(0.949999999), 0.0)
-        Assert.assertEquals(1000000.0, digest.quantile(0.95), 0.0)
+        Assert.assertEquals(18.0, digest.quantile(0.885), 0.0)
+        Assert.assertEquals(19.0, digest.quantile(0.915), 0.0)
+        Assert.assertEquals(19.0, digest.quantile(0.935), 0.0)
+        Assert.assertEquals(1_000_000.0, digest.quantile(0.95), 0.0)
     }
 
     @Test
@@ -140,6 +141,55 @@ abstract class TDigestTest : AbstractTest() {
         Assert.assertEquals(20.0, td.quantile(0.5 - 1e-10), 1e-10)
         Assert.assertEquals(32.0, td.quantile(0.5), 1e-10)
     }
+
+    /**
+     * Check against the example given in
+     * https://github.com/tdunning/t-digest/issues/143
+     *
+     * Don't think that there is a problem here, but keeping the test just in case.
+     */
+    @Test
+    open fun testExplicitSkewedData() {
+        val data = doubleArrayOf(
+            245.0,
+            246.0,
+            247.249,
+            240.0,
+            243.0,
+            248.0,
+            250.0,
+            241.0,
+            244.0,
+            245.0,
+            245.0,
+            247.0,
+            243.0,
+            242.0,
+            241.0,
+            50100.0,
+            51246.0,
+            52247.0,
+            52249.0,
+            51240.0,
+            53243.0,
+            59248.0,
+            59250.0,
+            57241.0,
+            56244.0,
+            55245.0,
+            56245.0,
+            575247.0,
+            58243.0,
+            51242.0,
+            54241.0
+        )
+        val digest = factory(50.0).create()
+        for (x in data) {
+            digest.add(x)
+        }
+        assertEquals(quantile(0.5, data), digest.quantile(0.5), 0.0)
+    }
+
 
     /**
      * Brute force test that cdf and quantile give reference behavior in digest made up of all singletons.
@@ -1017,7 +1067,6 @@ abstract class TDigestTest : AbstractTest() {
                     e.printStackTrace()
                 }
 
-                System.err.printf("\n\n")
             }
             executor.shutdownNow()
             Assert.assertTrue("Dangling executor thread", executor.awaitTermination(5, TimeUnit.SECONDS))

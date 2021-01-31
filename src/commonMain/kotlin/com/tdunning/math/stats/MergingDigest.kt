@@ -125,6 +125,9 @@ class MergingDigest
 
     val scaleFunction: ScaleFunction
         get() = scale
+    override fun setScaleFunction (scaleFunction:ScaleFunction ) {
+        super.setScaleFunction(scaleFunction)
+    }
 
     init {
         var compression = compression
@@ -190,6 +193,7 @@ class MergingDigest
         // scale is the ratio of extra buffer to the final size
         // we have to account for the fact that we copy all live centroids into the incoming space
         var scale = kotlin.math.max(1, bufferSize / size - 1).toDouble()
+        //noinspection ConstantConditions
         if (!useTwoLevelCompression) {
             scale = 1.0
         }
@@ -300,7 +304,7 @@ class MergingDigest
         if (others.size == 0) {
             return
         }
-        var size = lastUsedCell
+        var size = 0
         for (other in others) {
             other.compress()
             size += other.centroidCount()
@@ -367,6 +371,8 @@ class MergingDigest
     ) {
         var incomingCount = incomingCount
         var incomingOrder = incomingOrder
+        // when our incoming buffer fills up, we combine our existing centroids with the incoming data,
+        // and then reduce the centroids by merging if possible
         Utils.arraycopy(mean, 0, incomingMean, incomingCount, lastUsedCell)
         Utils.arraycopy(weight, 0, incomingWeight, incomingCount, lastUsedCell)
         incomingCount += lastUsedCell
@@ -382,14 +388,13 @@ class MergingDigest
             incomingOrder = IntArray(incomingCount)
         }
         Sort.sort(incomingOrder, incomingMean, incomingCount)
-        // option to run backwards is to investigate bias in errors
+        // option to run backwards is to help investigate bias in errors
         if (runBackwards) {
             Sort.reverse(incomingOrder, 0, incomingCount)
         }
 
         totalWeight += unmergedWeight
 
-        mpassert(lastUsedCell + incomingCount > 0)
         lastUsedCell = 0
         mean[lastUsedCell] = incomingMean[incomingOrder[0]]
         weight[lastUsedCell] = incomingWeight[incomingOrder[0]]
@@ -536,6 +541,9 @@ class MergingDigest
     }
 
     override fun cdf(x: Double): Double {
+        if (x.isNaN() || x.isInfinite()) {
+            throw IllegalArgumentException("Invalid value: $x")
+        }
         mergeNewValues()
 
         if (lastUsedCell == 0) {

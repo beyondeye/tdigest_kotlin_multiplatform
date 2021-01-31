@@ -395,7 +395,8 @@ class AVLTreeDigest  : AbstractTDigest {
                             break
                         }
                     }
-                    return (weightSoFar + aWeight + bWeight / 2.0) / size()
+                    return (weightSoFar + bWeight / 2.0) / size()
+//                    return (weightSoFar + aWeight + bWeight / 2.0) / size()
                 }
                 mpassert(x < bMean || x > bMean)
 
@@ -573,7 +574,7 @@ class AVLTreeDigest  : AbstractTDigest {
         // index is in the right hand side of the last node, interpolate to max
         // we have already handled the case were last centroid is a singleton
         mpassert(currentWeight > 1)
-        mpassert(index - weightSoFar < currentWeight / 2 - 1)
+        mpassert(index - weightSoFar < currentWeight / 2.0 - 1)
         mpassert(count - weightSoFar > 0.5)
 
         val w1 = index - weightSoFar

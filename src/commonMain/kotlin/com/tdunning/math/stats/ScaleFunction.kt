@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.tdunning.math.stats
 
 /**
@@ -68,20 +67,40 @@ enum class ScaleFunction {
      */
     K_1 {
         override fun k(q: Double, compression: Double, n: Double): Double {
-            return compression * kotlin.math.asin(2 * q - 1) / (2 * kotlin.math.PI)
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return compression * kotlin.math.asin(2 * q - 1) / (2 * kotlin.math.PI)
+                }
+            }
+            return limitCall(f, q, 1e-15, 1 - 1e-15)
         }
 
         override fun k(q: Double, normalizer: Double): Double {
-            return normalizer * kotlin.math.asin(2 * q - 1)
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return normalizer * kotlin.math.asin(2 * q - 1)
+                }
+            }
+            return limitCall(f, q, 1e-15, 1 - 1e-15)
         }
 
-
         override fun q(k: Double, compression: Double, n: Double): Double {
-            return (kotlin.math.sin(k * (2 * kotlin.math.PI / compression)) + 1) / 2
+            val f: Function = object : Function() {
+                override fun apply(k: Double): Double {
+                    return (kotlin.math.sin(k * (2 * kotlin.math.PI / compression)) + 1) / 2
+                }
+            }
+            return limitCall(f, k, -compression / 4, compression / 4)
         }
 
         override fun q(k: Double, normalizer: Double): Double {
-            return (kotlin.math.sin(k / normalizer) + 1) / 2
+            val f: Function = object : Function() {
+                override fun apply(x: Double): Double {
+                    return (kotlin.math.sin(x) + 1) / 2
+                }
+            }
+            val x = k / normalizer
+            return limitCall(f, x, -kotlin.math.PI / 2, kotlin.math.PI / 2)
         }
 
         override fun max(q: Double, compression: Double, n: Double): Double {
@@ -114,26 +133,31 @@ enum class ScaleFunction {
      * using an approximate version.
      */
     K_1_FAST {
-
         override fun k(q: Double, compression: Double, n: Double): Double {
-            return compression * fastAsin(2 * q - 1) / (2 * kotlin.math.PI)
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return compression * fastAsin(2 * q - 1) / (2 * kotlin.math.PI)
+                }
+            }
+            return limitCall(f, q, 0.0, 1.0)
         }
-
 
         override fun k(q: Double, normalizer: Double): Double {
-            return normalizer * fastAsin(2 * q - 1)
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return normalizer * fastAsin(2 * q - 1)
+                }
+            }
+            return limitCall(f, q, 0.0, 1.0)
         }
-
 
         override fun q(k: Double, compression: Double, n: Double): Double {
             return (kotlin.math.sin(k * (2 * kotlin.math.PI / compression)) + 1) / 2
         }
 
-
         override fun q(k: Double, normalizer: Double): Double {
             return (kotlin.math.sin(k / normalizer) + 1) / 2
         }
-
 
         override fun max(q: Double, compression: Double, n: Double): Double {
             return if (q <= 0) {
@@ -145,7 +169,6 @@ enum class ScaleFunction {
             }
         }
 
-
         override fun max(q: Double, normalizer: Double): Double {
             return if (q <= 0) {
                 0.0
@@ -155,7 +178,6 @@ enum class ScaleFunction {
                 2 * kotlin.math.sin(0.5 / normalizer) * kotlin.math.sqrt(q * (1 - q))
             }
         }
-
 
         override fun normalizer(compression: Double, n: Double): Double {
             return compression / (2 * kotlin.math.PI)
@@ -167,61 +189,50 @@ enum class ScaleFunction {
      * normalizing function results in a strictly bounded number of clusters no matter how many samples.
      */
     K_2 {
-
         override fun k(q: Double, compression: Double, n: Double): Double {
             if (n <= 1) {
                 return if (q <= 0) {
-                    -10.0
+                    (-10).toDouble()
                 } else if (q >= 1) {
                     10.0
                 } else {
                     0.0
                 }
             }
-            return if (q == 0.0) {
-                2 * k(1 / n, compression, n)
-            } else if (q == 1.0) {
-                2 * k((n - 1) / n, compression, n)
-            } else {
-                compression * kotlin.math.ln(q / (1 - q)) / Z(compression, n)
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return compression * kotlin.math.ln(q / (1 - q)) / Z(compression, n)
+                }
             }
+            return limitCall(f, q, 1e-15, 1 - 1e-15)
         }
-
 
         override fun k(q: Double, normalizer: Double): Double {
-            return if (q < 1e-15) {
-                // this will return something more extreme than q = 1/n
-                2 * k(1e-15, normalizer)
-            } else if (q > 1 - 1e-15) {
-                // this will return something more extreme than q = (n-1)/n
-                2 * k(1 - 1e-15, normalizer)
-            } else {
-                kotlin.math.ln(q / (1 - q)) * normalizer
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return kotlin.math.ln(q / (1 - q)) * normalizer
+                }
             }
+            return limitCall(f, q, 1e-15, 1 - 1e-15)
         }
-
 
         override fun q(k: Double, compression: Double, n: Double): Double {
-            val w = kotlin.math.exp(k * Z(compression, n) / compression)
+            val w: Double = kotlin.math.exp(k * Z(compression, n) / compression)
             return w / (1 + w)
         }
-
 
         override fun q(k: Double, normalizer: Double): Double {
-            val w = kotlin.math.exp(k / normalizer)
+            val w: Double = kotlin.math.exp(k / normalizer)
             return w / (1 + w)
         }
-
 
         override fun max(q: Double, compression: Double, n: Double): Double {
             return Z(compression, n) * q * (1 - q) / compression
         }
 
-
         override fun max(q: Double, normalizer: Double): Double {
             return q * (1 - q) / normalizer
         }
-
 
         override fun normalizer(compression: Double, n: Double): Double {
             return compression / Z(compression, n)
@@ -237,36 +248,31 @@ enum class ScaleFunction {
      * The use of a normalizing function results in a strictly bounded number of clusters no matter how many samples.
      */
     K_3 {
-
         override fun k(q: Double, compression: Double, n: Double): Double {
-            return if (q < 0.9 / n) {
-                10 * k(1 / n, compression, n)
-            } else if (q > 1 - 0.9 / n) {
-                10 * k((n - 1) / n, compression, n)
-            } else {
-                if (q <= 0.5) {
-                    compression * kotlin.math.ln(2 * q) / Z(compression, n)
-                } else {
-                    -k(1 - q, compression, n)
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return if (q <= 0.5) {
+                        compression * kotlin.math.ln(2 * q) / Z(compression, n)
+                    } else {
+                        -k(1 - q, compression, n)
+                    }
                 }
             }
+            return limitCall(f, q, 1e-15, 1 - 1e-15)
         }
-
 
         override fun k(q: Double, normalizer: Double): Double {
-            return if (q < 1e-15) {
-                10 * k(1e-15, normalizer)
-            } else if (q > 1 - 1e-15) {
-                10 * k(1 - 1e-15, normalizer)
-            } else {
-                if (q <= 0.5) {
-                    kotlin.math.ln(2 * q) * normalizer
-                } else {
-                    -k(1 - q, normalizer)
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return if (q <= 0.5) {
+                        kotlin.math.ln(2 * q) * normalizer
+                    } else {
+                        -k(1 - q, normalizer)
+                    }
                 }
             }
+            return limitCall(f, q, 1e-15, 1 - 1e-15)
         }
-
 
         override fun q(k: Double, compression: Double, n: Double): Double {
             return if (k <= 0) {
@@ -276,7 +282,6 @@ enum class ScaleFunction {
             }
         }
 
-
         override fun q(k: Double, normalizer: Double): Double {
             return if (k <= 0) {
                 kotlin.math.exp(k / normalizer) / 2
@@ -285,16 +290,13 @@ enum class ScaleFunction {
             }
         }
 
-
         override fun max(q: Double, compression: Double, n: Double): Double {
             return Z(compression, n) * kotlin.math.min(q, 1 - q) / compression
         }
 
-
         override fun max(q: Double, normalizer: Double): Double {
             return kotlin.math.min(q, 1 - q) / normalizer
         }
-
 
         override fun normalizer(compression: Double, n: Double): Double {
             return compression / Z(compression, n)
@@ -312,50 +314,41 @@ enum class ScaleFunction {
      * tree-based implementations.
      */
     K_2_NO_NORM {
-
         override fun k(q: Double, compression: Double, n: Double): Double {
-            return if (q == 0.0) {
-                2 * k(1 / n, compression, n)
-            } else if (q == 1.0) {
-                2 * k((n - 1) / n, compression, n)
-            } else {
-                compression * kotlin.math.ln(q / (1 - q))
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return compression * kotlin.math.ln(q / (1 - q))
+                }
             }
+            return limitCall(f, q, 1e-15, 1 - 1e-15)
         }
-
 
         override fun k(q: Double, normalizer: Double): Double {
-            return if (q <= 1e-15) {
-                2 * k(1e-15, normalizer)
-            } else if (q >= 1 - 1e-15) {
-                2 * k(1 - 1e-15, normalizer)
-            } else {
-                normalizer * kotlin.math.ln(q / (1 - q))
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return normalizer * kotlin.math.ln(q / (1 - q))
+                }
             }
+            return limitCall(f, q, 1e-15, 1 - 1e-15)
         }
-
 
         override fun q(k: Double, compression: Double, n: Double): Double {
-            val w = kotlin.math.exp(k / compression)
+            val w: Double = kotlin.math.exp(k / compression)
             return w / (1 + w)
         }
-
 
         override fun q(k: Double, normalizer: Double): Double {
-            val w = kotlin.math.exp(k / normalizer)
+            val w: Double = kotlin.math.exp(k / normalizer)
             return w / (1 + w)
         }
-
 
         override fun max(q: Double, compression: Double, n: Double): Double {
             return q * (1 - q) / compression
         }
 
-
         override fun max(q: Double, normalizer: Double): Double {
             return q * (1 - q) / normalizer
         }
-
 
         override fun normalizer(compression: Double, n: Double): Double {
             return compression
@@ -369,36 +362,32 @@ enum class ScaleFunction {
      * tree-based implementations.
      */
     K_3_NO_NORM {
-
         override fun k(q: Double, compression: Double, n: Double): Double {
-            return if (q < 0.9 / n) {
-                10 * k(1 / n, compression, n)
-            } else if (q > 1 - 0.9 / n) {
-                10 * k((n - 1) / n, compression, n)
-            } else {
-                if (q <= 0.5) {
-                    compression * kotlin.math.ln(2 * q)
-                } else {
-                    -k(1 - q, compression, n)
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return if (q <= 0.5) {
+                        compression * kotlin.math.ln(2 * q)
+                    } else {
+                        -k(1 - q, compression, n)
+                    }
                 }
             }
+            return limitCall(f, q, 1e-15, 1 - 1e-15)
         }
-
 
         override fun k(q: Double, normalizer: Double): Double {
-            return if (q <= 1e-15) {
-                10 * k(1e-15, normalizer)
-            } else if (q > 1 - 1e-15) {
-                10 * k(1 - 1e-15, normalizer)
-            } else {
-                if (q <= 0.5) {
-                    normalizer * kotlin.math.ln(2 * q)
-                } else {
-                    -k(1 - q, normalizer)
+            // poor man's lambda, sigh
+            val f: Function = object : Function() {
+                override fun apply(q: Double): Double {
+                    return if (q <= 0.5) {
+                        normalizer * kotlin.math.ln(2 * q)
+                    } else {
+                        -k(1 - q, normalizer)
+                    }
                 }
             }
+            return limitCall(f, q, 1e-15, 1 - 1e-15)
         }
-
 
         override fun q(k: Double, compression: Double, n: Double): Double {
             return if (k <= 0) {
@@ -408,7 +397,6 @@ enum class ScaleFunction {
             }
         }
 
-
         override fun q(k: Double, normalizer: Double): Double {
             return if (k <= 0) {
                 kotlin.math.exp(k / normalizer) / 2
@@ -417,23 +405,19 @@ enum class ScaleFunction {
             }
         }
 
-
         override fun max(q: Double, compression: Double, n: Double): Double {
             return kotlin.math.min(q, 1 - q) / compression
         }
 
-
         override fun max(q: Double, normalizer: Double): Double {
             return kotlin.math.min(q, 1 - q) / normalizer
         }
-
 
         override fun normalizer(compression: Double, n: Double): Double {
             return compression
         }
     };
     // max weight is min(q,1-q), should improve tail accuracy even more
-
     /**
      * Converts a quantile to the k-scale. The total number of points is also provided so that a normalizing function
      * can be computed if necessary.
@@ -512,9 +496,11 @@ enum class ScaleFunction {
      * Computes the normalizer given compression and number of points.
      */
     abstract fun normalizer(compression: Double, n: Double): Double
+    internal abstract class Function {
+        abstract fun apply(x: Double): Double
+    }
 
     companion object {
-
         /**
          * Approximates asin to within about 1e-6. This approximation works by breaking the range from 0 to 1 into 5 regions
          * for all but the region nearest 1, rational polynomial models get us a very good approximation of asin and by
@@ -524,11 +510,11 @@ enum class ScaleFunction {
          * @param x sin(theta)
          * @return theta
          */
-        internal fun fastAsin(x: Double): Double {
-            if (x < 0) {
-                return -fastAsin(-x)
+        fun fastAsin(x: Double): Double {
+            return if (x < 0) {
+                -fastAsin(-x)
             } else if (x > 1) {
-                return Double.NaN
+                Double.NaN
             } else {
                 // Cutoffs for models. Note that the ranges overlap. In the
                 // overlap we do linear interpolation to guarantee the overall
@@ -541,16 +527,44 @@ enum class ScaleFunction {
                 val c3High = 0.9
                 val c4Low = 0.87
                 if (x > c3High) {
-                    return kotlin.math.asin(x)
+                    kotlin.math.asin(x)
                 } else {
                     // the models
-                    val m0 = doubleArrayOf(0.2955302411, 1.2221903614, 0.1488583743, 0.2422015816, -0.3688700895, 0.0733398445)
-                    val m1 = doubleArrayOf(-0.0430991920, 0.9594035750, -0.0362312299, 0.1204623351, 0.0457029620, -0.0026025285)
-                    val m2 = doubleArrayOf(-0.034873933724, 1.054796752703, -0.194127063385, 0.283963735636, 0.023800124916, -0.000872727381)
-                    val m3 = doubleArrayOf(-0.37588391875, 2.61991859025, -2.48835406886, 1.48605387425, 0.00857627492, -0.00015802871)
+                    val m0 = doubleArrayOf(
+                        0.2955302411,
+                        1.2221903614,
+                        0.1488583743,
+                        0.2422015816,
+                        -0.3688700895,
+                        0.0733398445
+                    )
+                    val m1 = doubleArrayOf(
+                        -0.0430991920,
+                        0.9594035750,
+                        -0.0362312299,
+                        0.1204623351,
+                        0.0457029620,
+                        -0.0026025285
+                    )
+                    val m2 = doubleArrayOf(
+                        -0.034873933724,
+                        1.054796752703,
+                        -0.194127063385,
+                        0.283963735636,
+                        0.023800124916,
+                        -0.000872727381
+                    )
+                    val m3 = doubleArrayOf(
+                        -0.37588391875,
+                        2.61991859025,
+                        -2.48835406886,
+                        1.48605387425,
+                        0.00857627492,
+                        -0.00015802871
+                    )
 
                     // the parameters for all of the models
-                    val vars = doubleArrayOf(1.0, x, x * x, x * x * x, 1 / (1 - x), 1.0 / (1 - x) / (1 - x))
+                    val vars = doubleArrayOf(1.0, x, x * x, x * x * x, 1 / (1 - x), 1 / (1 - x) / (1 - x))
 
                     // raw grist for interpolation coefficients
                     val x0 = bound((c0High - x) / c0High)
@@ -559,7 +573,6 @@ enum class ScaleFunction {
                     val x3 = bound((c3High - x) / (c3High - c4Low))
 
                     // interpolation coefficients
-
                     val mix1 = (1 - x0) * x1
                     val mix2 = (1 - x1) * x2
                     val mix3 = (1 - x2) * x3
@@ -583,8 +596,18 @@ enum class ScaleFunction {
                         // model 4 is just the real deal
                         r += mix4 * kotlin.math.asin(x)
                     }
-                    return r
+                    r
                 }
+            }
+        }
+
+        internal fun limitCall(f: Function, x: Double, low: Double, high: Double): Double {
+            return if (x < low) {
+                f.apply(low)
+            } else if (x > high) {
+                f.apply(high)
+            } else {
+                f.apply(x)
             }
         }
 
