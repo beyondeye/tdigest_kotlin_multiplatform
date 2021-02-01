@@ -48,7 +48,8 @@ class AVLTreeDigestTest : TDigestTest() {
     }
 
     @Test
-    fun testUpdateSample() {
+    fun testUpdateSample_microdataset() {
+        //
         val oldValue=5.0
         val newValue=40.0
         val srcdata = listOf(5.0, 10.0, 15.0, 20.0, 32.0, 60.0)
@@ -66,27 +67,16 @@ class AVLTreeDigestTest : TDigestTest() {
         td_src.updateSample(oldValue,newValue)
 //        Assert.assertEquals(td_src.toString(),td_target.toString())
 
-        val src_quantiles= listOf(td_src.quantile(0.1),td_src.quantile(0.2),
-            td_src.quantile(0.3),td_src.quantile(0.4),td_src.quantile(0.5),
-            td_src.quantile(0.6),td_src.quantile(0.7),td_src.quantile(0.8),
-            td_src.quantile(0.9))
-        val dst_quantiles= listOf(td_trgt.quantile(0.1),td_trgt.quantile(0.2),
-            td_trgt.quantile(0.3),td_trgt.quantile(0.4),td_trgt.quantile(0.5),
-            td_trgt.quantile(0.6),td_trgt.quantile(0.7),td_trgt.quantile(0.8),
-            td_trgt.quantile(0.9))
-
-        Assert.assertEquals(td_src.quantile(0.1), td_trgt.quantile(0.1), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.2), td_trgt.quantile(0.2), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.3), td_trgt.quantile(0.3), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.4), td_trgt.quantile(0.4), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.5), td_trgt.quantile(0.5), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.6), td_trgt.quantile(0.6), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.7), td_trgt.quantile(0.7), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.8), td_trgt.quantile(0.8), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.9), td_trgt.quantile(0.9), 1e-10)
+        val src_quantiles= mutableListOf<Double>()
+        val trg_quantiles= mutableListOf<Double>()
+        for (iq in 1..9) {
+            src_quantiles.add(td_src.quantile(1.0/iq.toDouble()))
+            trg_quantiles.add(td_trgt.quantile(1.0/iq.toDouble()))
+        }
+        Assert.assertArrayEquals(src_quantiles.toDoubleArray(),trg_quantiles.toDoubleArray(),1e-10)
     }
     @Test
-    fun testUpdateSample2() {
+    fun testUpdateSample_1000_dataset() {
         val oldValue=5.0
         val newValue=40.5
         val src = Array(1000) { it.toDouble() }
@@ -97,10 +87,12 @@ class AVLTreeDigestTest : TDigestTest() {
         //5 removed, 40.5 added
 
         val td_src = AVLTreeDigest(5.0)
+        td_src.scale=ScaleFunction.K_0 //set scale function for uniform sampling, since we are interested in uniform quantiles
         for (datum in srcdata) {
             td_src.add(datum)
         }
         val td_target=AVLTreeDigest(5.0)
+        td_target.scale=ScaleFunction.K_0 //set scale function for uniform sampling, since we are interested in uniform quantiles
         for (datum in targetdata) {
             td_target.add(datum)
         }
@@ -108,18 +100,17 @@ class AVLTreeDigestTest : TDigestTest() {
 //        Assert.assertEquals(td_src.toString(),td_target.toString())
 
 
-        Assert.assertEquals(td_src.quantile(0.1), td_target.quantile(0.1), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.2), td_target.quantile(0.2), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.3), td_target.quantile(0.3), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.4), td_target.quantile(0.4), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.5), td_target.quantile(0.5), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.6), td_target.quantile(0.6), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.7), td_target.quantile(0.7), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.8), td_target.quantile(0.8), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.9), td_target.quantile(0.9), 1e-10)
+        val src_quantiles= mutableListOf<Double>()
+        val trg_quantiles= mutableListOf<Double>()
+        for (iq in 1..9) {
+            src_quantiles.add(td_src.quantile(1.0/iq.toDouble()))
+            trg_quantiles.add(td_target.quantile(1.0/iq.toDouble()))
+        }
+        Assert.assertArrayEquals(src_quantiles.toDoubleArray(),trg_quantiles.toDoubleArray(),1e-10)
+
     }
     @Test
-    fun testUpdateSample3() {
+    fun testUpdateSample_1000dataset_tworeps() {
         val oldValue=5.0
         val newValue=40.5
         val src = Array(1000) { it.toDouble() }
@@ -131,12 +122,14 @@ class AVLTreeDigestTest : TDigestTest() {
 
         val nreps=2
         val td_src = AVLTreeDigest(5.0)
+        td_src.scale=ScaleFunction.K_0 //set scale function for uniform sampling, since we are interested in uniform quantiles
         for(reps in 0 until nreps) {
             for (datum in srcdata) {
                 td_src.add(datum)
             }
         }
         val td_target=AVLTreeDigest(5.0)
+        td_target.scale=ScaleFunction.K_0 //set scale function for uniform sampling, since we are interested in uniform quantiles
         for(reps in 0 until nreps) {
             for (datum in targetdata) {
                 td_target.add(datum)
@@ -145,15 +138,13 @@ class AVLTreeDigestTest : TDigestTest() {
         for(reps in 0 until nreps) {
             td_src.updateSample(oldValue, newValue)
         }
-
-        Assert.assertEquals(td_src.quantile(0.1), td_target.quantile(0.1), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.2), td_target.quantile(0.2), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.3), td_target.quantile(0.3), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.4), td_target.quantile(0.4), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.6), td_target.quantile(0.6), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.7), td_target.quantile(0.7), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.8), td_target.quantile(0.8), 1e-10)
-        Assert.assertEquals(td_src.quantile(0.9), td_target.quantile(0.9), 1e-10)
+        val src_quantiles= mutableListOf<Double>()
+        val trg_quantiles= mutableListOf<Double>()
+        for (iq in 1..9) {
+            src_quantiles.add(td_src.quantile(1.0/iq.toDouble()))
+            trg_quantiles.add(td_target.quantile(1.0/iq.toDouble()))
+        }
+        Assert.assertArrayEquals(src_quantiles.toDoubleArray(),trg_quantiles.toDoubleArray(),1e-2)
     }
 
     companion object {

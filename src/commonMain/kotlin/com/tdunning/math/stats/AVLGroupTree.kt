@@ -39,6 +39,21 @@ internal class AVLGroupTree  constructor(record: Boolean = false) : AbstractColl
     /**DARIO*
      * for debugging
      */
+    fun toStringSorted():String {
+        val sb=StringBuilder()
+        val sorted_centroids=mutableListOf<Double>()
+        val sorted_counts= mutableListOf<Int>()
+        for (c in iterator()) {
+            sorted_centroids.add(c.mean())
+            sorted_counts.add(c.count())
+        }
+        sb.append("centroids=${sorted_centroids.joinToString()};")
+        sb.append("counts=${sorted_counts.joinToString()};")
+        return sb.toString()
+    }
+    /**DARIO*
+     * for debugging: note that centroids printed by this method are not sorted!
+     */
     override fun toString():String {
         val sb=StringBuilder()
         sb.append("centroids=${centroids?.joinToString()};")

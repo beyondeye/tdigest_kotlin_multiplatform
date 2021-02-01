@@ -52,6 +52,13 @@ class AVLTreeDigest  : AbstractTDigest {
     override fun toString(): String {
         return summary?.toString()?:""
     }
+
+    /**
+     * *DARIO* for debugging
+     */
+    fun toStringSorted():String {
+        return summary?.toStringSorted()?:""
+    }
     override fun recordAllData(): TDigest {
         if (summary!!.size != 0) {
             throw IllegalStateException("Can only ask to record added data on an empty summary")
@@ -183,12 +190,16 @@ class AVLTreeDigest  : AbstractTDigest {
         if(oldValue>max|| oldValue<min) {
             throw IllegalArgumentException("oldValue not in range")
         }
+        //*DARIO* initialize the search range for neighbors of the x=oldValue:
+        // floor(x) retrieve the index of first node before it
         val x=oldValue
         var start = summary!!.floor(x)
         if (start == IntAVLTree.NIL) {
             start = summary!!.first()
         }
 
+        //*DARIO* now start looping through (sorted) nodes of the AVL tree of centroids
+        //searching for all the neighbors of x=oldValue,i.e. all node that are at mindistance from x
         var minDistance = Double.MAX_VALUE
         var lastNeighbor = IntAVLTree.NIL
         run {
@@ -207,6 +218,7 @@ class AVLTreeDigest  : AbstractTDigest {
             }
         }
 
+        //*DARIO* choose randomly one between points that are at min distance from x=oldvalue
         var closest = IntAVLTree.NIL
         var n = 0.0
         var neighbor = start
@@ -244,15 +256,27 @@ class AVLTreeDigest  : AbstractTDigest {
         } else { //only one element in this centroid, simply remove it
             mpassert(minDistance==0.0)
             summary!!.remove(closest)
+            if(summary!!.size==1) {    //all nodes removed
+                min= Double.POSITIVE_INFINITY
+                max= Double.NEGATIVE_INFINITY
+            } else if(centroid_closest==min) { //need to update min!!
+                val firstnode=summary!!.first()
+                min=summary!!.mean(firstnode)
+            } else if(centroid_closest==max) { //need to update max!!
+                val lastnode=summary!!.last()
+                max=summary!!.mean(lastnode)
+            }
         }
         //-----
 
         count += -1
 
+        /* *DARIO* we have removed a point, not added, so nothing to compress here
         if (summary!!.size > 20 * compression ) {
             // may happen in case of sequential points
             compress()
         }
+         */
 
         //we are done removing old value: now add new one
         add(newValue,1,null)
