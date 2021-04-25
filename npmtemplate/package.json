@@ -1,7 +1,7 @@
 {
   "name": "tdigest-kt",
   "version" : "$version",
-  "description" : "port of latest (5/2019) TDigest algorithm to kotlin multiplatform",
+  "description" : "port of latest (24/4/2021) TDigest algorithm to kotlin multiplatform",
   "main" : "tdigest-kt.js",
   "types": "tdigest-kt.d.ts",
   "author": "eyebeyond",

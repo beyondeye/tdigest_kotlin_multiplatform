@@ -494,7 +494,10 @@ enum class ScaleFunction {
 
     /**
      * Computes the normalizer given compression and number of points.
-     */
+     * @param compression The compression parameter for the digest
+     * @param n The number of samples seen so far
+     * @return The normalizing factor for the scale function
+     * */
     abstract fun normalizer(compression: Double, n: Double): Double
     internal abstract class Function {
         abstract fun apply(x: Double): Double

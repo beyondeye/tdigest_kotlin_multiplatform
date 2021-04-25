@@ -20,6 +20,7 @@ package com.tdunning.math.stats
 import com.basicio.BinaryInput
 import com.basicio.BinaryOutput
 import com.basicio.buildBinaryOutput
+import com.tdunning.math.stats.IntAVLTree.Companion.NIL
 import kotlin.js.JsName
 import kotlin.math.abs
 import kotlin.random.Random
@@ -364,15 +365,30 @@ class AVLTreeDigest  : AbstractTDigest {
             if (x < min) {
                 return 0.0
             } else if (x == min) {
-                return 0.5 / size()
+                // we have one or more centroids == x, treat them as one
+                // dw will accumulate the weight of all of the centroids at x
+                var dw = 0.0
+                for (value in values) {
+                    if (value.mean() != x) {
+                        break
+                    }
+                    dw += value.count().toDouble()
+                }
+                return dw / 2.0 / size()
             }
             mpassert(x > min)
 
             if (x > max) {
                 return 1.0
             } else if (x == max) {
+                var ix: Int = values.last()
+                var dw = 0.0
+                while (ix != NIL && values.mean(ix) == x) {
+                    dw += values.count(ix).toDouble()
+                    ix = values.prev(ix)
+                }
                 val n = size()
-                return (n - 0.5) / n
+                return (n - dw / 2.0) / n
             }
             mpassert(x < max)
 

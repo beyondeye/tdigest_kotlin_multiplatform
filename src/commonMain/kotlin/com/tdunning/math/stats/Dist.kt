@@ -21,23 +21,31 @@ package com.tdunning.math.stats
  */
 object Dist {
     fun cdf(x: Double, data: DoubleArray): Double {
+        return cdf(x, data, 0.5)
+    }
+
+    fun cdf(x: Double, data: DoubleArray, w: Double): Double {
         var n1 = 0
         var n2 = 0
         for (v in data) {
             n1 += if (v < x) 1 else 0
             n2 += if (v == x) 1 else 0
         }
-        return (n1 + n2 / 2.0) / data.size
+        return (n1 + w * n2) / data.size
     }
 
     fun cdf(x: Double, data: Collection<Double>): Double {
+        return cdf(x, data, 0.5)
+    }
+
+    fun cdf(x: Double, data: Collection<Double>, w: Double): Double {
         var n1 = 0
         var n2 = 0
         for (v in data) {
             n1 += if (v < x) 1 else 0
             n2 += if (v == x) 1 else 0
         }
-        return (n1 + n2 / 2.0) / data.size
+        return (n1 + w * n2) / data.size
     }
 
     fun quantile(q: Double, data: DoubleArray): Double {

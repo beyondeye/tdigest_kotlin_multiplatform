@@ -93,12 +93,12 @@ class AccuracyTest {
                                     Assert.assertEquals(
                                         "Sub-digest centroid sum check",
                                         cnt[i],
-                                        k2.toLong()
+                                        k2
                                     )
                                     Assert.assertEquals(
                                         "Sub-digest centroid sum check",
                                         cnt[i],
-                                        subs[i].size()
+                                        subs[i].size().toInt()
                                     )
                                     i++
                                 }

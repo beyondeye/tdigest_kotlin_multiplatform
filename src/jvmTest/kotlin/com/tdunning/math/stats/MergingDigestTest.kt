@@ -19,16 +19,14 @@ package com.tdunning.math.stats
 
 import com.basicio.BinaryInput
 import com.carrotsearch.randomizedtesting.annotations.Seed
-import org.apache.mahout.common.RandomUtils
-import org.junit.Before
-import org.junit.BeforeClass
-
-import java.io.IOException
-
 import com.google.common.collect.Lists
 import com.tdunning.math.stats.Dist.quantile
+import org.apache.mahout.common.RandomUtils
 import org.junit.Assert
+import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Test
+import java.io.IOException
 import java.util.*
 
 
@@ -164,6 +162,39 @@ class MergingDigestTest : TDigestTest() {
             last = centroid.count()
         }
         assertEquals(1, last.toLong())
+    }
+
+    /**
+     * Verify centroid sizes.
+     */
+    @Test
+    fun testFill() {
+        val x = MergingDigest(300.0)
+        val gen = Random()
+        val scale = x.scaleFunction
+        val compression = x.compression()
+        for (i in 0..999999) {
+            x.add(gen.nextGaussian())
+        }
+        var q0 = 0.0
+        var i = 0
+        System.out.printf("i, q, mean, count, dk\n")
+        for (centroid in x.centroids()) {
+            val q = q0 + centroid.count() / 2.0 / x.size()
+            val q1 = q0 + centroid.count().toDouble() / x.size()
+            var dk = scale.k(q1, compression, x.size().toDouble()) - scale.k(q0, compression, x.size().toDouble())
+            if (centroid.count() > 1) {
+                assertTrue(String.format("K-size for centroid %d at %.3f is %.3f", i, centroid.mean(), dk), dk <= 1)
+            } else {
+                dk = 1.0
+            }
+            System.out.printf("%d,%.7f,%.7f,%d,%.7f\n", i, q, centroid.mean(), centroid.count(), dk)
+            if (java.lang.Double.isNaN(dk)) {
+                System.out.printf(">>>> %.8f, %.8f\n", q0, q1)
+            }
+            q0 = q1
+            i++
+        }
     }
     companion object {
         @BeforeClass

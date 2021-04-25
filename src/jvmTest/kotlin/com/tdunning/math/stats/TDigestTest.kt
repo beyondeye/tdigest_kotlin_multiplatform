@@ -32,15 +32,12 @@ import org.apache.mahout.math.jet.random.Gamma
 import org.apache.mahout.math.jet.random.Normal
 import org.apache.mahout.math.jet.random.Uniform
 import org.junit.*
-
 import java.io.*
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.ArrayList
-
-
-
 
 
 /**
@@ -207,7 +204,6 @@ abstract class TDigestTest : AbstractTest() {
     open fun testQuantile() {
         val compression = 100.0
         val samples = doubleArrayOf(1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 3.0, 4.0, 5.0, 6.0, 7.0)
-        System.out.printf("actual,hist1,hist2\n")
         for (i in 1..9999) {
             val hist1: TDigest = MergingDigest(compression)
             val data: MutableList<Double> = ArrayList()
@@ -223,8 +219,9 @@ abstract class TDigestTest : AbstractTest() {
             Collections.sort(data)
             hist2.compress()
             val x1 = hist1.quantile(0.5)
-            val h2 = hist2.quantile(0.5)
-            System.out.printf("%.3f,%.3f,%.3f\n", quantile(0.5, data), x1, h2)
+            val x2 = hist2.quantile(0.5)
+            assertEquals(Dist.quantile(0.5, data), x1, 0.2);
+            assertEquals(x1, x2, 0.01);
         }
     }
 
@@ -275,40 +272,41 @@ abstract class TDigestTest : AbstractTest() {
         Assert.assertEquals(1.0, digest.cdf(3 + 1e-10), 0.0)
     }
 
-    //    @Test
-    fun testFill() {
-        val delta = 300
-        val x = MergingDigest(delta.toDouble())
+    /**
+     * Test with adversarial inputs.
+     */
+    @Test
+    @Throws(FileNotFoundException::class)
+    open fun testAdversarial() {
+        val kilo = 1000
         val gen = Random()
-        val scale = x.scaleFunction
-        val compression = x.compression()
-        for (i in 0..999999) {
-            x.add(gen.nextGaussian())
-        }
-        var q0 = 0.0
-        var i = 0
-        System.out.printf("i, q, mean, count, dk\n")
-        for (centroid in x.centroids()) {
-            val q = q0 + centroid.count().toDouble() / 2.0 / x.size().toDouble()
-            val q1 = q0 + centroid.count().toDouble() / x.size()
-            var dk = scale.k(q1, compression, x.size().toDouble()) - scale.k(q0, compression, x.size().toDouble())
-            if (centroid.count() > 1) {
-                Assert.assertTrue(
-                    String.format("K-size for centroid %d at %.3f is %.3f", i, centroid.mean(), dk),
-                    dk <= 1
-                )
-            } else {
-                dk = 1.0
+        val maxE = Math.log(10.0) * 308
+        PrintWriter("adversarial.csv").use { out ->
+            out.printf("k,n,E,q,x0,x1,q0,q1\n")
+            for (N in intArrayOf(100 * kilo, 1000 * kilo)) {
+                System.out.printf("%d\n", N)
+                val data = DoubleArray(N)
+                for (E in doubleArrayOf(10.0, 100.0, 300.0, 700.0, maxE)) {
+                    val digest: TDigest = MergingDigest(500.0)
+                    for (i in 0 until N) {
+                        val u = gen.nextDouble()
+                        data[i] = (if (gen.nextDouble() < 0.01) -1 else 1) * Math.exp((2 * u - 1) * E)
+                        digest.add(data[i])
+                    }
+                    Arrays.sort(data)
+                    for (k in 0..9) {
+                        for (q in doubleArrayOf(0.0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0.1, 0.5)) {
+                            val x0 = quantile(q, data)
+                            val x1 = digest.quantile(q)
+                            val q0 = cdf(x0, data)
+                            val q1 = cdf(x1, data)
+                            out.printf("%d,%d,%.0f,%.6f,%.6g,%.6g,%.6f,%.6f\n", k, N, E, q, x0, x1, q0, q1)
+                        }
+                    }
+                }
             }
-            System.out.printf("%d,%.7f,%.7f,%d,%.7f\n", i, q, centroid.mean(), centroid.count(), dk)
-            if (java.lang.Double.isNaN(dk)) {
-                System.out.printf(">>>> %.8f, %.8f\n", q0, q1)
-            }
-            q0 = q1
-            i++
         }
     }
-
     /**
      * Tests cases where min or max is not the same as the extreme centroid which has weight>1. In these cases min and
      * max give us a little information we wouldn't otherwise have.
@@ -683,7 +681,42 @@ abstract class TDigestTest : AbstractTest() {
             )
         }
     }
-
+    @Test
+    open fun testMidPointRule() {
+        val dist = factory(200.0).create()
+        dist.add(1.0)
+        dist.add(2.0)
+        var scale = 0.0
+        for (i in 0..999) {
+            dist.add(1.0)
+            dist.add(2.0)
+            if (i % 8 == 0) {
+                val message = String.format("i = %d", i)
+                assertEquals(message, 0.0, dist.cdf(1 - 1e-9), 0.0)
+                assertEquals(message, 0.25, dist.cdf(1.0), 0.01 * scale)
+                assertEquals(message, 0.5, dist.cdf(1 + 1e-9), 0.03 * scale)
+                assertEquals(message, 0.5, dist.cdf(2 - 1e-9), 0.03 * scale)
+                assertEquals(message, 0.75, dist.cdf(2.0), 0.01 * scale)
+                assertEquals(message, 1.0, dist.cdf(2 + 1e-9), 0.0)
+                assertEquals(1.0, dist.quantile(0.0), 0.0)
+                assertEquals(1.0, dist.quantile(0.1), 0.0)
+                assertEquals(1.0, dist.quantile(0.2), 0.0)
+                assertEquals(1.0, dist.quantile(0.4), 0.0)
+                assertEquals(2.0, dist.quantile(0.6), 0.0)
+                assertEquals(2.0, dist.quantile(0.7), 0.0)
+                assertEquals(2.0, dist.quantile(0.8), 0.0)
+                assertEquals(2.0, dist.quantile(0.9), 0.0)
+                assertEquals(2.0, dist.quantile(1.0), 0.0)
+            }
+            // this limit should be 70 for merging digest variants
+            // I decreased it to help out AVLTreeDigest.
+            // TODO fix AVLTreeDigest behavior
+            if (i >= 39) {
+                // when centroids start doubling up, accuracy is no longer perfect
+                scale = 1.0;
+            }
+        }
+    }
     @Test
     open fun testRepeatedValues() {
         val gen = RandomizedTest.getRandom()

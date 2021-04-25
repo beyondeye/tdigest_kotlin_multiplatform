@@ -1,7 +1,7 @@
 # TDigest for kotlin multiplatform
 
 This is a full port to Kotlin multiplatform of Ted Dunning reference implementation of the [TDigest algorithm](https://github.com/tdunning/t-digest). 
-The API (the whole code actually) is identical to the original Java implementation (retrieved 5/2019), with one notable exception:
+The API (the whole code actually) is identical to the original Java implementation (retrieved 24/4/2021), with one notable exception:
 
 _Java Serialization for TDigest objects is not currently supported._
 
