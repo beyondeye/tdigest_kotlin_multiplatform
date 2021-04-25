@@ -254,7 +254,9 @@ class AVLTreeDigest  : AbstractTDigest {
             count_closest += -1
             summary!!.update(closest, centroid_closest, count_closest, d_closest, false)
         } else { //only one element in this centroid, simply remove it
-            mpassert(minDistance==0.0)
+            if(minDistance!=0.0) {
+                mpassert(minDistance==0.0)
+            }
             summary!!.remove(closest)
             if(summary!!.size==1) {    //all nodes removed
                 min= Double.POSITIVE_INFINITY

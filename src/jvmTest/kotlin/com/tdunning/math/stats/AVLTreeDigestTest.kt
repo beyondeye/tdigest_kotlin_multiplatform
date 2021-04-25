@@ -23,6 +23,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 
 import java.io.IOException
+import kotlin.random.Random
 
 class AVLTreeDigestTest : TDigestTest() {
 
@@ -146,6 +147,66 @@ class AVLTreeDigestTest : TDigestTest() {
         }
         Assert.assertArrayEquals(src_quantiles.toDoubleArray(),trg_quantiles.toDoubleArray(),1e-2)
     }
+
+    @Test
+    fun testUpdateSample_1000dataset_shift_all() {
+        val srcdata =Array(1000) { it.toDouble() }.toList()
+        //shift all data by one
+        val targetdata= Array(1000) { it.toDouble()+0.5 }.toList()
+
+        val td_src = AVLTreeDigest(100.0)
+        td_src.scale = ScaleFunction.K_0 //set scale function for uniform sampling, since we are interested in uniform quantiles
+        for (datum in srcdata) {
+            td_src.add(datum)
+        }
+        val td_target = AVLTreeDigest(100.0)
+        td_target.scale =
+            ScaleFunction.K_0 //set scale function for uniform sampling, since we are interested in uniform quantiles
+        for (datum in targetdata) {
+            td_target.add(datum)
+        }
+        for(i in 0 until 1000) {
+            td_src.updateSample(i.toDouble(), i+0.5)
+        }
+        val src_quantiles= mutableListOf<Double>()
+        val trg_quantiles= mutableListOf<Double>()
+        for (iq in 1..9) {
+            src_quantiles.add(td_src.quantile(1.0/iq.toDouble()))
+            trg_quantiles.add(td_target.quantile(1.0/iq.toDouble()))
+        }
+        Assert.assertArrayEquals(src_quantiles.toDoubleArray(),trg_quantiles.toDoubleArray(),1e-2)
+    }
+
+    @Test
+    fun testUpdateSample_1000dataset_randomized_shift_all() {
+        val rnd= Random(0)
+        val srcdata =Array(1000) { rnd.nextDouble(0.0,1000.0) }.toList()
+        //shift all data by one
+        val targetdata= Array(1000) { srcdata[it]+0.5 }.toList()
+
+        val td_src = AVLTreeDigest(100.0)
+        td_src.scale = ScaleFunction.K_0 //set scale function for uniform sampling, since we are interested in uniform quantiles
+        for (datum in srcdata) {
+            td_src.add(datum)
+        }
+        val td_target = AVLTreeDigest(100.0)
+        td_target.scale =
+            ScaleFunction.K_0 //set scale function for uniform sampling, since we are interested in uniform quantiles
+        for (datum in targetdata) {
+            td_target.add(datum)
+        }
+        for(i in 0 until 1000) {
+            td_src.updateSample(srcdata[i], srcdata[i]+0.5)
+        }
+        val src_quantiles= mutableListOf<Double>()
+        val trg_quantiles= mutableListOf<Double>()
+        for (iq in 1..9) {
+            src_quantiles.add(td_src.quantile(1.0/iq.toDouble()))
+            trg_quantiles.add(td_target.quantile(1.0/iq.toDouble()))
+        }
+        Assert.assertArrayEquals(src_quantiles.toDoubleArray(),trg_quantiles.toDoubleArray(),1e-2)
+    }
+
 
     companion object {
         @BeforeClass
