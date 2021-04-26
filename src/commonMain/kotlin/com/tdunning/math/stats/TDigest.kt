@@ -65,6 +65,7 @@ abstract class TDigest
         }
     }
 
+    @JsName("addList")
     abstract fun add(others: List<TDigest>)
 
     /**

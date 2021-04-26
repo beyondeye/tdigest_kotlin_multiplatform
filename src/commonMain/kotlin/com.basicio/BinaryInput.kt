@@ -1,8 +1,11 @@
 package com.basicio
 
+import kotlin.js.JsExport
+
 /**
  * interface inspired by kotlinx-io Input interface
  */
+@JsExport
 interface BinaryInput {
     fun readByte(): Byte
     fun readShort(): Short

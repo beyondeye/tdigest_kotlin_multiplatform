@@ -1,8 +1,11 @@
 package com.basicio
 
+import kotlin.js.JsExport
+
 /**
  * interface inspired by kotlinx-io Output interface
  */
+@JsExport
 interface BinaryOutput {
     val size: Int
     fun writeByte(v: Byte)
