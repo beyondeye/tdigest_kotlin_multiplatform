@@ -1,24 +1,31 @@
 package com.basicio
 
-import kotlin.js.JsExport
+import kotlin.js.JsName
 
 /**
  * interface inspired by kotlinx-io Input interface
  */
-@JsExport
 interface BinaryInput {
+    @JsName("readByte")
     fun readByte(): Byte
+    @JsName("readShort")
     fun readShort(): Short
+    @JsName("readInt")
     fun readInt(): Int
+    @JsName("readLong")
     fun readLong(): kotlin.Long
+    @JsName("readFloat")
     fun readFloat(): Float
+    @JsName("readDouble")
     fun readDouble(): Double
+    @JsName("readBoolean")
     fun readBoolean():Boolean {
         return if(readByte()==0.toByte()) false else true
     }
     /**
      * release the data buffer
      */
+    @JsName("release")
     fun release()
 }
 
