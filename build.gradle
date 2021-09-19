@@ -2,12 +2,12 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests
 //see https://kotlinlang.org/docs/mpp-dsl-reference.html for reference on how write mpp build.gradle
 buildscript {
     ext {
-        kotlin_version='1.4.32'
+        kotlin_version='1.5.30'
         //https://github.com/Kotlin/kotlinx.serialization
-        serialization_version='1.1.0'
-        coroutines_version='1.4.3'
+        serialization_version='1.3.0-RC'
+        coroutines_version='1.5.2'
         //https://github.com/Kotlin/kotlinx.atomicfu
-        atomicfu_version ='0.15.2'
+        atomicfu_version ='0.16.3'
         letsplotversion="1.5.6"
         letsplotapiversion="1.2.0"
         //https://github.com/Kotlin/kotlinx-io
@@ -168,13 +168,13 @@ project.ext.npmDependencies += """ "bytebuffer": "${bytebuffer_version}" """
 //transform the list of deps into single comma separated string
 project.ext.npmDependencies = project.properties.npmDependencies.join(",\n")
 
-compileKotlinJs {
-    kotlinOptions {
-        // NOTE: Module base-name must be equal to the package name declared in package.json
-        def baseName = "tdigest-kt"
-        outputFile = new File(outputFile.parent, baseName + ".js")
-    }
-}
+//compileKotlinJs {
+//    kotlinOptions {
+//        // NOTE: Module base-name must be equal to the package name declared in package.json
+//        def baseName = "tdigest-kt"
+//        outputFile = new File(outputFile.parent, baseName + ".js")
+//    }
+//}
 
 apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
 apply from: file("$rootProject.projectDir/gradle/test-mocha-js.gradle")

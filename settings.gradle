@@ -7,7 +7,7 @@ pluginManagement {
         }
     }
 }
-rootProject.name = 'tdigest_kotlin_multiplatform'
+rootProject.name = 'tdigest-kt'
 
 
 enableFeaturePreview('GRADLE_METADATA')
